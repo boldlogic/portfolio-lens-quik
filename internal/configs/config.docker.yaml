@@ -1,0 +1,30 @@
+log:
+  level: "info"
+  format: "json"
+  output_file: ""
+server:
+  listen_host: "0.0.0.0"
+  port: 5030
+  timeout: 20
+  tls:
+    enabled: true
+    cert_file: "/certs/services/quik-portfolio/server.crt"
+    key_file: "/certs/services/quik-portfolio/server.key"
+    client_ca_file: "/certs/ca.crt"
+grpc:
+  port: 5051
+service_registry:
+  manager_base_url: "https://service-registry:5080"
+  heartbeat_interval_sec: 10
+  grpc_public_addr: "quik-portfolio:5051"
+  api_secret: ""
+  mtls:
+    ca_file: "/certs/ca.crt"
+    cert_file: "/certs/services/quik-portfolio/client.crt"
+    key_file: "/certs/services/quik-portfolio/client.key"
+db:
+  server: "mssql"
+  host: "mssql"
+  port: 1433
+  db_name: "portfolio_lens"
+  ssl_mode: "disable"
