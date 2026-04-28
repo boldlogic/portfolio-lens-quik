@@ -768,7 +768,7 @@ const file_quik_v1_limits_proto_rawDesc = "" +
 	"\x14StreamSecurityLimits\x12!.quik.v1.GetSecurityLimitsRequest\x1a\x16.quik.v1.SecurityLimit0\x01\x12J\n" +
 	"\x11StreamMoneyLimits\x12\x1e.quik.v1.GetMoneyLimitsRequest\x1a\x13.quik.v1.MoneyLimit0\x01\x12P\n" +
 	"\x13StreamCurrentQuotes\x12 .quik.v1.GetCurrentQuotesRequest\x1a\x15.quik.v1.CurrentQuote0\x01\x12^\n" +
-	"\x1aStreamCurrentQuotesForKeys\x12'.quik.v1.GetCurrentQuotesForKeysRequest\x1a\x15.quik.v1.CurrentQuote0\x01B@Z>github.com/boldlogic/quik-portfolio/proto/gen/go/quik/v1;quikv1b\x06proto3"
+	"\x1aStreamCurrentQuotesForKeys\x12'.quik.v1.GetCurrentQuotesForKeysRequest\x1a\x15.quik.v1.CurrentQuote0\x01BFZDgithub.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1;quikv1b\x06proto3"
 
 var (
 	file_quik_v1_limits_proto_rawDescOnce sync.Once

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/boldlogic/quik-portfolio/pkg/models"
-	"github.com/boldlogic/quik-portfolio/pkg/transport/httpserver/httputils"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 )
 
 type Adapter interface {

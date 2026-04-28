@@ -1,6 +1,6 @@
 package quik
 
-import "github.com/boldlogic/quik-portfolio/pkg/models"
+import "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 
 type InstrumentType struct {
 	Id    uint8

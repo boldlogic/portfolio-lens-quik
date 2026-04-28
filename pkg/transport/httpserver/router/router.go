@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/boldlogic/packages/metrics"
-	"github.com/boldlogic/quik-portfolio/pkg/transport/httpserver/handler"
-	"github.com/boldlogic/quik-portfolio/pkg/transport/httpserver/httpmetrics"
-	"github.com/boldlogic/quik-portfolio/pkg/transport/httpserver/middleware"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httpmetrics"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"

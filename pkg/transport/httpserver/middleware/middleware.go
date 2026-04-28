@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/boldlogic/quik-portfolio/pkg/transport/httpserver/httpmetrics"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httpmetrics"
 	"go.uber.org/zap"
 )
 

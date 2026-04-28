@@ -1,4 +1,4 @@
-module github.com/boldlogic/quik-portfolio
+module github.com/boldlogic/portfolio-lens-quik
 
 go 1.26.2
 
@@ -20,6 +20,7 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/boldlogic/portfolio-lens-currency v0.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect

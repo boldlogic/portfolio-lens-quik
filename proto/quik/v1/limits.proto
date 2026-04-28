@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package quik.v1;
 
-option go_package = "github.com/boldlogic/quik-portfolio/proto/gen/go/quik/v1;quikv1";
+option go_package = "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1;quikv1";
 
 import "google/protobuf/timestamp.proto";
 

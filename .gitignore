@@ -32,3 +32,12 @@ go.work.sum
 # .vscode/
 /configs
 app.log
+.cursor
+docs
+config.json
+config.yaml
+config.yml
+configs
+quik-currency
+
+.obsidian

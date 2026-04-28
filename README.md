@@ -1,20 +1,47 @@
-# quik-portfolio
+# portfolio-lens-quik
 
-**Назначение модуля:** приём и хранение лимитов из контура QUIK (схема `quik` в SQL Server), расчёт портфеля с пересчётом оценки в целевую валюту, выдача данных по HTTP и gRPC; справочник фирм и фоновые воркеры (roll-forward лимитов, актуализация фирм).
+Репозиторий домена QUIK в рамках Portfolio Lens. Сейчас основной рабочий сервис - `quik-portfolio`; структура подготовлена для расширения на несколько микросервисов.
 
-**Интерфейсы:** OpenAPI [docs/openapi/quik-portfolio/openapi.yaml](../docs/openapi/quik-portfolio/openapi.yaml); проектное описание [docs/quik-portfolio/architecture.md](../docs/quik-portfolio/architecture.md).
+## Что внутри
 
-**Сеть по умолчанию (Docker-пример):** HTTP **5030** (`server.port`), gRPC **5051** (`grpc.port`).
+- `quik-portfolio/` - сервис лимитов/портфеля (HTTP + gRPC).
+- `quik-currency/` - задел под отдельный сервис домена валют/курсов.
+- `pkg/` - общий код (транспорт, модели, интеграционные утилиты).
+- `proto/` - protobuf-контракты и сгенерированный Go-код.
+- `scripts/sql/` - bootstrap и DDL для MSSQL.
+- `scripts/create-odbc-dsn.ps1` - создание 64-bit System DSN для ODBC-выгрузки.
 
-## Запуск
+## Быстрый старт (quik-portfolio)
 
-Предварительно: развёрнута БД с DDL из `scripts/sql/quik-portfolio/`, заполнен конфиг. Секреты БД задаются через переменные окружения (секция `db` в конфиге); в Docker часто достаточно `MSSQL_SA_PASSWORD` в `.env`.
-
-Из корня репозитория:
+1. Подготовить БД MSSQL:
+   - выполнить `scripts/sql/bootstrap/create_database.sql`;
+   - выполнить DDL из `scripts/sql/DDL/`;
+   - при необходимости создать app-user через `scripts/sql/bootstrap/create_app_user.sql`.
+2. Проверить конфиг сервиса в `quik-portfolio/internal/configs/`.
+3. Запустить сервис из корня репозитория:
 
 ```bash
 go run ./quik-portfolio/cmd
-go run ./quik-portfolio/cmd -config path/to/config.yaml
+go run ./quik-portfolio/cmd -config quik-portfolio/internal/configs/config.yaml
 ```
 
-Путь к YAML по умолчанию: `quik-portfolio/internal/configs/config.yaml`.
+Порты по умолчанию:
+
+- HTTP: `5030`
+- gRPC: `5051`
+
+## ODBC / QUIK
+
+Для экспорта из QUIK используйте БД без дефиса в имени. Текущее стандартное имя БД: `portfolio_lens_quik`.
+
+Пример создания DSN:
+
+```powershell
+.\scripts\create-odbc-dsn.ps1 -Force -DbName portfolio_lens_quik -Dsn64 QuikPortfolioLocal_64 -PromptPassword
+```
+
+## Конфигурация и безопасность
+
+- Не храните реальные пароли в tracked-конфигах.
+- Для секретов используйте переменные окружения/секрет-хранилище.
+- Для production включайте защищенные каналы (TLS/mTLS) для внешних интерфейсов и БД.

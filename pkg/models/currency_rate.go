@@ -12,7 +12,6 @@ type FxRate struct {
 	BaseISOCode      int
 	RateQuotePerBase decimal.Decimal
 	RateBasePerQuote decimal.Decimal
-	ExtSystemId      *ExternalSystemID
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	BaseCurrency     *Currency
