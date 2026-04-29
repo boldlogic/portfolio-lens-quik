@@ -5,6 +5,7 @@ go 1.26.2
 require (
 	github.com/JohannesJHN/iso4217 v0.0.0-20250910211824-d9ba0fe363a8
 	github.com/boldlogic/packages v0.1.9
+	github.com/boldlogic/portfolio-lens-currency v0.1.1
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0
@@ -20,7 +21,6 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/boldlogic/portfolio-lens-currency v0.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect

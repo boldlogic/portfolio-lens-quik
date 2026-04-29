@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/boldlogic/packages/utils/dates"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 	"github.com/shopspring/decimal"
 )
@@ -36,13 +36,13 @@ func (h *Handler) CreateMoneyLimit(r *http.Request) (any, string, error) {
 	return moneyLimitToDTO(created), "", nil
 }
 
-func (req moneyLimitReqDTO) convertToMoneyLimit() (qmodels.MoneyLimit, error) {
+func (req moneyLimitReqDTO) convertToMoneyLimit() (quik.MoneyLimit, error) {
 	date, err := dates.ParseWithDefaultNow(req.LoadDate, dates.ISODateFormat)
 	if err != nil {
-		return qmodels.MoneyLimit{}, err
+		return quik.MoneyLimit{}, err
 	}
 
-	return qmodels.MoneyLimit{
+	return quik.MoneyLimit{
 		LoadDate:     date,
 		ClientCode:   req.ClientCode,
 		Currency:     req.Currency,

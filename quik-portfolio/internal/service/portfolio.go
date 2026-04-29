@@ -7,18 +7,18 @@ import (
 	"time"
 
 	"github.com/boldlogic/packages/utils/dates"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
-func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]qmodels.Limit, error) {
-	var res []qmodels.Limit
-	var ml []qmodels.MoneyLimit
-	var sl []qmodels.SecurityLimit
-	var otc []qmodels.SecurityLimit
+func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error) {
+	var res []quik.Limit
+	var ml []quik.MoneyLimit
+	var sl []quik.SecurityLimit
+	var otc []quik.SecurityLimit
 	var maxDateMoney, maxDateSec, maxDateOtc *time.Time
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -54,7 +54,7 @@ func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]qmodels.Limi
 
 	minAvailable := dates.EarliestDate(maxDateMoney, maxDateSec, maxDateOtc)
 	if minAvailable == nil {
-		return []qmodels.Limit{}, nil
+		return []quik.Limit{}, nil
 	}
 	if err := checkLimitDate(date, *minAvailable); err != nil {
 		return nil, err
@@ -85,8 +85,8 @@ func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]qmodels.Limi
 	}
 
 	for _, m := range ml {
-		res = append(res, qmodels.Limit{
-			LimitType:      qmodels.LimitTypeMoney,
+		res = append(res, quik.Limit{
+			LimitType:      quik.LimitTypeMoney,
 			LoadDate:       m.LoadDate,
 			SourceDate:     m.SourceDate,
 			ClientCode:     m.ClientCode,
@@ -99,8 +99,8 @@ func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]qmodels.Limi
 	}
 
 	for _, l := range sl {
-		res = append(res, qmodels.Limit{
-			LimitType:      qmodels.LimitTypeSecurities,
+		res = append(res, quik.Limit{
+			LimitType:      quik.LimitTypeSecurities,
 			LoadDate:       l.LoadDate,
 			SourceDate:     l.SourceDate,
 			ClientCode:     l.ClientCode,
@@ -114,8 +114,8 @@ func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]qmodels.Limi
 		})
 	}
 	for _, o := range otc {
-		res = append(res, qmodels.Limit{
-			LimitType:      qmodels.LimitTypeSecuritiesOtc,
+		res = append(res, quik.Limit{
+			LimitType:      quik.LimitTypeSecuritiesOtc,
 			LoadDate:       o.LoadDate,
 			SourceDate:     o.SourceDate,
 			ClientCode:     o.ClientCode,
@@ -135,7 +135,7 @@ func (s *Service) GetLimits(ctx context.Context, date time.Time) ([]qmodels.Limi
 	return res, nil
 }
 
-func (s *Service) GetPortfolio(ctx context.Context, targetCcy string) ([]qmodels.PortfolioEntry, error) {
+func (s *Service) GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error) {
 	if targetCcy == "" {
 		targetCcy = "RUB"
 	}
@@ -144,9 +144,9 @@ func (s *Service) GetPortfolio(ctx context.Context, targetCcy string) ([]qmodels
 		return nil, err
 	}
 
-	var securities []qmodels.PortfolioEntry
-	var otcEntries []qmodels.PortfolioEntry
-	var moneyEntries []qmodels.PortfolioEntry
+	var securities []quik.PortfolioEntry
+	var otcEntries []quik.PortfolioEntry
+	var moneyEntries []quik.PortfolioEntry
 
 	g, gCtx := errgroup.WithContext(ctx)
 
@@ -172,7 +172,7 @@ func (s *Service) GetPortfolio(ctx context.Context, targetCcy string) ([]qmodels
 		return nil, err
 	}
 
-	entries := make([]qmodels.PortfolioEntry, 0, len(securities)+len(otcEntries)+len(moneyEntries))
+	entries := make([]quik.PortfolioEntry, 0, len(securities)+len(otcEntries)+len(moneyEntries))
 	entries = append(entries, securities...)
 	entries = append(entries, otcEntries...)
 	entries = append(entries, moneyEntries...)

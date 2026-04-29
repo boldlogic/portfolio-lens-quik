@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/boldlogic/packages/shutdown"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	mssql "github.com/microsoft/go-mssqldb"
 	"go.uber.org/zap"
 )
@@ -57,8 +57,8 @@ const (
 `
 )
 
-func (r *Repository) SelectMoneyLimits(ctx context.Context, date time.Time) ([]qmodels.MoneyLimit, error) {
-	var result []qmodels.MoneyLimit
+func (r *Repository) SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
+	var result []quik.MoneyLimit
 
 	rows, err := r.Db.QueryContext(ctx, selectMoneyLimitsByDate, date)
 	if err != nil {
@@ -71,7 +71,7 @@ func (r *Repository) SelectMoneyLimits(ctx context.Context, date time.Time) ([]q
 	defer rows.Close()
 
 	for rows.Next() {
-		row := qmodels.MoneyLimit{}
+		row := quik.MoneyLimit{}
 		err = rows.Scan(
 			&row.LoadDate,
 			&row.SourceDate,
@@ -137,8 +137,8 @@ const (
 		`
 )
 
-func (r *Repository) InsertMoneyLimit(ctx context.Context, s qmodels.MoneyLimit) (qmodels.MoneyLimit, error) {
-	var out qmodels.MoneyLimit
+func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (quik.MoneyLimit, error) {
+	var out quik.MoneyLimit
 	row := r.Db.QueryRowContext(ctx, insertMoneyLimit,
 		s.LoadDate,
 		s.ClientCode,
@@ -160,12 +160,12 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s qmodels.MoneyLimit)
 	)
 	if err != nil {
 		if shutdown.IsExceeded(err) {
-			return qmodels.MoneyLimit{}, err
+			return quik.MoneyLimit{}, err
 		}
 
 		if errors.Is(err, sql.ErrNoRows) {
 			r.Logger.Warn("фирма не найдена", zap.String("firm_name", s.FirmName))
-			return qmodels.MoneyLimit{}, models.ErrNotFound
+			return quik.MoneyLimit{}, models.ErrNotFound
 		}
 
 		var msErr mssql.Error
@@ -177,7 +177,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s qmodels.MoneyLimit)
 				zap.String("position_code", s.PositionCode),
 				zap.String("settle_code", string(s.SettleCode)),
 				zap.String("firm_code", s.FirmCode))
-			return qmodels.MoneyLimit{}, models.ErrConflict
+			return quik.MoneyLimit{}, models.ErrConflict
 		}
 		r.Logger.Error("ошибка при создании лимита по деньгам",
 			zap.Time("load_date", s.LoadDate),
@@ -187,7 +187,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s qmodels.MoneyLimit)
 			zap.String("settle_code", string(s.SettleCode)),
 			zap.String("firm_code", s.FirmCode),
 			zap.Error(err))
-		return qmodels.MoneyLimit{}, models.ErrSavingData
+		return quik.MoneyLimit{}, models.ErrSavingData
 	}
 	r.Logger.Debug("лимит по деньгам успешно сохранен",
 		zap.Time("load_date", s.LoadDate),

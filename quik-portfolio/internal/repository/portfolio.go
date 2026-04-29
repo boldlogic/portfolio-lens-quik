@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/boldlogic/packages/shutdown"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -118,8 +118,8 @@ CROSS APPLY dbo.fnFxRateToRub(norm.norm_tgt, c.load_date) ft
 ORDER BY c.load_date, c.client_code, c.ticker, c.trade_account, c.firm_code
 `
 
-func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]qmodels.PortfolioEntry, error) {
-	var result []qmodels.PortfolioEntry
+func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error) {
+	var result []quik.PortfolioEntry
 	r.Logger.Debug("запрос портфеля по бумагам", zap.Time("date", date), zap.String("target_ccy", targetCcy))
 
 	rows, err := r.Db.QueryContext(ctx, selectSecuritiesPortfolio, date, targetCcy)
@@ -135,7 +135,7 @@ func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Ti
 	dateTrunc := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 
 	for rows.Next() {
-		var row qmodels.PortfolioEntry
+		var row quik.PortfolioEntry
 		var mvISOCharCode, targetISOCharCode, shortName sql.NullString
 		var mvMinorUnits, targetMinorUnits sql.NullInt32
 		var quoteDate sql.NullTime
@@ -157,7 +157,7 @@ func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Ti
 			r.Logger.Error("ошибка при сканировании строки портфеля по бумагам", zap.Time("date", date), zap.Error(err))
 			return nil, models.ErrRetrievingData
 		}
-		row.LimitType = qmodels.LimitTypeSecurities
+		row.LimitType = quik.LimitTypeSecurities
 		if quoteDate.Valid {
 			row.QuoteDate = &quoteDate.Time
 			qt := time.Date(quoteDate.Time.Year(), quoteDate.Time.Month(), quoteDate.Time.Day(), 0, 0, 0, 0, quoteDate.Time.Location())
@@ -297,8 +297,8 @@ CROSS APPLY dbo.fnFxRateToRub(norm.norm_tgt, c.load_date) ft
 ORDER BY c.load_date, c.client_code, c.ticker, c.trade_account, c.firm_code
 `
 
-func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]qmodels.PortfolioEntry, error) {
-	var result []qmodels.PortfolioEntry
+func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error) {
+	var result []quik.PortfolioEntry
 	r.Logger.Debug("запрос портфеля по OTC-бумагам", zap.Time("date", date), zap.String("target_ccy", targetCcy))
 
 	rows, err := r.Db.QueryContext(ctx, selectSecuritiesOtcPortfolio, date, targetCcy)
@@ -314,7 +314,7 @@ func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time
 	dateTrunc := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 
 	for rows.Next() {
-		var row qmodels.PortfolioEntry
+		var row quik.PortfolioEntry
 		var mvISOCharCode, targetISOCharCode, shortName sql.NullString
 		var mvMinorUnits, targetMinorUnits sql.NullInt32
 		var quoteDate sql.NullTime
@@ -336,7 +336,7 @@ func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time
 			r.Logger.Error("ошибка при сканировании строки портфеля по OTC-бумагам", zap.Time("date", date), zap.Error(err))
 			return nil, models.ErrRetrievingData
 		}
-		row.LimitType = qmodels.LimitTypeSecuritiesOtc
+		row.LimitType = quik.LimitTypeSecuritiesOtc
 		if quoteDate.Valid {
 			row.QuoteDate = &quoteDate.Time
 			qt := time.Date(quoteDate.Time.Year(), quoteDate.Time.Month(), quoteDate.Time.Day(), 0, 0, 0, 0, quoteDate.Time.Location())
@@ -424,7 +424,7 @@ WHERE c.settle_code = c.settle_max AND c.balance <> 0
 ORDER BY c.load_date, c.client_code, c.ccy, c.position_code, c.firm_code;
 `
 
-func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]qmodels.PortfolioEntry, error) {
+func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error) {
 	r.Logger.Debug("запрос денежных позиций для портфеля", zap.Time("date", date), zap.String("target_ccy", targetCcy))
 
 	rows, err := r.Db.QueryContext(ctx, selectMoneyLimitsPortfolio, date, targetCcy)
@@ -437,7 +437,7 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 	}
 	defer rows.Close()
 
-	var result []qmodels.PortfolioEntry
+	var result []quik.PortfolioEntry
 	for rows.Next() {
 		var (
 			ccy, positionCode, firmCode, firmName string
@@ -445,7 +445,7 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 			quoteDate                             sql.NullTime
 			mvISO, tgtISO, shortName              sql.NullString
 			mvMinorUnits, tgtMinorUnits           sql.NullInt32
-			row                                   qmodels.PortfolioEntry
+			row                                   quik.PortfolioEntry
 		)
 		err = rows.Scan(
 			&row.LoadDate, &row.SourceDate, &row.ClientCode, &ccy, &positionCode,
@@ -464,7 +464,7 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 			return nil, models.ErrRetrievingData
 		}
 
-		row.LimitType = qmodels.LimitTypeMoney
+		row.LimitType = quik.LimitTypeMoney
 		row.Instrument = ccy
 		row.PositionCode = positionCode
 		row.FirmCode = firmCode

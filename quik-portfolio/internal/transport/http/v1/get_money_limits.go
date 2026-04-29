@@ -6,7 +6,7 @@ import (
 
 	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
 func (h *Handler) GetMoneyLimits(r *http.Request) (any, string, error) {
@@ -28,7 +28,7 @@ func (h *Handler) GetMoneyLimits(r *http.Request) (any, string, error) {
 	return moneyLimitsToResp(mls), "", nil
 }
 
-func moneyLimitsToResp(mls []models.MoneyLimit) []moneyLimitDTO {
+func moneyLimitsToResp(mls []quik.MoneyLimit) []moneyLimitDTO {
 	if len(mls) == 0 {
 		return []moneyLimitDTO{}
 	}
@@ -40,7 +40,7 @@ func moneyLimitsToResp(mls []models.MoneyLimit) []moneyLimitDTO {
 	return resp
 }
 
-func moneyLimitToDTO(ml models.MoneyLimit) moneyLimitDTO {
+func moneyLimitToDTO(ml quik.MoneyLimit) moneyLimitDTO {
 	return moneyLimitDTO{
 		LoadDate:     ml.LoadDate.Format(dates.ISODateFormat),
 		SourceDate:   ml.SourceDate.Format(dates.ISODateFormat),

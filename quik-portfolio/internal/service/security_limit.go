@@ -8,16 +8,16 @@ import (
 
 	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
-func (s *Service) GetSecurityLimits(ctx context.Context, date time.Time) ([]qmodels.SecurityLimit, error) {
+func (s *Service) GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
 	maxDate, err := s.repo.SelectSecurityLimitsMaxDate(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if maxDate == nil {
-		return []qmodels.SecurityLimit{}, nil
+		return []quik.SecurityLimit{}, nil
 	}
 	if err := checkLimitDate(date, *maxDate); err != nil {
 		return nil, err
@@ -25,13 +25,13 @@ func (s *Service) GetSecurityLimits(ctx context.Context, date time.Time) ([]qmod
 	return s.repo.SelectSecurityLimits(ctx, date)
 }
 
-func (s *Service) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]qmodels.SecurityLimit, error) {
+func (s *Service) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
 	maxDate, err := s.repo.SelectSecurityLimitsOtcMaxDate(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if maxDate == nil {
-		return []qmodels.SecurityLimit{}, nil
+		return []quik.SecurityLimit{}, nil
 	}
 	if err := checkLimitDate(date, *maxDate); err != nil {
 		return nil, err
@@ -39,13 +39,13 @@ func (s *Service) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]q
 	return s.repo.SelectSecurityLimitsOtc(ctx, date)
 }
 
-func (s *Service) CreateSecurityLimit(ctx context.Context, sec qmodels.SecurityLimit) (qmodels.SecurityLimit, error) {
+func (s *Service) CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
 	maxDate, err := s.repo.SelectSecurityLimitsMaxDate(ctx)
 	if err != nil && !errors.Is(err, models.ErrNotFound) {
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 	if err := checkLimitDate(sec.LoadDate, minRollForwardDate(maxDate)); err != nil {
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 
 	if sec.SettleCode == "" {
@@ -54,16 +54,16 @@ func (s *Service) CreateSecurityLimit(ctx context.Context, sec qmodels.SecurityL
 
 	err = sec.SettleCode.Validate()
 	if err != nil {
-		return qmodels.SecurityLimit{}, fmt.Errorf("%w: %s", models.ErrBusinessValidation, err.Error())
+		return quik.SecurityLimit{}, fmt.Errorf("%w: %s", models.ErrBusinessValidation, err.Error())
 	}
 
 	created, err := s.repo.InsertSecurityLimit(ctx, sec)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			return qmodels.SecurityLimit{}, fmt.Errorf("%w: некорректное имя фирмы", models.ErrBusinessValidation)
+			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректное имя фирмы", models.ErrBusinessValidation)
 		}
 		if errors.Is(err, models.ErrConflict) {
-			return qmodels.SecurityLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ticker=%s trade_account=%s settle_code=%s firm_name=%s",
+			return quik.SecurityLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ticker=%s trade_account=%s settle_code=%s firm_name=%s",
 				models.ErrConflict,
 				sec.LoadDate.Format(dates.ISODateFormat),
 				sec.ClientCode,
@@ -72,18 +72,18 @@ func (s *Service) CreateSecurityLimit(ctx context.Context, sec qmodels.SecurityL
 				sec.SettleCode,
 				sec.FirmName)
 		}
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 	return created, nil
 }
 
-func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec qmodels.SecurityLimit) (qmodels.SecurityLimit, error) {
+func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
 	maxDate, err := s.repo.SelectSecurityLimitsOtcMaxDate(ctx)
 	if err != nil && !errors.Is(err, models.ErrNotFound) {
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 	if err := checkLimitDate(sec.LoadDate, minRollForwardDate(maxDate)); err != nil {
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 
 	sec.TradeAccount = "OTC"
@@ -93,16 +93,16 @@ func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec qmodels.Securi
 
 	err = sec.SettleCode.Validate()
 	if err != nil {
-		return qmodels.SecurityLimit{}, fmt.Errorf("%w: %s", models.ErrBusinessValidation, err.Error())
+		return quik.SecurityLimit{}, fmt.Errorf("%w: %s", models.ErrBusinessValidation, err.Error())
 	}
 
 	created, err := s.repo.InsertSecurityLimitOtc(ctx, sec)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			return qmodels.SecurityLimit{}, fmt.Errorf("%w: некорректное имя фирмы", models.ErrBusinessValidation)
+			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректное имя фирмы", models.ErrBusinessValidation)
 		}
 		if errors.Is(err, models.ErrConflict) {
-			return qmodels.SecurityLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ticker=%s trade_account=%s settle_code=%s firm_name=%s",
+			return quik.SecurityLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ticker=%s trade_account=%s settle_code=%s firm_name=%s",
 				models.ErrConflict,
 				sec.LoadDate.Format(dates.ISODateFormat),
 				sec.ClientCode,
@@ -111,7 +111,7 @@ func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec qmodels.Securi
 				sec.SettleCode,
 				sec.FirmName)
 		}
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 	return created, nil
 }

@@ -14,9 +14,9 @@
 ## Быстрый старт (quik-portfolio)
 
 1. Подготовить БД MSSQL:
-   - выполнить `scripts/sql/bootstrap/create_database.sql`;
-   - выполнить DDL из `scripts/sql/DDL/`;
-   - при необходимости создать app-user через `scripts/sql/bootstrap/create_app_user.sql`.
+  - выполнить `scripts/sql/bootstrap/create_database.sql`;
+  - выполнить DDL из `scripts/sql/DDL/`;
+  - при необходимости создать app-user через `scripts/sql/bootstrap/create_app_user.sql`.
 2. Проверить конфиг сервиса в `quik-portfolio/internal/configs/`.
 3. Запустить сервис из корня репозитория:
 
@@ -32,7 +32,7 @@ go run ./quik-portfolio/cmd -config quik-portfolio/internal/configs/config.yaml
 
 ## ODBC / QUIK
 
-Для экспорта из QUIK используйте БД без дефиса в имени. Текущее стандартное имя БД: `portfolio_lens_quik`.
+Для экспорта из QUIK используйте БД. Текущее стандартное имя БД: `portfolio_lens_quik`.
 
 Пример создания DSN:
 
@@ -40,8 +40,3 @@ go run ./quik-portfolio/cmd -config quik-portfolio/internal/configs/config.yaml
 .\scripts\create-odbc-dsn.ps1 -Force -DbName portfolio_lens_quik -Dsn64 QuikPortfolioLocal_64 -PromptPassword
 ```
 
-## Конфигурация и безопасность
-
-- Не храните реальные пароли в tracked-конфигах.
-- Для секретов используйте переменные окружения/секрет-хранилище.
-- Для production включайте защищенные каналы (TLS/mTLS) для внешних интерфейсов и БД.

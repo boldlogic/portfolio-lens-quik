@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func moneyLimitToProto(l models.MoneyLimit) *quikv1.MoneyLimit {
+func moneyLimitToProto(l quik.MoneyLimit) *quikv1.MoneyLimit {
 	return &quikv1.MoneyLimit{
 		ClientCode:   l.ClientCode,
 		Currency:     l.Currency,

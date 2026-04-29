@@ -9,16 +9,16 @@ import (
 	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
-func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]models.MoneyLimit, error) {
+func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
 	maxDate, err := s.repo.SelectMoneyLimitsMaxDate(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if maxDate == nil {
-		return []models.MoneyLimit{}, nil
+		return []quik.MoneyLimit{}, nil
 	}
 	if err := checkLimitDate(date, *maxDate); err != nil {
 		return nil, err
@@ -26,19 +26,19 @@ func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]models.
 	return s.repo.SelectMoneyLimits(ctx, date)
 }
 
-func (s *Service) CreateMoneyLimit(ctx context.Context, ml models.MoneyLimit) (models.MoneyLimit, error) {
+func (s *Service) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error) {
 
 	maxDate, err := s.repo.SelectMoneyLimitsMaxDate(ctx)
 	if err != nil && !errors.Is(err, md.ErrNotFound) {
-		return models.MoneyLimit{}, err
+		return quik.MoneyLimit{}, err
 	}
 	if err := checkLimitDate(ml.LoadDate, minRollForwardDate(maxDate)); err != nil {
-		return models.MoneyLimit{}, err
+		return quik.MoneyLimit{}, err
 	}
 
 	normCcy := normalizeQuikCcy(ml.Currency)
 	if err := currencies.CheckCurrencyCode(normCcy); err != nil {
-		return models.MoneyLimit{}, fmt.Errorf("%w: %s", md.ErrBusinessValidation, err.Error())
+		return quik.MoneyLimit{}, fmt.Errorf("%w: %s", md.ErrBusinessValidation, err.Error())
 	}
 
 	if ml.SettleCode == "" {
@@ -47,16 +47,16 @@ func (s *Service) CreateMoneyLimit(ctx context.Context, ml models.MoneyLimit) (m
 
 	err = ml.SettleCode.Validate()
 	if err != nil {
-		return models.MoneyLimit{}, fmt.Errorf("%w: %s", md.ErrBusinessValidation, err.Error())
+		return quik.MoneyLimit{}, fmt.Errorf("%w: %s", md.ErrBusinessValidation, err.Error())
 	}
 
 	created, err := s.repo.InsertMoneyLimit(ctx, ml)
 	if err != nil {
 		if errors.Is(err, md.ErrNotFound) {
-			return models.MoneyLimit{}, fmt.Errorf("%w: некорректное имя фирмы", md.ErrBusinessValidation)
+			return quik.MoneyLimit{}, fmt.Errorf("%w: некорректное имя фирмы", md.ErrBusinessValidation)
 		}
 		if errors.Is(err, md.ErrConflict) {
-			return models.MoneyLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ccy=%s position_code=%s settle_code=%s firm_name=%s",
+			return quik.MoneyLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ccy=%s position_code=%s settle_code=%s firm_name=%s",
 				md.ErrConflict,
 				ml.LoadDate.Format(dates.ISODateFormat),
 				ml.ClientCode,
@@ -66,7 +66,7 @@ func (s *Service) CreateMoneyLimit(ctx context.Context, ml models.MoneyLimit) (m
 				ml.FirmName)
 		}
 
-		return models.MoneyLimit{}, err
+		return quik.MoneyLimit{}, err
 	}
 	return created, nil
 }

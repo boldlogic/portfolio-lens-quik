@@ -7,7 +7,7 @@ import (
 
 	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
 func (h *Handler) readGetLimitsRequest(r *http.Request) (time.Time, error) {
@@ -33,7 +33,7 @@ func (h *Handler) GetLimits(r *http.Request) (any, string, error) {
 	return limitsToResp(lim), "", nil
 }
 
-func limitsToResp(limits []models.Limit) []limitDTO {
+func limitsToResp(limits []quik.Limit) []limitDTO {
 	if len(limits) == 0 {
 		return []limitDTO{}
 	}
@@ -44,7 +44,7 @@ func limitsToResp(limits []models.Limit) []limitDTO {
 	return resp
 }
 
-func limitToDTO(limit models.Limit) limitDTO {
+func limitToDTO(limit quik.Limit) limitDTO {
 	var isin string
 	if limit.ISIN != nil {
 		isin = *limit.ISIN

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	pm "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
@@ -18,35 +17,35 @@ import (
 
 type svcStub struct{}
 
-func (svcStub) GetMoneyLimits(ctx context.Context, date time.Time) ([]pm.MoneyLimit, error) {
+func (svcStub) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
 	return nil, nil
 }
 
-func (svcStub) GetSecurityLimits(ctx context.Context, date time.Time) ([]pm.SecurityLimit, error) {
+func (svcStub) GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
 	return nil, nil
 }
 
-func (svcStub) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]pm.SecurityLimit, error) {
+func (svcStub) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
 	return nil, nil
 }
 
-func (svcStub) CreateMoneyLimit(ctx context.Context, ml pm.MoneyLimit) (pm.MoneyLimit, error) {
-	return pm.MoneyLimit{}, nil
+func (svcStub) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error) {
+	return quik.MoneyLimit{}, nil
 }
 
-func (svcStub) CreateSecurityLimit(ctx context.Context, sec pm.SecurityLimit) (pm.SecurityLimit, error) {
-	return pm.SecurityLimit{}, nil
+func (svcStub) CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
+	return quik.SecurityLimit{}, nil
 }
 
-func (svcStub) CreateSecurityLimitOtc(ctx context.Context, sec pm.SecurityLimit) (pm.SecurityLimit, error) {
-	return pm.SecurityLimit{}, nil
+func (svcStub) CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
+	return quik.SecurityLimit{}, nil
 }
 
-func (svcStub) GetLimits(ctx context.Context, date time.Time) ([]pm.Limit, error) {
+func (svcStub) GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error) {
 	return nil, nil
 }
 
-func (svcStub) GetPortfolio(ctx context.Context, targetCcy string) ([]pm.PortfolioEntry, error) {
+func (svcStub) GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error) {
 	return nil, nil
 }
 

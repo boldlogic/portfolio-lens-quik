@@ -6,7 +6,7 @@ import (
 
 	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
 func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
@@ -27,7 +27,7 @@ func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
 	return securityLimitsToResp(sls), "", nil
 }
 
-func securityLimitsToResp(sls []qmodels.SecurityLimit) []securityLimitDTO {
+func securityLimitsToResp(sls []quik.SecurityLimit) []securityLimitDTO {
 
 	if len(sls) == 0 {
 		return []securityLimitDTO{}
@@ -40,7 +40,7 @@ func securityLimitsToResp(sls []qmodels.SecurityLimit) []securityLimitDTO {
 	return res
 }
 
-func securityLimitToDTO(sl qmodels.SecurityLimit) securityLimitDTO {
+func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
 	var out securityLimitDTO
 	out.LoadDate = sl.LoadDate.Format(dates.ISODateFormat)
 	out.SourceDate = sl.SourceDate.Format(dates.ISODateFormat)

@@ -4,14 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1"
+	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"go.uber.org/zap"
 )
 
 type Service interface {
-	GetMoneyLimits(ctx context.Context, date time.Time) ([]models.MoneyLimit, error)
-	GetSecurityLimits(ctx context.Context, date time.Time) ([]models.SecurityLimit, error)
+	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
+	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
 	GetCurrentQuotes(ctx context.Context) ([]models.CurrentQuote, error)
 	GetCurrentQuotesForKeys(ctx context.Context, keys []string) ([]models.CurrentQuote, error)
 }

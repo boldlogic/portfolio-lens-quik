@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/boldlogic/packages/utils/dates"
-	qmodels "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 	"github.com/shopspring/decimal"
 )
@@ -36,16 +36,16 @@ func (h *Handler) CreateSecurityLimitOtc(r *http.Request) (any, string, error) {
 	return securityLimitToDTO(created), "", nil
 }
 
-func (req securityLimitOtcReqDTO) convertToSecurityLimit() (qmodels.SecurityLimit, error) {
+func (req securityLimitOtcReqDTO) convertToSecurityLimit() (quik.SecurityLimit, error) {
 	date, err := dates.ParseWithDefaultNow(req.LoadDate, dates.ISODateFormat)
 	if err != nil {
-		return qmodels.SecurityLimit{}, err
+		return quik.SecurityLimit{}, err
 	}
 	var isin *string
 	if req.ISIN != "" {
 		isin = &req.ISIN
 	}
-	return qmodels.SecurityLimit{
+	return quik.SecurityLimit{
 		LoadDate:       date,
 		ClientCode:     req.ClientCode,
 		Ticker:         req.Ticker,

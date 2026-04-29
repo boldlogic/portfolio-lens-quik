@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func securityLimitToProto(l models.SecurityLimit) *quikv1.SecurityLimit {
+func securityLimitToProto(l quik.SecurityLimit) *quikv1.SecurityLimit {
 	pb := &quikv1.SecurityLimit{
 		ClientCode:     l.ClientCode,
 		Ticker:         l.Ticker,

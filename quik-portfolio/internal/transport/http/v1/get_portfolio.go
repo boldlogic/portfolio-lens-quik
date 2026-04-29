@@ -7,7 +7,7 @@ import (
 
 	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
 func (h *Handler) GetPortfolio(r *http.Request) (any, string, error) {
@@ -29,7 +29,7 @@ func (h *Handler) GetPortfolio(r *http.Request) (any, string, error) {
 	return portfolioEntriesToDTO(entries), "", nil
 }
 
-func portfolioEntriesToDTO(entries []models.PortfolioEntry) []portfolioEntryDTO {
+func portfolioEntriesToDTO(entries []quik.PortfolioEntry) []portfolioEntryDTO {
 	result := make([]portfolioEntryDTO, 0, len(entries))
 	for _, e := range entries {
 		dto := portfolioEntryDTO{
