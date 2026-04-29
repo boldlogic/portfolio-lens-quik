@@ -9,7 +9,16 @@ import (
 )
 
 func (s *Service) InitCurrencyDictionary(ctx context.Context) error {
-	return s.getNewCurrenciesFromLib(ctx)
+	if err := s.getNewCurrenciesFromLib(ctx); err != nil {
+		return err
+	}
+
+	if err := s.currencyRepo.SetEmptyCurrencyNamesFromQuik(ctx); err != nil {
+		s.logger.Error("произошла ошибка при заполнении имен валют из QUIK", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) getNewCurrenciesFromLib(ctx context.Context) error {

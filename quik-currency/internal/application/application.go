@@ -3,13 +3,16 @@ package application
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
+	"github.com/boldlogic/packages/periodic"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/config"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/repository"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/service"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/workers"
 	"go.uber.org/zap"
 )
 
@@ -55,6 +58,15 @@ func (a *Application) Start(ctx context.Context) error {
 	if err = a.svc.InitCurrencyDictionary(ctx); err != nil {
 		return err
 	}
+
+	runner := periodic.NewRunner(
+		workers.NewMergeFxCBRRatesQuikWorker(a.svc, a.logger, 60*time.Second),
+	)
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+		runner.Run(ctx)
+	}()
 
 	return nil
 }

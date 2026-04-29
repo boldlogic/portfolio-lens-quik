@@ -51,6 +51,33 @@ VALUES (
 );`
 	countCurrencies = `
 		SELECT COUNT(1) FROM quik.currencies`
+	setEmptyNamesFromQuik = `
+WITH names AS (
+	SELECT
+		iso_char_code = CASE
+			WHEN UPPER(LTRIM(RTRIM(q.ticker))) IN ('SUR', 'RUR', 'RUB') THEN 'RUB'
+			ELSE UPPER(LTRIM(RTRIM(q.ticker)))
+		END,
+		currency_name = MAX(COALESCE(
+			NULLIF(LTRIM(RTRIM(q.full_name)), ''),
+			NULLIF(LTRIM(RTRIM(q.short_name)), '')
+		))
+	FROM quik.current_quotes q
+	WHERE q.class_code = 'CROSSRATE'
+		AND LEN(LTRIM(RTRIM(q.ticker))) <= 3
+	GROUP BY CASE
+		WHEN UPPER(LTRIM(RTRIM(q.ticker))) IN ('SUR', 'RUR', 'RUB') THEN 'RUB'
+		ELSE UPPER(LTRIM(RTRIM(q.ticker)))
+	END
+)
+UPDATE c
+SET
+	c.currency_name = n.currency_name,
+	c.updated_at = SYSDATETIMEOFFSET()
+FROM quik.currencies c
+INNER JOIN names n ON RTRIM(c.iso_char_code) = n.iso_char_code
+WHERE c.currency_name IS NULL
+	AND n.currency_name IS NOT NULL;`
 )
 
 func (r *Repository) SelectCountCurrencies(ctx context.Context) (int, error) {
@@ -69,6 +96,20 @@ func (r *Repository) SelectCountCurrencies(ctx context.Context) (int, error) {
 	}
 	return res, nil
 }
+
+func (r *Repository) SetEmptyCurrencyNamesFromQuik(ctx context.Context) error {
+	_, err := r.Db.ExecContext(ctx, setEmptyNamesFromQuik)
+	if err != nil {
+		if r.isShutdown(err) {
+			return err
+		}
+		r.Logger.Error("ошибка при обновлении currency_name в currencies", zap.Error(err))
+		return models.ErrSavingData
+	}
+
+	return nil
+}
+
 func (r *Repository) MergeCurrencies(ctx context.Context, currencies []currencies.Currency) error {
 
 	if len(currencies) == 0 {
