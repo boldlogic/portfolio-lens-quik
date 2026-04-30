@@ -1,4 +1,4 @@
-package firms
+package syncfirms
 
 import (
 	"context"
@@ -8,10 +8,14 @@ import (
 
 type Service struct {
 	logger *zap.Logger
-	repo   FirmsRepo
+	repo   firmsRepo
 }
 
-func NewService(repo FirmsRepo, logger *zap.Logger) *Service {
+type firmsRepo interface {
+	SyncFirmsFromLimits(ctx context.Context) error
+}
+
+func NewService(repo firmsRepo, logger *zap.Logger) *Service {
 	return &Service{
 		logger: logger,
 		repo:   repo,

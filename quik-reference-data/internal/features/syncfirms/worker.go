@@ -1,4 +1,4 @@
-package firms
+package syncfirms
 
 import (
 	"context"

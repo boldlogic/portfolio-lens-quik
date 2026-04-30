@@ -1,19 +1,19 @@
-package firms
+package firm
 
 import (
 	"context"
 
 	"github.com/boldlogic/packages/shutdown"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/infra"
+	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/shared/db"
 	"go.uber.org/zap"
 )
 
 type FirmsRepo struct {
-	repo *infra.Repository
+	repo *db.Repository
 }
 
-func NewFirmsRepo(r *infra.Repository) *FirmsRepo {
+func NewFirmsRepo(r *db.Repository) *FirmsRepo {
 
 	return &FirmsRepo{
 		repo: r,
