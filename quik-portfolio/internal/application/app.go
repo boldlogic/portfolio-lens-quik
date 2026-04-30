@@ -74,7 +74,6 @@ func (a *Application) Start(ctx context.Context) error {
 		workers.NewRollForwardMoneyLimitsWorker(a.svc, a.Logger, 60*time.Second),
 		workers.NewRollForwardSecurityLimitsWorker(a.svc, a.Logger, 60*time.Second),
 		workers.NewRollForwardOtcWorker(a.svc, a.Logger, 60*time.Second),
-		workers.NewActualizeFirmsWorker(a.svc, a.Logger, 60*time.Second),
 	)
 	a.wg.Add(1)
 	go func() {

@@ -43,20 +43,6 @@ const (
 		OUTPUT inserted.firm_id, inserted.code, inserted.name
 		WHERE firm_id = @p1
 `
-	syncFirmsFromLimits = `
-		INSERT INTO quik.firms (code, name)
-		SELECT DISTINCT src.code, src.name
-		FROM (
-			SELECT firm_code AS code, LTRIM(RTRIM(firm_name)) AS name
-			FROM quik.money_limits
-			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_name)) <> ''
-			UNION
-			SELECT firm_code AS code, LTRIM(RTRIM(firm_name)) AS name
-			FROM quik.security_limits
-			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_name)) <> ''
-		) src
-		WHERE NOT EXISTS (SELECT 1 FROM quik.firms f WHERE f.code = src.code);
-	`
 )
 
 func (r *Repository) SelectFirms(ctx context.Context) ([]quik.Firm, error) {
@@ -165,17 +151,4 @@ func (r *Repository) InsertFirm(ctx context.Context, code string, name string) (
 
 	r.Logger.Debug("фирма брокера успешно сохранена", zap.Uint8("firm_id", res.Id), zap.String("code", res.Code), zap.String("name", res.Name))
 	return res, nil
-}
-
-func (r *Repository) SyncFirmsFromLimits(ctx context.Context) error {
-	_, err := r.Db.ExecContext(ctx, syncFirmsFromLimits)
-	if err != nil {
-		if shutdown.IsExceeded(err) {
-			return err
-		}
-		r.Logger.Error("ошибка синхронизации фирм из лимитов", zap.Error(err))
-		return models.ErrSavingData
-	}
-	r.Logger.Debug("фирмы из лимитов синхронизированы")
-	return nil
 }

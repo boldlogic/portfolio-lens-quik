@@ -45,7 +45,3 @@ func (s *Service) UpdateFirm(ctx context.Context, id uint8, name string) (quik.F
 	}
 	return firm, nil
 }
-
-func (s *Service) SyncFirmsFromLimits(ctx context.Context) error {
-	return s.repo.SyncFirmsFromLimits(ctx)
-}

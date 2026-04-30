@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"go.uber.org/zap"
 )
 
@@ -45,7 +45,6 @@ type FirmsRepo interface {
 	SelectFirmByName(ctx context.Context, name string) (quik.Firm, error)
 	InsertFirm(ctx context.Context, code string, name string) (quik.Firm, error)
 	UpdateFirm(ctx context.Context, id uint8, name string) (quik.Firm, error)
-	SyncFirmsFromLimits(ctx context.Context) error
 }
 
 type CurrentQuotesRepo interface {
