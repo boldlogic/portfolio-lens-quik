@@ -5,18 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
-
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 	"github.com/go-chi/chi/v5"
 )
 
-type firmPatchReqDTO struct {
-	Name string `json:"firmName" validate:"required,min=1,max=128"`
-}
-
 func (h *Handler) UpdateFirm(r *http.Request) (any, string, error) {
-	ctx := r.Context()
 	id64, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 8)
 	if err != nil {
 		return nil, "некорректный id фирмы", models.ErrValidation
@@ -30,7 +24,7 @@ func (h *Handler) UpdateFirm(r *http.Request) (any, string, error) {
 		return nil, err.Error(), models.ErrValidation
 	}
 
-	firm, err := h.service.UpdateFirm(ctx, uint8(id64), req.Name)
+	firm, err := h.writeService.UpdateFirm(r.Context(), uint8(id64), req.Name)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) || errors.Is(err, models.ErrBusinessValidation) {
 			return nil, err.Error(), err

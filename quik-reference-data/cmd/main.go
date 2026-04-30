@@ -29,11 +29,6 @@ func main() {
 		logger.Fatal("не удалось запустить приложение", zap.Error(err))
 	}
 
-	err = a.InitFeatures(ctx)
-	if err != nil {
-		logger.Fatal("не удалось запустить приложение", zap.Error(err))
-	}
-
 	err = a.Wait(ctx, cancel)
 	if err != nil {
 		logger.Fatal("приложение завершилось с ошибкой", zap.Error(err))

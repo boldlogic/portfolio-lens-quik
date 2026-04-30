@@ -39,14 +39,6 @@ type PortfolioRepo interface {
 	SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
 }
 
-type FirmsRepo interface {
-	SelectFirms(ctx context.Context) ([]quik.Firm, error)
-	SelectFirmByID(ctx context.Context, id uint8) (quik.Firm, error)
-	SelectFirmByName(ctx context.Context, name string) (quik.Firm, error)
-	InsertFirm(ctx context.Context, code string, name string) (quik.Firm, error)
-	UpdateFirm(ctx context.Context, id uint8, name string) (quik.Firm, error)
-}
-
 type CurrentQuotesRepo interface {
 	SelectCurrentQuotes(ctx context.Context) ([]models.CurrentQuote, error)
 	SelectCurrentQuotesForKeys(ctx context.Context, keys []string) ([]models.CurrentQuote, error)
@@ -57,7 +49,6 @@ type Repository interface {
 	SecurityLimitsRepo
 	SecurityLimitsOtcRepo
 	PortfolioRepo
-	FirmsRepo
 	CurrentQuotesRepo
 }
 

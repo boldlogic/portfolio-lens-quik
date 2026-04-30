@@ -39,8 +39,4 @@ type Service interface {
 
 	GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error)
 	GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
-	GetFirms(ctx context.Context) ([]quik.Firm, error)
-	GetFirmByID(ctx context.Context, id uint8) (quik.Firm, error)
-	CreateFirm(ctx context.Context, code string, name string) (quik.Firm, error)
-	UpdateFirm(ctx context.Context, id uint8, name string) (quik.Firm, error)
 }

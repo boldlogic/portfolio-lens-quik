@@ -1,4 +1,4 @@
-package service
+package writefirms
 
 import (
 	"context"
@@ -8,17 +8,6 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
-
-func (s *Service) CreateFirm(ctx context.Context, code string, name string) (quik.Firm, error) {
-	firm, err := s.repo.InsertFirm(ctx, code, name)
-	if err != nil {
-		if errors.Is(err, models.ErrConflict) {
-			return quik.Firm{}, fmt.Errorf("%w: фирма c firmCode %s уже существует", models.ErrConflict, code)
-		}
-		return quik.Firm{}, err
-	}
-	return firm, nil
-}
 
 func (s *Service) UpdateFirm(ctx context.Context, id uint8, name string) (quik.Firm, error) {
 	firm, err := s.repo.UpdateFirm(ctx, id, name)

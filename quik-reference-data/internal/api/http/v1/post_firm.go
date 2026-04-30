@@ -8,19 +8,7 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 )
 
-type firmCreateReqDTO struct {
-	Code string `json:"firmCode" validate:"required,min=1,max=12"`
-	Name string `json:"firmName" validate:"required,min=1,max=128"`
-}
-
-type firmRespDTO struct {
-	Id   uint8  `json:"id"`
-	Code string `json:"firmCode"`
-	Name string `json:"firmName"`
-}
-
 func (h *Handler) CreateFirm(r *http.Request) (any, string, error) {
-	ctx := r.Context()
 	req, err := httputils.DecodeAndValidate[firmCreateReqDTO](r)
 	if err != nil {
 		if errors.Is(err, httputils.ErrUnsupportedMediaType) || errors.Is(err, httputils.ErrRequestEntityTooLarge) {
@@ -29,7 +17,7 @@ func (h *Handler) CreateFirm(r *http.Request) (any, string, error) {
 		return nil, err.Error(), models.ErrValidation
 	}
 
-	firm, err := h.service.CreateFirm(ctx, req.Code, req.Name)
+	firm, err := h.writeService.CreateFirm(r.Context(), req.Code, req.Name)
 	if err != nil {
 		if errors.Is(err, models.ErrConflict) {
 			return nil, err.Error(), err

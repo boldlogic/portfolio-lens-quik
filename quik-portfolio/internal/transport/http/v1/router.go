@@ -30,12 +30,6 @@ func NewRouter(handler *Handler, logger *zap.Logger) *Router {
 			r.Post("/securities/otc", handler.Adapt(handler.CreateSecurityLimitOtc))
 		})
 		r.Get("/portfolio", handler.Adapt(handler.GetPortfolio))
-		r.Route("/firms", func(r chi.Router) {
-			r.Get("/", handler.Adapt(handler.GetFirms))
-			r.Post("/", handler.Adapt(handler.CreateFirm))
-			r.Get("/{id}", handler.Adapt(handler.GetFirm))
-			r.Patch("/{id}", handler.Adapt(handler.UpdateFirm))
-		})
 	})
 	return &Router{
 		mux:    r,
