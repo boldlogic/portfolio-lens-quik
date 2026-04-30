@@ -51,7 +51,7 @@ func (req securityLimitReqDTO) convertToSecurityLimit() (quik.SecurityLimit, err
 		ClientCode:     req.ClientCode,
 		Ticker:         req.Ticker,
 		TradeAccount:   req.TradeAccount,
-		SettleCode:     models.SettleCode(req.SettleCode),
+		SettleCode:     quik.SettleCode(req.SettleCode),
 		FirmName:       req.FirmName,
 		Balance:        decimal.NewFromFloat(req.Balance),
 		AcquisitionCcy: req.AcquisitionCcy,

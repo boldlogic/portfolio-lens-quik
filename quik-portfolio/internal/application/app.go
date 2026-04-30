@@ -12,8 +12,6 @@ import (
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/periodic"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/registryinstance"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpclient"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/config"
@@ -112,26 +110,6 @@ func (a *Application) Start(ctx context.Context) error {
 			a.errChan <- fmt.Errorf("gRPC server остановлен с ошибкой: %w", err)
 		}
 	}()
-
-	if a.cfg.ServiceRegistry.ManagerBaseURL != "" {
-		regHTTP, err := httpclient.OptionalMtlsHTTPClient(a.cfg.ServiceRegistry.Mtls)
-		if err != nil {
-			return err
-		}
-		a.wg.Add(1)
-		go func() {
-			defer a.wg.Done()
-			_ = registryinstance.Run(ctx, a.Logger, registryinstance.Config{
-				ManagerBaseURL: a.cfg.ServiceRegistry.ManagerBaseURL,
-				Secret:         a.cfg.ServiceRegistry.APISecret,
-				ServiceName:    "portfolio-lens-quik",
-				InstanceID:     a.cfg.ServiceRegistry.InstanceID,
-				GrpcPublicAddr: a.cfg.ServiceRegistry.GrpcPublicAddr,
-				Interval:       time.Duration(a.cfg.ServiceRegistry.HeartbeatIntervalSec) * time.Second,
-				HTTPClient:     regHTTP,
-			})
-		}()
-	}
 
 	return nil
 }

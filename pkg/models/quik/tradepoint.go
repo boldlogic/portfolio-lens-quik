@@ -1,4 +1,4 @@
-package models
+package quik
 
 type TradePoint struct {
 	Id   uint8

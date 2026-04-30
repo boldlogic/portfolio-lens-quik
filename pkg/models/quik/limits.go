@@ -3,7 +3,6 @@ package quik
 import (
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/shopspring/decimal"
 )
 
@@ -21,7 +20,7 @@ type MoneyLimit struct {
 	ClientCode   string
 	Currency     string
 	PositionCode string
-	SettleCode   models.SettleCode
+	SettleCode   SettleCode
 	FirmCode     string
 	FirmName     string
 	Balance      decimal.Decimal
@@ -33,7 +32,7 @@ type SecurityLimit struct {
 	ClientCode     string
 	Ticker         string
 	TradeAccount   string
-	SettleCode     models.SettleCode
+	SettleCode     SettleCode
 	FirmCode       string
 	FirmName       string
 	Balance        decimal.Decimal
@@ -49,7 +48,7 @@ type Limit struct {
 	ClientCode     string
 	InstrumentCode string
 	ISIN           *string
-	SettleCode     models.SettleCode
+	SettleCode     SettleCode
 	FirmCode       string
 	FirmName       string
 	Balance        decimal.Decimal

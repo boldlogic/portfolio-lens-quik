@@ -42,7 +42,7 @@ func (s *Service) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (qui
 	}
 
 	if ml.SettleCode == "" {
-		ml.SettleCode = md.SettleCodeTx
+		ml.SettleCode = quik.SettleCodeTx
 	}
 
 	err = ml.SettleCode.Validate()

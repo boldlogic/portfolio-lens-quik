@@ -49,7 +49,7 @@ func (s *Service) CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimi
 	}
 
 	if sec.SettleCode == "" {
-		sec.SettleCode = models.SettleCodeTx
+		sec.SettleCode = quik.SettleCodeTx
 	}
 
 	err = sec.SettleCode.Validate()
@@ -88,7 +88,7 @@ func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityL
 
 	sec.TradeAccount = "OTC"
 	if sec.SettleCode == "" {
-		sec.SettleCode = models.SettleCodeTx
+		sec.SettleCode = quik.SettleCodeTx
 	}
 
 	err = sec.SettleCode.Validate()

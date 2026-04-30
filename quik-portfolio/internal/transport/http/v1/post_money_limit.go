@@ -47,7 +47,7 @@ func (req moneyLimitReqDTO) convertToMoneyLimit() (quik.MoneyLimit, error) {
 		ClientCode:   req.ClientCode,
 		Currency:     req.Currency,
 		PositionCode: req.PositionCode,
-		SettleCode:   models.SettleCode(req.SettleCode),
+		SettleCode:   quik.SettleCode(req.SettleCode),
 		FirmName:     req.FirmName,
 		Balance:      decimal.NewFromFloat(req.Balance),
 	}, nil

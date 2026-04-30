@@ -1,7 +1,5 @@
 package quik
 
-import "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-
 type InstrumentType struct {
 	Id    uint8
 	Title string
@@ -25,5 +23,5 @@ type Board struct {
 	Name         string
 	IsTraded     bool
 	TradePointId *uint8
-	TradePoint   *models.TradePoint
+	TradePoint   *TradePoint
 }

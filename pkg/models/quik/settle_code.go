@@ -1,4 +1,4 @@
-package models
+package quik
 
 import "errors"
 
