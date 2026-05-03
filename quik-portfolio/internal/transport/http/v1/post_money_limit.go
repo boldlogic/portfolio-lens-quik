@@ -4,16 +4,16 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/boldlogic/packages/transport/httputils"
 	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 	"github.com/shopspring/decimal"
 )
 
 func (h *Handler) CreateMoneyLimit(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	req, err := httputils.DecodeAndValidate[moneyLimitReqDTO](r)
+	req, err := httputils.DecodeRequest[moneyLimitReqDTO](r)
 	if err != nil {
 		if errors.Is(err, httputils.ErrUnsupportedMediaType) || errors.Is(err, httputils.ErrRequestEntityTooLarge) {
 			return nil, err.Error(), err

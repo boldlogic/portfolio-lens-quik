@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/boldlogic/packages/transport/httputils"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/httputils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -16,7 +16,7 @@ func (h *Handler) UpdateFirm(r *http.Request) (any, string, error) {
 		return nil, "некорректный id фирмы", models.ErrValidation
 	}
 
-	req, err := httputils.DecodeAndValidate[firmPatchReqDTO](r)
+	req, err := httputils.DecodeRequest[firmPatchReqDTO](r)
 	if err != nil {
 		if errors.Is(err, httputils.ErrUnsupportedMediaType) || errors.Is(err, httputils.ErrRequestEntityTooLarge) {
 			return nil, err.Error(), err
