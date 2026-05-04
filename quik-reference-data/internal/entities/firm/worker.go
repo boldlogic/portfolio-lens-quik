@@ -10,7 +10,7 @@ import (
 
 const (
 	syncFirmsFromLimits = `
-		INSERT INTO quik.firms (code, name)
+		INSERT INTO dbo.firms (code, name)
 		SELECT DISTINCT src.code, src.name
 		FROM (
 			SELECT firm_code AS code, LTRIM(RTRIM(firm_name)) AS name
@@ -21,7 +21,7 @@ const (
 			FROM quik.security_limits
 			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_name)) <> ''
 		) src
-		WHERE NOT EXISTS (SELECT 1 FROM quik.firms f WHERE f.code = src.code);
+		WHERE NOT EXISTS (SELECT 1 FROM dbo.firms f WHERE f.code = src.code);
 	`
 )
 

@@ -14,19 +14,19 @@ import (
 const (
 	selectFirms = `
 	SELECT firm_id, code, name
-	FROM quik.firms
+	FROM dbo.firms
 	ORDER BY firm_id
 `
 	selectFirmByName = `
 	SELECT  firm_id
 		,code
 		,name
-	FROM quik.firms
+	FROM dbo.firms
 	where name=@p1
 `
 	selectFirmByID = `
 	SELECT firm_id, code, name
-	FROM quik.firms
+	FROM dbo.firms
 	WHERE firm_id = @p1
 `
 )

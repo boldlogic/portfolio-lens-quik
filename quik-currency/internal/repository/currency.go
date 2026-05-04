@@ -19,7 +19,7 @@ WITH src AS (
 		minor_units = @p5
 
 )
-MERGE INTO quik.currencies AS tgt
+MERGE INTO dbo.currencies AS tgt
 USING src ON tgt.iso_code = src.iso_code
 WHEN MATCHED
 	AND (
@@ -50,34 +50,36 @@ VALUES (
 	SYSDATETIMEOFFSET()
 );`
 	countCurrencies = `
-		SELECT COUNT(1) FROM quik.currencies`
+		SELECT COUNT(1) FROM dbo.currencies`
 	setEmptyNamesFromQuik = `
-WITH names AS (
-	SELECT
-		iso_char_code = CASE
-			WHEN UPPER(LTRIM(RTRIM(q.ticker))) IN ('SUR', 'RUR', 'RUB') THEN 'RUB'
-			ELSE UPPER(LTRIM(RTRIM(q.ticker)))
-		END,
-		currency_name = MAX(COALESCE(
-			NULLIF(LTRIM(RTRIM(q.full_name)), ''),
-			NULLIF(LTRIM(RTRIM(q.short_name)), '')
-		))
-	FROM quik.current_quotes q
-	WHERE q.class_code = 'CROSSRATE'
-		AND LEN(LTRIM(RTRIM(q.ticker))) <= 3
-	GROUP BY CASE
-		WHEN UPPER(LTRIM(RTRIM(q.ticker))) IN ('SUR', 'RUR', 'RUB') THEN 'RUB'
-		ELSE UPPER(LTRIM(RTRIM(q.ticker)))
-	END
-)
-UPDATE c
-SET
-	c.currency_name = n.currency_name,
-	c.updated_at = SYSDATETIMEOFFSET()
-FROM quik.currencies c
-INNER JOIN names n ON RTRIM(c.iso_char_code) = n.iso_char_code
-WHERE c.currency_name IS NULL
-	AND n.currency_name IS NOT NULL;`
+		WITH NAMES AS (
+			SELECT
+				iso_char_code = RTRIM(COALESCE(c.iso_char_code, norm.ticker)),
+				currency_name = MAX(RTRIM(COALESCE(q.full_name, q.short_name))),
+				ext_system_id=max(es.ext_system_id)
+			FROM (
+				SELECT DISTINCT
+					ticker = CASE WHEN q.ticker IN ('SUR', 'RUR', 'RUB') THEN 'RUB' ELSE q.ticker END,
+					full_name = q.full_name,
+					short_name = q.short_name
+				FROM quik.current_quotes q
+				WHERE q.class_code = 'CROSSRATE'
+					AND LEN(q.ticker) = 3
+			) q
+			CROSS APPLY (SELECT ticker = q.ticker) norm
+			LEFT JOIN dbo.external_systems es on es.ext_system='QUIK'
+			LEFT JOIN dbo.external_codes ec ON ec.ext_code = norm.ticker AND ec.ext_system_id = es.ext_system_id AND ec.ext_code_type_id = 1 
+			LEFT JOIN dbo.currencies c ON c.iso_code = ec.internal_id
+			GROUP BY COALESCE(c.iso_char_code, norm.ticker)
+		)
+		UPDATE c
+		SET
+			c.currency_name = n.currency_name,
+			updated_at = GETDATE(),
+			ext_system_id = n.ext_system_id
+		FROM dbo.currencies c
+		INNER JOIN NAMES n ON c.iso_char_code = n.iso_char_code
+		WHERE c.currency_name IS NULL;`
 )
 
 func (r *Repository) SelectCountCurrencies(ctx context.Context) (int, error) {

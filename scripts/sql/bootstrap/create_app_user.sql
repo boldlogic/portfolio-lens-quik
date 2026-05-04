@@ -6,12 +6,6 @@ DECLARE @app_user SYSNAME = N'quik_portfolio_app';
 DECLARE @app_role SYSNAME = N'quik_portfolio_rw';
 DECLARE @app_password NVARCHAR(256) = N'CHANGE_ME';
 
-IF @app_password = N'CHANGE_ME'
-BEGIN
-    RAISERROR(N'Укажите пароль в переменной @app_password', 16, 1);
-    RETURN;
-END;
-
 IF DB_ID(@app_db) IS NULL
 BEGIN
     RAISERROR(N'База данных не существует', 16, 1);
@@ -24,6 +18,12 @@ IF NOT EXISTS (
     WHERE name = @app_login
 )
 BEGIN
+    IF @app_password = N'CHANGE_ME'
+    BEGIN
+        RAISERROR(N'Укажите пароль в переменной @app_password', 16, 1);
+        RETURN;
+    END;
+
     DECLARE @create_login_sql NVARCHAR(MAX) =
         N'CREATE LOGIN ' + QUOTENAME(@app_login) + N' WITH PASSWORD = ' + QUOTENAME(@app_password, '''') + N';';
     EXEC (@create_login_sql);
@@ -77,6 +77,9 @@ DECLARE @grant_sql NVARCHAR(MAX) =
 N'USE ' + QUOTENAME(@app_db) + N';
 GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::[quik] TO ' + QUOTENAME(@app_user) + N';
 DENY ALTER ON SCHEMA::[quik] TO ' + QUOTENAME(@app_user) + N';
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::[dbo] TO ' + QUOTENAME(@app_user) + N';
+GRANT EXECUTE ON SCHEMA::[dbo] TO ' + QUOTENAME(@app_user) + N';
+DENY ALTER ON SCHEMA::[dbo] TO ' + QUOTENAME(@app_user) + N';
 DENY CREATE TABLE TO ' + QUOTENAME(@app_user) + N';
 DENY CREATE VIEW TO ' + QUOTENAME(@app_user) + N';
 DENY CREATE PROCEDURE TO ' + QUOTENAME(@app_user) + N';
