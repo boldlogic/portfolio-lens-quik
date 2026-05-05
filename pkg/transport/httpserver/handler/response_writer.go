@@ -47,7 +47,7 @@ func UnprocessableEntity(detail string) HTTPErr {
 		Detail: detail,
 	}
 }
-func Internal(detail string) HTTPErr {
+func Internal() HTTPErr {
 	return HTTPErr{
 		Title:  "SERVER_ERROR",
 		Status: http.StatusInternalServerError,

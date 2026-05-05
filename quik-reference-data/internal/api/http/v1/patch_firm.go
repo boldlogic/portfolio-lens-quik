@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,9 +12,10 @@ import (
 )
 
 func (h *Handler) UpdateFirm(r *http.Request) (any, string, error) {
-	id64, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 8)
+	param := chi.URLParam(r, "id")
+	id64, err := strconv.ParseUint(param, 10, 8)
 	if err != nil {
-		return nil, "некорректный id фирмы", models.ErrValidation
+		return nil, fmt.Sprintf("некорректный id фирмы %s", param), models.ErrValidation
 	}
 
 	req, err := httputils.DecodeRequest[firmPatchReqDTO](r)
@@ -26,10 +28,7 @@ func (h *Handler) UpdateFirm(r *http.Request) (any, string, error) {
 
 	firm, err := h.writeService.UpdateFirm(r.Context(), uint8(id64), req.Name)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) || errors.Is(err, models.ErrBusinessValidation) {
-			return nil, err.Error(), err
-		}
-		return nil, "", err
+		return nil, err.Error(), err
 	}
 	return firmToResp(firm), "", nil
 }

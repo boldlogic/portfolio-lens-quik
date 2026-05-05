@@ -31,7 +31,7 @@ const (
 
 func (r *FirmsRepo) InsertFirm(ctx context.Context, code string, name string) (quik.Firm, error) {
 	var res quik.Firm
-	r.repo.Logger.Debug("сохранение фирмы брокера", zap.String("code", code), zap.String("name", name))
+	//r.repo.Logger.Debug("сохранение фирмы брокера", zap.String("code", code), zap.String("name", name))
 
 	err := r.repo.Db.QueryRowContext(ctx, insertFirms, code, name).Scan(&res.Id, &res.Code, &res.Name)
 	if err != nil {

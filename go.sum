@@ -14,8 +14,6 @@ github.com/JohannesJHN/iso4217 v0.0.0-20250910211824-d9ba0fe363a8 h1:d17pPc9OEen
 github.com/JohannesJHN/iso4217 v0.0.0-20250910211824-d9ba0fe363a8/go.mod h1:EigOUF2OBoQ/J/WXl44atfjF+d9CuI9CuOAjpllOJE0=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/boldlogic/packages v0.1.12 h1:fLG+k1BnculXoAUCgymcZSGv1HOTiKvkBQTfJwHg6Ek=
-github.com/boldlogic/packages v0.1.12/go.mod h1:3x0kr2XY6wlq46OFGdDXSI7+OOK8rjdJLlmj1VeTG2o=
 github.com/boldlogic/packages v0.1.13 h1:Nd7fQhZGR3s3VBtwDyhCvPIWkxhebWqyJ2HMqSHgvOw=
 github.com/boldlogic/packages v0.1.13/go.mod h1:3x0kr2XY6wlq46OFGdDXSI7+OOK8rjdJLlmj1VeTG2o=
 github.com/boldlogic/portfolio-lens-currency v0.1.1 h1:bj59bEdTE+QNeInqt0lI4+k/JY3XpY3GPZ6+UnI+WpE=
