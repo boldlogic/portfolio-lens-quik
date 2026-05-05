@@ -9,7 +9,7 @@ import (
 
 func (h *Handler) GetSecurityLimitsOtc(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	date, err := h.readGetLimitsRequest(r)
+	date, err := h.extractDateQueryParam(r)
 	if err != nil {
 		return nil, err.Error(), md.ErrValidation
 	}

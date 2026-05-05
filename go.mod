@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	github.com/JohannesJHN/iso4217 v0.0.0-20250910211824-d9ba0fe363a8
-	github.com/boldlogic/packages v0.1.13
+	github.com/boldlogic/packages v0.1.14
 	github.com/boldlogic/portfolio-lens-currency v0.1.1
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/microsoft/go-mssqldb v1.9.8

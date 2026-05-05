@@ -10,14 +10,14 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
-func (h *Handler) readGetLimitsRequest(r *http.Request) (time.Time, error) {
+func (h *Handler) extractDateQueryParam(r *http.Request) (time.Time, error) {
 	dateReq := r.URL.Query().Get("date")
 	return dates.ParseWithDefaultNow(dateReq, dates.ISODateFormat)
 }
 
 func (h *Handler) GetLimits(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	date, err := h.readGetLimitsRequest(r)
+	date, err := h.extractDateQueryParam(r)
 	if err != nil {
 		return nil, err.Error(), md.ErrValidation
 	}

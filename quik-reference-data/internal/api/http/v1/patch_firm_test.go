@@ -13,8 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const exampleURL = "/api/v1/quik/firms/"
-
 type writeSvc struct {
 	err error
 }
