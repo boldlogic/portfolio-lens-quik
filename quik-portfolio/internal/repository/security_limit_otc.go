@@ -22,7 +22,7 @@ const (
 				,ticker = @p3
 				,trade_account = @p4
 				,settle_code = @p5
-				,firm_name = @p6
+				,firm_code = @p6
 				,balance = @p7
 				,acquisition_ccy = @p8
 				,isin = @p9
@@ -35,17 +35,13 @@ const (
 			,src.trade_account
 			,src.settle_code
 			,f.code
-			,src.firm_name
+			,f.name
 			,src.balance
 			,src.acquisition_ccy
 			,src.isin
 			,src.load_date
 		FROM src
-		CROSS APPLY (
-			SELECT TOP 1 code
-			FROM quik.firms
-			WHERE name = src.firm_name
-		) f
+		join dbo.firms f on code = src.firm_code	
 	`
 	getSecurityLimitsOtc = `
 			WITH cte AS (
@@ -154,15 +150,34 @@ func (r *Repository) InsertSecurityLimitsOtcCopy(ctx context.Context, dateFrom t
 func (r *Repository) InsertSecurityLimitOtc(ctx context.Context, s quik.SecurityLimit) (quik.SecurityLimit, error) {
 	var out quik.SecurityLimit
 	row := r.Db.QueryRowContext(ctx, insertSecurityLimitOtc,
-		s.LoadDate, s.ClientCode, s.Ticker, s.TradeAccount, string(s.SettleCode),
-		s.FirmName, s.Balance, s.AcquisitionCcy, s.ISIN)
-	err := row.Scan(&out.LoadDate, &out.SourceDate, &out.ClientCode, &out.Ticker, &out.TradeAccount, &out.SettleCode, &out.FirmCode, &out.FirmName, &out.Balance, &out.AcquisitionCcy, &out.ISIN)
+		s.LoadDate, 
+		s.ClientCode, 
+		s.Ticker, 
+		s.TradeAccount, 
+		string(s.SettleCode),
+		s.FirmCode, 
+		s.Balance, 
+		s.AcquisitionCcy, 
+		s.ISIN)
+	err := row.Scan(
+		&out.LoadDate, 
+		&out.SourceDate, 
+		&out.ClientCode, 
+		&out.Ticker, 
+		&out.TradeAccount, 
+		&out.SettleCode, 
+		&out.FirmCode,
+		&out.FirmName, 
+		&out.Balance, 
+		&out.AcquisitionCcy, 
+		&out.ISIN)
 	if err != nil {
 		if shutdown.IsExceeded(err) {
 			return quik.SecurityLimit{}, err
 		}
 		if errors.Is(err, sql.ErrNoRows) {
-			r.Logger.Warn("фирма не найдена", zap.String("firm_name", s.FirmName))
+			r.Logger.Warn("при создании лимитов не найдена фирма", 
+			zap.String("firm_code", s.FirmCode))
 			return quik.SecurityLimit{}, models.ErrNotFound
 		}
 		var msErr mssql.Error

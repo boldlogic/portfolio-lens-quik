@@ -26,6 +26,7 @@ func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.Mo
 	return s.repo.SelectMoneyLimits(ctx, date)
 }
 
+// CreateMoneyLimit
 func (s *Service) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error) {
 
 	maxDate, err := s.repo.SelectMoneyLimitsMaxDate(ctx)
@@ -53,17 +54,17 @@ func (s *Service) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (qui
 	created, err := s.repo.InsertMoneyLimit(ctx, ml)
 	if err != nil {
 		if errors.Is(err, md.ErrNotFound) {
-			return quik.MoneyLimit{}, fmt.Errorf("%w: некорректное имя фирмы", md.ErrBusinessValidation)
+			return quik.MoneyLimit{}, fmt.Errorf("%w: некорректный код фирмы %s", md.ErrBusinessValidation, ml.FirmCode)
 		}
 		if errors.Is(err, md.ErrConflict) {
-			return quik.MoneyLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ccy=%s position_code=%s settle_code=%s firm_name=%s",
+			return quik.MoneyLimit{}, fmt.Errorf("%w: loadDate=%s clientCode=%s currency=%s positionCode=%s settleCode=%s firmCode=%s",
 				md.ErrConflict,
 				ml.LoadDate.Format(dates.ISODateFormat),
 				ml.ClientCode,
 				ml.Currency,
 				ml.PositionCode,
 				ml.SettleCode,
-				ml.FirmName)
+				ml.FirmCode)
 		}
 
 		return quik.MoneyLimit{}, err

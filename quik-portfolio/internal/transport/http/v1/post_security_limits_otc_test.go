@@ -1,0 +1,78 @@
+package v1
+
+import (
+	"context"
+	"net/http"
+	"testing"
+	"time"
+
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCreateSecurityLimitOtc(t *testing.T) {
+	t.Parallel()
+
+	sourceDate := time.Date(2025, 1, 2, 0, 0, 0, 0, time.Local)
+
+	tests := []struct {
+		name       string
+		req        *http.Request
+		svc        svc
+		wantBody   any
+		wantDetail string
+		wantErr    error
+	}{
+		{
+			name: "успешный_запрос_без_trade_account",
+			req: reqJSON(`{
+				"loadDate":"2025-01-01",
+				"clientCode":"AB12CD",
+				"ticker":"OTC_BOND",
+				"settleCode":"T0",
+				"firmCode": "NC0058900000",
+				"balance":2,
+				"acquisitionCcy":"USD"
+			}`),
+			svc: svc{
+				createSecurityLimitOtc: func(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
+					sec.SourceDate = sourceDate
+					sec.FirmName = "Фирма брокера"
+					return sec, nil
+				},
+			},
+			wantBody: securityLimitDTO{
+				LoadDate:       "2025-01-01",
+				SourceDate:     "2025-01-02",
+				ClientCode:     "AB12CD",
+				Ticker:         "OTC_BOND",
+				SettleCode:     "T0",
+				FirmCode:       "NC0058900000",
+				FirmName:       "Фирма брокера",
+				Balance:        decimal.NewFromFloat(2),
+				AcquisitionCcy: "USD",
+			},
+		},
+		{
+			name:       "битый_json",
+			req:        reqJSON(`{"loadDate":"2025-01-01"`),
+			wantBody:   nil,
+			wantDetail: "unexpected EOF",
+			wantErr:    models.ErrValidation,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			h := newTestHandler(tt.svc)
+			body, detail, err := h.CreateSecurityLimitOtc(tt.req)
+			assert.Equal(t, tt.wantBody, body)
+			assert.Contains(t, detail, tt.wantDetail)
+			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}

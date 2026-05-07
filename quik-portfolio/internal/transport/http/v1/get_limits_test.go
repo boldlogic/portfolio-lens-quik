@@ -113,7 +113,7 @@ func TestGetLimits(t *testing.T) {
 					SettleCode:     "T2",
 					FirmCode:       "COFE",
 					FirmName:       "Фирма брокера",
-					Balance:        10.5,
+					Balance:        decimal.RequireFromString("10.5"),
 					AcquisitionCcy: "RUB",
 				},
 			},

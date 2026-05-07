@@ -60,17 +60,17 @@ func (s *Service) CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimi
 	created, err := s.repo.InsertSecurityLimit(ctx, sec)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректное имя фирмы", models.ErrBusinessValidation)
+			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректный код фирмы %s", models.ErrBusinessValidation, sec.FirmCode)
 		}
 		if errors.Is(err, models.ErrConflict) {
-			return quik.SecurityLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ticker=%s trade_account=%s settle_code=%s firm_name=%s",
+			return quik.SecurityLimit{}, fmt.Errorf("%w: loadDate=%s clientCode=%s ticker=%s tradeAccount=%s settleCode=%s firmCode=%s",
 				models.ErrConflict,
 				sec.LoadDate.Format(dates.ISODateFormat),
 				sec.ClientCode,
 				sec.Ticker,
 				sec.TradeAccount,
 				sec.SettleCode,
-				sec.FirmName)
+				sec.FirmCode)
 		}
 		return quik.SecurityLimit{}, err
 	}
@@ -99,17 +99,17 @@ func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityL
 	created, err := s.repo.InsertSecurityLimitOtc(ctx, sec)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректное имя фирмы", models.ErrBusinessValidation)
+			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректный код фирмы %s", models.ErrBusinessValidation, sec.FirmCode)
 		}
 		if errors.Is(err, models.ErrConflict) {
-			return quik.SecurityLimit{}, fmt.Errorf("%w: load_date=%s client_code=%s ticker=%s trade_account=%s settle_code=%s firm_name=%s",
+			return quik.SecurityLimit{}, fmt.Errorf("%w: loadDate=%s clientCode=%s ticker=%s tradeAccount=%s settleCode=%s firmCode=%s",
 				models.ErrConflict,
 				sec.LoadDate.Format(dates.ISODateFormat),
 				sec.ClientCode,
 				sec.Ticker,
 				sec.TradeAccount,
 				sec.SettleCode,
-				sec.FirmName)
+				sec.FirmCode)
 		}
 		return quik.SecurityLimit{}, err
 	}

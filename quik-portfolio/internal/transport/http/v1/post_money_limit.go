@@ -41,25 +41,24 @@ func (req moneyLimitReqDTO) convertToMoneyLimit() (quik.MoneyLimit, error) {
 	if err != nil {
 		return quik.MoneyLimit{}, err
 	}
-
 	return quik.MoneyLimit{
 		LoadDate:     date,
 		ClientCode:   req.ClientCode,
 		Currency:     req.Currency,
 		PositionCode: req.PositionCode,
 		SettleCode:   quik.SettleCode(req.SettleCode),
-		FirmName:     req.FirmName,
-		Balance:      decimal.NewFromFloat(req.Balance),
+		FirmCode:     req.FirmCode,
+		Balance:      req.Balance,
 	}, nil
 
 }
 
 type moneyLimitReqDTO struct {
-	LoadDate     string  `json:"loadDate" validate:"omitempty"`
-	ClientCode   string  `json:"clientCode" validate:"required,min=1,max=12"`
-	Currency     string  `json:"currency" validate:"required,min=1,max=3"`
-	PositionCode string  `json:"positionCode" validate:"omitempty,min=1,max=4"`
-	SettleCode   string  `json:"settleCode" validate:"omitempty,min=0,max=5"`
-	FirmName     string  `json:"firmName" validate:"required,min=1,max=128"`
-	Balance      float64 `json:"balance" validate:"min=-999999999999,max=999999999999"`
+	LoadDate     string          `json:"loadDate" validate:"omitempty"`
+	ClientCode   string          `json:"clientCode" validate:"required,min=1,max=12"`
+	Currency     string          `json:"currency" validate:"required,min=1,max=3"`
+	PositionCode string          `json:"positionCode" validate:"omitempty,min=1,max=4"`
+	SettleCode   string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
+	FirmCode     string          `json:"firmCode" validate:"required,min=1,max=12"`
+	Balance      decimal.Decimal `json:"balance"` // validate:"min=-999999999999,max=999999999999"`
 }

@@ -114,7 +114,7 @@ const (
 				,ccy = @p3
 				,position_code = @p4
 				,settle_code = @p5
-				,firm_name = @p6
+				,firm_code = @p6
 				,balance = @p7
 		)
 		INSERT INTO quik.money_limits (load_date, client_code, ccy, position_code, settle_code, firm_code, firm_name, balance, source_date)
@@ -125,15 +125,11 @@ const (
 			,src.position_code
 			,src.settle_code
 			,f.code
-			,src.firm_name
+			,f.name
 			,src.balance
 			,src.load_date
 		FROM src
-		CROSS APPLY (
-			SELECT TOP 1 code
-			FROM quik.firms
-			WHERE name = src.firm_name
-		) f
+		join dbo.firms f on code = src.firm_code	
 		`
 )
 
@@ -145,7 +141,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 		s.Currency,
 		s.PositionCode,
 		s.SettleCode,
-		s.FirmName,
+		s.FirmCode,
 		s.Balance)
 	err := row.Scan(
 		&out.LoadDate,
@@ -164,7 +160,8 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 		}
 
 		if errors.Is(err, sql.ErrNoRows) {
-			r.Logger.Warn("фирма не найдена", zap.String("firm_name", s.FirmName))
+			r.Logger.Warn("при создании лимитов не найдена фирма", 
+			zap.String("firm_code", s.FirmCode))
 			return quik.MoneyLimit{}, models.ErrNotFound
 		}
 
