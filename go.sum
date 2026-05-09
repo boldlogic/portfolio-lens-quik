@@ -18,6 +18,8 @@ github.com/boldlogic/packages v0.1.13 h1:Nd7fQhZGR3s3VBtwDyhCvPIWkxhebWqyJ2HMqSH
 github.com/boldlogic/packages v0.1.13/go.mod h1:3x0kr2XY6wlq46OFGdDXSI7+OOK8rjdJLlmj1VeTG2o=
 github.com/boldlogic/packages v0.1.14 h1:NRgF2vmrE4GP3vV1BJb0kPPecdZjXh9UM5DryB2uIFI=
 github.com/boldlogic/packages v0.1.14/go.mod h1:3x0kr2XY6wlq46OFGdDXSI7+OOK8rjdJLlmj1VeTG2o=
+github.com/boldlogic/packages v0.1.15 h1:MioFyY2syBzwvMFdL20jh2ZKy1XLUDr6NeiM9hkeqTc=
+github.com/boldlogic/packages v0.1.15/go.mod h1:3x0kr2XY6wlq46OFGdDXSI7+OOK8rjdJLlmj1VeTG2o=
 github.com/boldlogic/portfolio-lens-currency v0.1.1 h1:bj59bEdTE+QNeInqt0lI4+k/JY3XpY3GPZ6+UnI+WpE=
 github.com/boldlogic/portfolio-lens-currency v0.1.1/go.mod h1:xP5rnuDjhkobHVlcQsCfzsfm+Fv14bAhxYxCI1d6h9g=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

@@ -60,5 +60,5 @@ type moneyLimitReqDTO struct {
 	PositionCode string          `json:"positionCode" validate:"omitempty,min=1,max=4"`
 	SettleCode   string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
 	FirmCode     string          `json:"firmCode" validate:"required,min=1,max=12"`
-	Balance      decimal.Decimal `json:"balance"` // validate:"min=-999999999999,max=999999999999"`
+	Balance      decimal.Decimal `json:"balance" validate:"required,decimal"`
 }
