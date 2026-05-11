@@ -21,6 +21,7 @@ func NewRouter(logger *zap.Logger, reg metrics.Registry) *Router {
 
 	m := httpmetrics.NewMetrics(reg)
 	mw := middleware.NewMiddleware(m, logger)
+	r.Use(mw.Recover)
 	r.Use(mw.Metrics)
 	r.Use(mw.Wrap)
 
