@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/boldlogic/packages/transport/httpserver/response"
 	"github.com/boldlogic/packages/transport/httputils"
 	"github.com/boldlogic/packages/utils/converters"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
@@ -26,24 +27,24 @@ func (h *Handler) Adapt(fn HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, detail, err := fn(r)
 		if err != nil {
-			var resp HTTPErr
+			var status int
 			switch {
 			case errors.Is(err, httputils.ErrUnsupportedMediaType):
-				resp = UnsupportedMediaType(detail)
+				status = http.StatusUnsupportedMediaType
 			case errors.Is(err, httputils.ErrRequestEntityTooLarge):
-				resp = RequestEntityTooLarge(detail)
+				status = http.StatusRequestEntityTooLarge
 			case errors.Is(err, models.ErrValidation) || errors.Is(err, httputils.ErrReadingBody) || errors.Is(err, converters.ErrWrongJSON):
-				resp = BadRequest(detail)
+				status = http.StatusBadRequest
 			case errors.Is(err, models.ErrBusinessValidation):
-				resp = UnprocessableEntity(detail)
+				status = http.StatusUnprocessableEntity
 			case errors.Is(err, models.ErrNotFound):
-				resp = NotFound(detail)
+				status = http.StatusNotFound
 			case errors.Is(err, models.ErrConflict):
-				resp = Conflict(detail)
+				status = http.StatusConflict
 			default:
-				resp = Internal()
+				status = http.StatusInternalServerError
 			}
-			WriteResp(w, resp.Status, resp)
+			response.WriteResp(w, status, response.Problem(status, "", detail))
 			return
 		}
 
@@ -53,9 +54,9 @@ func (h *Handler) Adapt(fn HandlerFunc) http.HandlerFunc {
 		}
 
 		if r.Method == http.MethodPost {
-			WriteResp(w, http.StatusCreated, data)
+			response.WriteResp(w, http.StatusCreated, data)
 		} else {
-			WriteResp(w, http.StatusOK, data)
+			response.WriteResp(w, http.StatusOK, data)
 		}
 	}
 }

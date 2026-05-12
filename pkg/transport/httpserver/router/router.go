@@ -6,7 +6,7 @@ import (
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/transport/httpserver/httpmetrics"
 	"github.com/boldlogic/packages/transport/httpserver/middleware"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
+	"github.com/boldlogic/packages/transport/httpserver/response"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ func NewRouter(logger *zap.Logger, reg metrics.Registry) *Router {
 
 	r.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 	r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
-		handler.WriteResp(w, http.StatusOK, "ok")
+		response.WriteResp(w, http.StatusOK, "ok")
 	})
 
 	return &Router{mux: r}
