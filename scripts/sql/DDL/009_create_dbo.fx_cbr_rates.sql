@@ -12,7 +12,7 @@ BEGIN
         ext_system_id tinyint NULL,
         CONSTRAINT PK_fx_cbr_rates PRIMARY KEY CLUSTERED (date, quote_iso_code, base_iso_code),
         CONSTRAINT FK_fx_cbr_rates_quote_iso FOREIGN KEY (quote_iso_code) REFERENCES dbo.currencies (iso_code),
-        CONSTRAINT FK_fx_cbr_rates_base_iso FOREIGN KEY (quote_iso_code) REFERENCES dbo.currencies (iso_code),
+        CONSTRAINT FK_fx_cbr_rates_base_iso FOREIGN KEY (base_iso_code) REFERENCES dbo.currencies (iso_code),
         CONSTRAINT FK_fx_cbr_rates_ext_system FOREIGN KEY (ext_system_id) REFERENCES dbo.external_systems (ext_system_id)
     );
 END
