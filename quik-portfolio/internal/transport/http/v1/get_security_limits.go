@@ -4,14 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
 func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	date, err := h.readGetLimitsRequest(r)
+	date, err := h.extractDateQueryParam(r)
 	if err != nil {
 		return nil, err.Error(), md.ErrValidation
 	}
@@ -25,50 +23,4 @@ func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
 		return nil, "", err
 	}
 	return securityLimitsToResp(sls), "", nil
-}
-
-func securityLimitsToResp(sls []quik.SecurityLimit) []securityLimitDTO {
-
-	if len(sls) == 0 {
-		return []securityLimitDTO{}
-	}
-
-	res := make([]securityLimitDTO, 0, len(sls))
-	for _, sl := range sls {
-		res = append(res, securityLimitToDTO(sl))
-	}
-	return res
-}
-
-func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
-	var out securityLimitDTO
-	out.LoadDate = sl.LoadDate.Format(dates.ISODateFormat)
-	out.SourceDate = sl.SourceDate.Format(dates.ISODateFormat)
-	out.ClientCode = sl.ClientCode
-	out.Ticker = sl.Ticker
-	out.TradeAccount = sl.TradeAccount
-	out.SettleCode = string(sl.SettleCode)
-	out.FirmCode = sl.FirmCode
-	out.FirmName = sl.FirmName
-	out.Balance = sl.Balance.InexactFloat64()
-	out.AcquisitionCcy = sl.AcquisitionCcy
-
-	if sl.ISIN != nil {
-		out.ISIN = *sl.ISIN
-	}
-	return out
-}
-
-type securityLimitDTO struct {
-	LoadDate       string  `json:"loadDate"`
-	SourceDate     string  `json:"sourceDate"`
-	ClientCode     string  `json:"clientCode"`
-	Ticker         string  `json:"ticker"`
-	TradeAccount   string  `json:"tradeAccount"`
-	SettleCode     string  `json:"settleCode"`
-	FirmCode       string  `json:"firmCode"`
-	FirmName       string  `json:"firmName"`
-	Balance        float64 `json:"balance"`
-	AcquisitionCcy string  `json:"acquisitionCcy"`
-	ISIN           string  `json:"isin,omitempty"`
 }

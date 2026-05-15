@@ -8,7 +8,28 @@ import (
 	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/shopspring/decimal"
 )
+
+type portfolioEntryDTO struct {
+	LimitType      string          `json:"limitType"`
+	LoadDate       string          `json:"loadDate"`
+	SourceDate     string          `json:"sourceDate"`
+	ClientCode     string          `json:"clientCode"`
+	FirmCode       string          `json:"firmCode,omitempty"`
+	FirmName       string          `json:"firmName"`
+	Instrument     string          `json:"instrument"`
+	ISIN           string          `json:"isin,omitempty"`
+	ShortName      string          `json:"shortName,omitempty"`
+	QuoteDate      string          `json:"quoteDate,omitempty"`
+	QTY            decimal.Decimal `json:"qty"`
+	MvCurrency     string          `json:"mvCurrency,omitempty"`
+	MvInCcy        decimal.Decimal `json:"mvInCcy"`
+	MvPrice        decimal.Decimal `json:"mvPrice"`
+	MvAccrued      decimal.Decimal `json:"mvAccrued"`
+	MvTotal        decimal.Decimal `json:"mvTotal"`
+	TargetCurrency string          `json:"targetCurrency,omitempty"`
+}
 
 func (h *Handler) GetPortfolio(r *http.Request) (any, string, error) {
 	ctx := r.Context()
@@ -40,11 +61,11 @@ func portfolioEntriesToDTO(entries []quik.PortfolioEntry) []portfolioEntryDTO {
 			FirmCode:   e.FirmCode,
 			FirmName:   e.FirmName,
 			Instrument: e.Instrument,
-			QTY:        e.Balance.InexactFloat64(),
-			MvInCcy:    e.MvInCcy.InexactFloat64(),
-			MvPrice:    e.MvPrice.InexactFloat64(),
-			MvAccrued:  e.MvAccrued.InexactFloat64(),
-			MvTotal:    e.MvTotal.InexactFloat64(),
+			QTY:        e.Balance,
+			MvInCcy:    e.MvInCcy,
+			MvPrice:    e.MvPrice,
+			MvAccrued:  e.MvAccrued,
+			MvTotal:    e.MvTotal,
 		}
 		if e.ISIN != nil {
 			dto.ISIN = *e.ISIN
@@ -60,24 +81,4 @@ func portfolioEntriesToDTO(entries []quik.PortfolioEntry) []portfolioEntryDTO {
 		result = append(result, dto)
 	}
 	return result
-}
-
-type portfolioEntryDTO struct {
-	LimitType      string  `json:"limitType"`
-	LoadDate       string  `json:"loadDate"`
-	SourceDate     string  `json:"sourceDate"`
-	ClientCode     string  `json:"clientCode"`
-	FirmCode       string  `json:"firmCode,omitempty"`
-	FirmName       string  `json:"firmName"`
-	Instrument     string  `json:"instrument"`
-	ISIN           string  `json:"isin,omitempty"`
-	ShortName      string  `json:"shortName,omitempty"`
-	QuoteDate      string  `json:"quoteDate,omitempty"`
-	QTY            float64 `json:"qty"`
-	MvCurrency     string  `json:"mvCurrency,omitempty"`
-	MvInCcy        float64 `json:"mvInCcy"`
-	MvPrice        float64 `json:"mvPrice"`
-	MvAccrued      float64 `json:"mvAccrued"`
-	MvTotal        float64 `json:"mvTotal"`
-	TargetCurrency string  `json:"targetCurrency,omitempty"`
 }
