@@ -15,15 +15,12 @@ import (
 )
 
 type svc struct {
-	err                    error
-	getLimits              func(ctx context.Context, date time.Time) ([]quik.Limit, error)
-	getMoneyLimits         func(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	getSecurityLimits      func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	getSecurityLimitsOtc   func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	getPortfolio           func(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
-	createMoneyLimit       func(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error)
-	createSecurityLimit    func(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error)
-	createSecurityLimitOtc func(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error)
+	err                  error
+	getLimits            func(ctx context.Context, date time.Time) ([]quik.Limit, error)
+	getMoneyLimits       func(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
+	getSecurityLimits    func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	getSecurityLimitsOtc func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	getPortfolio         func(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
 }
 
 func (s svc) GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error) {
@@ -52,27 +49,6 @@ func (s svc) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.S
 		return s.getSecurityLimitsOtc(ctx, date)
 	}
 	return []quik.SecurityLimit{}, s.err
-}
-
-func (s svc) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error) {
-	if s.createMoneyLimit != nil {
-		return s.createMoneyLimit(ctx, ml)
-	}
-	return ml, s.err
-}
-
-func (s svc) CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
-	if s.createSecurityLimit != nil {
-		return s.createSecurityLimit(ctx, sec)
-	}
-	return sec, s.err
-}
-
-func (s svc) CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
-	if s.createSecurityLimitOtc != nil {
-		return s.createSecurityLimitOtc(ctx, sec)
-	}
-	return sec, s.err
 }
 
 func (s svc) GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error) {

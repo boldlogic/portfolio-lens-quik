@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
@@ -29,9 +28,7 @@ func (h *Handler) Adapt(fn handler.HandlerFunc) http.HandlerFunc {
 }
 
 type Service interface {
-	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error)
-	GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
+	CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error)
+	CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error)
+	CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error)
 }

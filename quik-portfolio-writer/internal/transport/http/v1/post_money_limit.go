@@ -37,12 +37,8 @@ func (h *Handler) CreateMoneyLimit(r *http.Request) (any, string, error) {
 }
 
 func (req moneyLimitReqDTO) convertToMoneyLimit() (quik.MoneyLimit, error) {
-	date, err := dates.ParseWithDefaultNow(req.LoadDate, dates.ISODateFormat)
-	if err != nil {
-		return quik.MoneyLimit{}, err
-	}
+
 	return quik.MoneyLimit{
-		LoadDate:     date,
 		ClientCode:   req.ClientCode,
 		Currency:     req.Currency,
 		PositionCode: req.PositionCode,
@@ -54,11 +50,36 @@ func (req moneyLimitReqDTO) convertToMoneyLimit() (quik.MoneyLimit, error) {
 }
 
 type moneyLimitReqDTO struct {
-	LoadDate     string          `json:"loadDate" validate:"omitempty"`
 	ClientCode   string          `json:"clientCode" validate:"required,min=1,max=12"`
 	Currency     string          `json:"currency" validate:"required,min=1,max=3"`
 	PositionCode string          `json:"positionCode" validate:"omitempty,min=1,max=4"`
 	SettleCode   string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
 	FirmCode     string          `json:"firmCode" validate:"required,min=1,max=12"`
 	Balance      decimal.Decimal `json:"balance" validate:"required,decimal"`
+}
+
+type moneyLimitDTO struct {
+	LoadDate     string          `json:"loadDate"`
+	SourceDate   string          `json:"sourceDate"`
+	ClientCode   string          `json:"clientCode"`
+	Currency     string          `json:"currency"`
+	PositionCode string          `json:"positionCode"`
+	SettleCode   string          `json:"settleCode"`
+	FirmCode     string          `json:"firmCode"`
+	FirmName     string          `json:"firmName"`
+	Balance      decimal.Decimal `json:"balance"`
+}
+
+func moneyLimitToDTO(ml quik.MoneyLimit) moneyLimitDTO {
+	return moneyLimitDTO{
+		LoadDate:     ml.LoadDate.Format(dates.ISODateFormat),
+		SourceDate:   ml.SourceDate.Format(dates.ISODateFormat),
+		ClientCode:   ml.ClientCode,
+		Currency:     ml.Currency,
+		PositionCode: ml.PositionCode,
+		SettleCode:   string(ml.SettleCode),
+		FirmCode:     ml.FirmCode,
+		FirmName:     ml.FirmName,
+		Balance:      ml.Balance,
+	}
 }

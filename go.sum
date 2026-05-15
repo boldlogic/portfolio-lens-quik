@@ -28,8 +28,12 @@ github.com/boldlogic/packages v0.1.20 h1:rmvLf/kP0vPih+fCgVgwgdU+qDdtvUQp7OD6kF8
 github.com/boldlogic/packages v0.1.20/go.mod h1:wTlA5eghw0/DiYegzpKyYJjjBKSFoiQx0dVIpADRxGk=
 github.com/boldlogic/packages v0.1.23 h1:Jo1Ex13s/a0PtZdbIBWNUUq9QpWcvhTXGc15qsO5m2w=
 github.com/boldlogic/packages v0.1.23/go.mod h1:wTlA5eghw0/DiYegzpKyYJjjBKSFoiQx0dVIpADRxGk=
+github.com/boldlogic/packages v0.1.24 h1:xZYrbJN9mSQ3/rjkZNJZySfHG9EFv1DVUZlckiYr5eg=
+github.com/boldlogic/packages v0.1.24/go.mod h1:wTlA5eghw0/DiYegzpKyYJjjBKSFoiQx0dVIpADRxGk=
 github.com/boldlogic/portfolio-lens-currency v0.1.1 h1:bj59bEdTE+QNeInqt0lI4+k/JY3XpY3GPZ6+UnI+WpE=
 github.com/boldlogic/portfolio-lens-currency v0.1.1/go.mod h1:xP5rnuDjhkobHVlcQsCfzsfm+Fv14bAhxYxCI1d6h9g=
+github.com/boldlogic/portfolio-lens-currency v0.1.2 h1:WIwiiGPdwgOk154LIQzPbzVo+5kVdP4I+O35djNwdCk=
+github.com/boldlogic/portfolio-lens-currency v0.1.2/go.mod h1:xP5rnuDjhkobHVlcQsCfzsfm+Fv14bAhxYxCI1d6h9g=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

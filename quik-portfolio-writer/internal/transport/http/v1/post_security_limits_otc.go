@@ -5,15 +5,14 @@ import (
 	"net/http"
 
 	"github.com/boldlogic/packages/transport/httputils"
-	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
 )
 
-func (h *Handler) CreateSecurityLimit(r *http.Request) (any, string, error) {
+func (h *Handler) CreateSecurityLimitOtc(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	req, err := httputils.DecodeRequest[securityLimitReqDTO](r)
+	req, err := httputils.DecodeRequest[securityLimitOtcReqDTO](r)
 	if err != nil {
 		if errors.Is(err, httputils.ErrUnsupportedMediaType) || errors.Is(err, httputils.ErrRequestEntityTooLarge) {
 			return nil, err.Error(), err
@@ -26,7 +25,7 @@ func (h *Handler) CreateSecurityLimit(r *http.Request) (any, string, error) {
 		return nil, err.Error(), models.ErrValidation
 	}
 
-	created, err := h.service.CreateSecurityLimit(ctx, lim)
+	created, err := h.service.CreateSecurityLimitOtc(ctx, lim)
 	if err != nil {
 		if errors.Is(err, models.ErrBusinessValidation) || errors.Is(err, models.ErrConflict) {
 			return nil, err.Error(), err
@@ -36,21 +35,14 @@ func (h *Handler) CreateSecurityLimit(r *http.Request) (any, string, error) {
 	return securityLimitToDTO(created), "", nil
 }
 
-func (req securityLimitReqDTO) convertToSecurityLimit() (quik.SecurityLimit, error) {
-	date, err := dates.ParseWithDefaultNow(req.LoadDate, dates.ISODateFormat)
-	if err != nil {
-		return quik.SecurityLimit{}, err
-	}
-
+func (req securityLimitOtcReqDTO) convertToSecurityLimit() (quik.SecurityLimit, error) {
 	var isin *string
 	if req.ISIN != "" {
 		isin = &req.ISIN
 	}
 	return quik.SecurityLimit{
-		LoadDate:       date,
 		ClientCode:     req.ClientCode,
 		Ticker:         req.Ticker,
-		TradeAccount:   req.TradeAccount,
 		SettleCode:     quik.SettleCode(req.SettleCode),
 		FirmCode:       req.FirmCode,
 		Balance:        req.Balance,
@@ -59,13 +51,11 @@ func (req securityLimitReqDTO) convertToSecurityLimit() (quik.SecurityLimit, err
 	}, nil
 }
 
-type securityLimitReqDTO struct {
-	LoadDate       string          `json:"loadDate" validate:"omitempty"`
+type securityLimitOtcReqDTO struct {
 	ClientCode     string          `json:"clientCode" validate:"required,min=1,max=12"`
 	Ticker         string          `json:"ticker" validate:"required,min=1,max=12"`
-	TradeAccount   string          `json:"tradeAccount" validate:"required,min=1,max=12"`
 	SettleCode     string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
-	FirmCode     string          `json:"firmCode" validate:"required,min=1,max=12"`
+	FirmCode       string          `json:"firmCode" validate:"required,min=1,max=12"`
 	Balance        decimal.Decimal `json:"balance"`
 	AcquisitionCcy string          `json:"acquisitionCcy" validate:"omitempty,min=1,max=3"`
 	ISIN           string          `json:"isin" validate:"omitempty,min=1,max=12"`

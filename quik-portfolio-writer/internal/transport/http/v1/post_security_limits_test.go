@@ -10,20 +10,21 @@ import (
 	"time"
 
 	"github.com/boldlogic/packages/transport/httputils"
-	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateSecurityLimitOtc(t *testing.T) {
+func TestCreateSecurityLimit(t *testing.T) {
 	t.Parallel()
 
+	loadDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.Local)
 	sourceDate := time.Date(2025, 1, 2, 0, 0, 0, 0, time.Local)
 	internalSvcErr := errors.New("временная_ошибка_хранилища")
 
 	successStub := func(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error) {
+		sec.LoadDate = loadDate
 		sec.SourceDate = sourceDate
 		sec.FirmName = "Фирма брокера"
 		return sec, nil
@@ -38,67 +39,66 @@ func TestCreateSecurityLimitOtc(t *testing.T) {
 		wantErr    error
 	}{
 		{
-			name: "успешный_запрос_min_полей",
+			name: "успешный_запрос",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
-				"ticker":"OTC_BOND",
-				"settleCode":"T0",
+				"ticker":"SBER",
+				"tradeAccount":"L01-00000F00",
+				"settleCode":"T2",
 				"firmCode": "NC0058900000",
-				"balance":2,
-				"acquisitionCcy":"USD"
+				"balance":10.5,
+				"acquisitionCcy":"RUB",
+				"isin":"RU000A0JX0J2"
 			}`),
-			svc: svc{createSecurityLimitOtc: successStub},
+			svc: svc{createSecurityLimit: successStub},
 			wantBody: securityLimitDTO{
 				LoadDate:       "2025-01-01",
 				SourceDate:     "2025-01-02",
 				ClientCode:     "AB12CD",
-				Ticker:         "OTC_BOND",
-				TradeAccount:   "",
-				SettleCode:     "T0",
+				Ticker:         "SBER",
+				TradeAccount:   "L01-00000F00",
+				SettleCode:     "T2",
 				FirmCode:       "NC0058900000",
 				FirmName:       "Фирма брокера",
-				Balance:        decimal.NewFromFloat(2),
-				AcquisitionCcy: "USD",
-				ISIN:           "",
+				Balance:        decimal.NewFromFloat(10.5),
+				AcquisitionCcy: "RUB",
+				ISIN:           "RU000A0JX0J2",
 			},
 		},
 		{
-			name: "успех_с_isin",
+			name: "успешный_запрос_без_isin",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
-				"ticker":"OTC_BOND",
-				"settleCode":"T0",
+				"ticker":"SBER",
+				"tradeAccount":"L01-00000F00",
+				"settleCode":"T2",
 				"firmCode": "NC0058900000",
-				"balance":2,
-				"acquisitionCcy":"USD",
-				"isin":"RU000A0JX0J2"
+				"balance":10.5,
+				"acquisitionCcy":"RUB"
 			}`),
-			svc: svc{createSecurityLimitOtc: successStub},
+			svc: svc{createSecurityLimit: successStub},
 			wantBody: securityLimitDTO{
 				LoadDate:       "2025-01-01",
 				SourceDate:     "2025-01-02",
 				ClientCode:     "AB12CD",
-				Ticker:         "OTC_BOND",
-				TradeAccount:   "",
-				SettleCode:     "T0",
+				Ticker:         "SBER",
+				TradeAccount:   "L01-00000F00",
+				SettleCode:     "T2",
 				FirmCode:       "NC0058900000",
 				FirmName:       "Фирма брокера",
-				Balance:        decimal.NewFromFloat(2),
-				AcquisitionCcy: "USD",
-				ISIN:           "RU000A0JX0J2",
+				Balance:        decimal.NewFromFloat(10.5),
+				AcquisitionCcy: "RUB",
+				ISIN:           "",
 			},
 		},
 		{
 			name: "конфликт_ключа",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
-				"ticker":"OTC_BOND",
+				"ticker":"SBER",
+				"tradeAccount":"L01-00000F00",
 				"firmCode": "NC0058900000",
-				"balance":2,
-				"acquisitionCcy":"USD"
+				"balance":10.5
 			}`),
 			svc:        svc{err: models.ErrConflict},
 			wantBody:   nil,
@@ -108,12 +108,11 @@ func TestCreateSecurityLimitOtc(t *testing.T) {
 		{
 			name: "бизнес_валидация_ErrBusinessValidation",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
-				"ticker":"OTC_BOND",
+				"ticker":"SBER",
+				"tradeAccount":"L01-00000F00",
 				"firmCode": "NC0058900000",
-				"balance":2,
-				"acquisitionCcy":"USD"
+				"balance":10.5
 			}`),
 			svc:        svc{err: models.ErrBusinessValidation},
 			wantBody:   nil,
@@ -123,12 +122,11 @@ func TestCreateSecurityLimitOtc(t *testing.T) {
 		{
 			name: "внутренняя_ошибка_сервиса",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
-				"ticker":"OTC_BOND",
+				"ticker":"SBER",
+				"tradeAccount":"L01-00000F00",
 				"firmCode": "NC0058900000",
-				"balance":1,
-				"acquisitionCcy":"USD"
+				"balance":1
 			}`),
 			svc:        svc{err: internalSvcErr},
 			wantBody:   nil,
@@ -138,7 +136,7 @@ func TestCreateSecurityLimitOtc(t *testing.T) {
 		{
 			name: "UnsupportedMediaType",
 			req: httptest.NewRequest(http.MethodPost, exampleURL, bytes.NewBufferString(
-				`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`,
+				`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1}`,
 			)),
 			wantBody:   nil,
 			wantDetail: "Content-Type",
@@ -146,84 +144,84 @@ func TestCreateSecurityLimitOtc(t *testing.T) {
 		},
 		{
 			name:       "битый_json",
-			req:        reqJSON(`{"loadDate":"2025-01-01"`),
+			req:        reqJSON(`{"clientCode":"AB12CD"`),
 			wantBody:   nil,
 			wantDetail: "unexpected EOF",
 			wantErr:    models.ErrValidation,
 		},
 		{
-			name:       "некорректная_дата",
-			req:        reqJSON(`{"loadDate":"2025-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`),
+			name:       "пустой_tradeAccount",
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"","firmCode":"NC0058900000","balance":1}`),
 			wantBody:   nil,
-			wantDetail: dates.ErrWrongDateFormat.Error(),
+			wantDetail: "tradeAccount",
+			wantErr:    models.ErrValidation,
+		},
+		{
+			name:       "tradeAccount_длина_>12",
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F000","firmCode":"NC0058900000","balance":1}`),
+			wantBody:   nil,
+			wantDetail: "tradeAccount",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "пустой_clientCode",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "clientCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "clientCode_длина_>12",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"1234567890123","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"1234567890123","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "clientCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "пустой_ticker",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "ticker",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "пустой_firmCode",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "firmCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
-			name:       "лишнее_поле_tradeAccount_DecodeJSONStrict",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD","tradeAccount":"L01-00000F00"}`),
-			wantBody:   nil,
-			wantDetail: "некорректный формат JSON",
-			wantErr:    models.ErrValidation,
-		},
-		{
 			name:       "ticker_длина_>12",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"SBERLONGTICKER","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBERLONGTICKER","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "ticker",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "firmCode_длина_>12",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"NC00589000001","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"NC00589000001","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "firmCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "settleCode_длина_>5",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","settleCode":"123456","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F00","settleCode":"123456","firmCode":"NC0058900000","balance":1}`),
 			wantBody:   nil,
 			wantDetail: "settleCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "acquisitionCcy_длина_>3",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USDD"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USDD"}`),
 			wantBody:   nil,
 			wantDetail: "acquisitionCcy",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "isin_длина_>12",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"AB12CD","ticker":"OTC_BOND","firmCode":"NC0058900000","balance":1,"acquisitionCcy":"USD","isin":"RU000A0JX0J2X"}`),
+			req:        reqJSON(`{"clientCode":"AB12CD","ticker":"SBER","tradeAccount":"L01-00000F00","firmCode":"NC0058900000","balance":1,"isin":"RU000A0JX0J2X"}`),
 			wantBody:   nil,
 			wantDetail: "isin",
 			wantErr:    models.ErrValidation,
@@ -235,7 +233,7 @@ func TestCreateSecurityLimitOtc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			h := newTestHandler(tt.svc)
-			body, detail, err := h.CreateSecurityLimitOtc(tt.req)
+			body, detail, err := h.CreateSecurityLimit(tt.req)
 			assert.Equal(t, tt.wantBody, body)
 			assert.Contains(t, detail, tt.wantDetail)
 			assert.ErrorIs(t, err, tt.wantErr)
