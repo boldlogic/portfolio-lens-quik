@@ -1,6 +1,5 @@
 # portfolio-lens-quik
-
-Репозиторий домена QUIK в рамках Portfolio Lens. Сейчас основной рабочий сервис - `quik-portfolio`; структура подготовлена для расширения на несколько микросервисов.
+[![CI](https://github.com/boldlogic/portfolio-lens-quik/actions/workflows/go.yml/badge.svg)](https://github.com/boldlogic/portfolio-lens-quik/actions/workflows/go.yml)
 
 ## Что внутри
 
