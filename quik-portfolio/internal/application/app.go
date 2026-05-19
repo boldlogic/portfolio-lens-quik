@@ -11,7 +11,6 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/metrics"
-	"github.com/boldlogic/packages/periodic"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/config"
@@ -21,7 +20,6 @@ import (
 	grpcv1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/grpc/v1"
 	portfolioserver "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http"
 	v1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http/v1"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/workers"
 	"go.uber.org/zap"
 )
 
@@ -31,8 +29,8 @@ const (
 )
 
 type Application struct {
-	cfg    *config.Config
-	Logger *zap.Logger
+	cfg    *config.Config //+
+	logger *zap.Logger
 
 	svc *service.Service
 
@@ -54,7 +52,7 @@ func New() (*Application, error) {
 	log := logger.New(cfg.Log)
 	return &Application{
 		cfg:     cfg,
-		Logger:  log,
+		logger:  log,
 		errChan: make(chan error, errChanBufSize),
 	}, nil
 }
@@ -62,33 +60,22 @@ func New() (*Application, error) {
 func (a *Application) Start(ctx context.Context) error {
 
 	dsn := a.cfg.Db.GetDSN()
-	repo, err := repository.NewRepository(ctx, dsn, a.Logger)
+	repo, err := repository.NewRepository(ctx, dsn, a.logger)
 	if err != nil {
 		return err
 	}
 	a.repo = repo
 
-	a.svc = service.NewService(a.repo, a.Logger)
-
-	runner := periodic.NewRunner(
-		workers.NewRollForwardMoneyLimitsWorker(a.svc, a.Logger, 60*time.Second),
-		workers.NewRollForwardSecurityLimitsWorker(a.svc, a.Logger, 60*time.Second),
-		workers.NewRollForwardOtcWorker(a.svc, a.Logger, 60*time.Second),
-	)
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-		runner.Run(ctx)
-	}()
+	a.svc = service.NewService(a.repo, a.logger)
 
 	reg := metrics.New()
 	commonHandler := handler.NewHandler()
-	handler := v1.NewHandler(commonHandler, a.svc, a.Logger)
-	r := portfolioserver.NewRouter(handler, a.Logger, reg)
+	handler := v1.NewHandler(commonHandler, a.svc, a.logger)
+	r := portfolioserver.NewRouter(handler, a.logger, reg)
 	a.server = httpserver.NewServer(r, a.cfg.Server)
 
-	grpcHandler := grpcv1.NewHandler(a.svc, a.Logger)
-	grpcSrv, err := grpc.NewServer(a.cfg.Grpc.Addr(), grpcHandler, a.Logger)
+	grpcHandler := grpcv1.NewHandler(a.svc, a.logger)
+	grpcSrv, err := grpc.NewServer(a.cfg.Grpc.Addr(), grpcHandler, a.logger)
 	if err != nil {
 		return fmt.Errorf("ошибка создания gRPC server: %w", err)
 	}

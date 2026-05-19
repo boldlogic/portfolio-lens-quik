@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/boldlogic/packages/utils/dates"
+	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 
@@ -139,10 +139,11 @@ func (s *Service) GetPortfolio(ctx context.Context, targetCcy string) ([]quik.Po
 	if targetCcy == "" {
 		targetCcy = "RUB"
 	}
-	targetCcy = strings.ToUpper(strings.TrimSpace(targetCcy))
-	if err := validateCurrencyCode(targetCcy); err != nil {
+	ccy, err := currencies.ParseCurrencyCode(targetCcy)
+	if err != nil {
 		return nil, err
 	}
+	targetCcy = ccy.String()
 
 	var securities []quik.PortfolioEntry
 	var otcEntries []quik.PortfolioEntry

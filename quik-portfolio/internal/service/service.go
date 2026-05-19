@@ -11,26 +11,17 @@ import (
 
 type MoneyLimitsRepo interface {
 	SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (quik.MoneyLimit, error)
 	SelectMoneyLimitsMaxDate(ctx context.Context) (*time.Time, error)
-	InsertMoneyLimitsCopy(ctx context.Context, dateFrom time.Time, dateTo time.Time) error
-	DeleteMoneyLimits(ctx context.Context, date time.Time) error
 }
 
 type SecurityLimitsRepo interface {
 	SelectSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	InsertSecurityLimit(ctx context.Context, s quik.SecurityLimit) (quik.SecurityLimit, error)
 	SelectSecurityLimitsMaxDate(ctx context.Context) (*time.Time, error)
-	InsertSecurityLimitsCopy(ctx context.Context, dateFrom time.Time, dateTo time.Time) error
-	DeleteSecurityLimits(ctx context.Context, date time.Time) error
 }
 
 type SecurityLimitsOtcRepo interface {
 	SelectSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	InsertSecurityLimitOtc(ctx context.Context, s quik.SecurityLimit) (quik.SecurityLimit, error)
 	SelectSecurityLimitsOtcMaxDate(ctx context.Context) (*time.Time, error)
-	InsertSecurityLimitsOtcCopy(ctx context.Context, dateFrom time.Time, dateTo time.Time) error
-	DeleteSecurityLimitsOtc(ctx context.Context, date time.Time) error
 }
 
 type PortfolioRepo interface {

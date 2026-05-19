@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/boldlogic/packages/transport/httputils"
-	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
@@ -20,6 +19,7 @@ import (
 func TestCreateMoneyLimit(t *testing.T) {
 	t.Parallel()
 
+	loadDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.Local)
 	sourceDate := time.Date(2025, 1, 2, 0, 0, 0, 0, time.Local)
 	internalSvcErr := errors.New("временная_ошибка_хранилища")
 
@@ -34,7 +34,6 @@ func TestCreateMoneyLimit(t *testing.T) {
 		{
 			name: "успешный_запрос",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
 				"currency":"RUB",
 				"positionCode":"EQTV",
@@ -44,6 +43,7 @@ func TestCreateMoneyLimit(t *testing.T) {
 			}`),
 			svc: svc{
 				createMoneyLimit: func(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error) {
+					ml.LoadDate = loadDate
 					ml.SourceDate = sourceDate
 					ml.FirmCode = "NC0058900000"
 					ml.FirmName = "Фирма брокера"
@@ -63,36 +63,29 @@ func TestCreateMoneyLimit(t *testing.T) {
 			},
 		},
 		{
-			name:       "некорректная_дата",
-			req:        reqJSON(`{"loadDate":"2025-01","clientCode":"AB12CD","currency":"RUB","firmCode": "NC0058900000"}`),
-			wantBody:   nil,
-			wantDetail: dates.ErrWrongDateFormat.Error(),
-			wantErr:    models.ErrValidation,
-		},
-		{
 			name:       "пустой_clientCode",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"","currency":"RUB","firmCode": "NC0058900000"}`),
+			req:        reqJSON(`{"clientCode":"","currency":"RUB","firmCode": "NC0058900000"}`),
 			wantBody:   nil,
 			wantDetail: "clientCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "clientCode>12",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"1234567890123","currency":"RUB","firmCode": "NC0058900000"}`),
+			req:        reqJSON(`{"clientCode":"1234567890123","currency":"RUB","firmCode": "NC0058900000"}`),
 			wantBody:   nil,
 			wantDetail: "clientCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "пустой_currency",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"","firmCode": "NC0058900000"}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"","firmCode": "NC0058900000"}`),
 			wantBody:   nil,
 			wantDetail: "currency",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "пустой_firmCode",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUR","firmCode": ""}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUR","firmCode": ""}`),
 			wantBody:   nil,
 			wantDetail: "firmCode",
 			wantErr:    models.ErrValidation,
@@ -100,7 +93,7 @@ func TestCreateMoneyLimit(t *testing.T) {
 		{
 			name: "UnsupportedMediaType",
 			req: httptest.NewRequest(http.MethodPost, exampleURL, bytes.NewBufferString(
-				`{"loadDate":"2025-01-01","clientCode":"AB12CD","currency":"RUB","firmCode":"NC0058900000","balance":"1"}`,
+				`{"clientCode":"AB12CD","currency":"RUB","firmCode":"NC0058900000","balance":"1"}`,
 			)),
 			wantBody:   nil,
 			wantDetail: "Content-Type",
@@ -108,7 +101,7 @@ func TestCreateMoneyLimit(t *testing.T) {
 		},
 		{
 			name:       "битый_json",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUR","firmCode":"NC0058900000","balance":"1"`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUR","firmCode":"NC0058900000","balance":"1"`),
 			wantBody:   nil,
 			wantDetail: "",
 			wantErr:    models.ErrValidation,
@@ -116,7 +109,6 @@ func TestCreateMoneyLimit(t *testing.T) {
 		{
 			name: "конфликт_ключа",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
 				"currency":"RUB",
 				"firmCode":"NC0058900000",
@@ -130,7 +122,6 @@ func TestCreateMoneyLimit(t *testing.T) {
 		{
 			name: "бизнес_валидация_ErrBusinessValidation",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
 				"currency":"RUB",
 				"firmCode":"NC0058900000",
@@ -144,7 +135,6 @@ func TestCreateMoneyLimit(t *testing.T) {
 		{
 			name: "внутренняя_ошибка_сервиса",
 			req: reqJSON(`{
-				"loadDate":"2025-01-01",
 				"clientCode":"AB12CD",
 				"currency":"RUB",
 				"firmCode":"NC0058900000",
@@ -157,35 +147,35 @@ func TestCreateMoneyLimit(t *testing.T) {
 		},
 		{
 			name:       "currency_длина_>3",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUBB","firmCode":"NC0058900000","balance":"1"}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUBB","firmCode":"NC0058900000","balance":"1"}`),
 			wantBody:   nil,
 			wantDetail: "currency",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "firmCode_длина_>12",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUB","firmCode":"NC00589000001","balance":"1"}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUB","firmCode":"NC00589000001","balance":"1"}`),
 			wantBody:   nil,
 			wantDetail: "firmCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "positionCode_длина_>4",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUB","positionCode":"EQTVX","firmCode":"NC0058900000","balance":"1"}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUB","positionCode":"EQTVX","firmCode":"NC0058900000","balance":"1"}`),
 			wantBody:   nil,
 			wantDetail: "positionCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "settleCode_длина_>5",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUB","settleCode":"123456","firmCode":"NC0058900000","balance":"1"}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUB","settleCode":"123456","firmCode":"NC0058900000","balance":"1"}`),
 			wantBody:   nil,
 			wantDetail: "settleCode",
 			wantErr:    models.ErrValidation,
 		},
 		{
 			name:       "некорректный_balance",
-			req:        reqJSON(`{"loadDate":"2025-01-01","clientCode":"TBANK","currency":"RUB","firmCode":"NC0058900000","balance":"not_a_number"}`),
+			req:        reqJSON(`{"clientCode":"TBANK","currency":"RUB","firmCode":"NC0058900000","balance":"not_a_number"}`),
 			wantBody:   nil,
 			wantDetail: "некорректный формат JSON",
 			wantErr:    models.ErrValidation,
