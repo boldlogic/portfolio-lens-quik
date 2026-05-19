@@ -1,11 +1,12 @@
 # portfolio-lens-quik
-[![CI](https://github.com/boldlogic/portfolio-lens-quik/actions/workflows/go.yml/badge.svg)](https://github.com/boldlogic/portfolio-lens-quik/actions/workflows/go.yml)
+
+[CI](https://github.com/boldlogic/portfolio-lens-quik/actions/workflows/go.yml)
 
 ## Что внутри
 
 - `quik-portfolio/` - сервис лимитов/портфеля (HTTP + gRPC).
-- `quik-currency/` - сервис домена валют/курсов, см. [`quik-currency/README.md`](quik-currency/README.md).
-- `quik-reference-data/` - сервис справочников QUIK, см. [`quik-reference-data/README.md`](quik-reference-data/README.md).
+- `quik-currency/` - сервис домена валют/курсов, см. `[quik-currency/README.md](quik-currency/README.md)`.
+- `quik-reference-data/` - сервис справочников QUIK, см. `[quik-reference-data/README.md](quik-reference-data/README.md)`.
 - `pkg/` - общий код (транспорт, модели, интеграционные утилиты).
 - `proto/` - protobuf-контракты и сгенерированный Go-код.
 - `scripts/sql/` - bootstrap и DDL для MSSQL.
@@ -32,7 +33,7 @@ go run ./quik-portfolio/cmd -config quik-portfolio/internal/configs/config.yaml
 
 ## ODBC / QUIK
 
-Для экспорта из QUIK используйте БД. Текущее стандартное имя БД: `portfolio_lens_quik`.
+Для экспорта из QUIK требуется подготовленная БД и созданный ODBC-источник.
 
 Пример создания DSN:
 
