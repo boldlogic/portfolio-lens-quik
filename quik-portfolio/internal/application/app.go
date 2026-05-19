@@ -11,7 +11,7 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/metrics"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
+	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/config"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/repository"

@@ -7,7 +7,7 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	"github.com/boldlogic/packages/dbzap"
 	logger "github.com/boldlogic/packages/logger/zaplog"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
+	"github.com/boldlogic/packages/transport/httpserver"
 )
 
 type Config struct {

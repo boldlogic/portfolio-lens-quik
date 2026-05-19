@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strings"
+
 	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
@@ -18,6 +20,7 @@ type securityLimitDTO struct {
 	Balance        decimal.Decimal `json:"balance"`
 	AcquisitionCcy string          `json:"acquisitionCcy"`
 	ISIN           string          `json:"isin,omitempty"`
+	ShortName      string          `json:"shortName,omitempty"`
 }
 
 func securityLimitsToResp(sls []quik.SecurityLimit) []securityLimitDTO {
@@ -48,6 +51,9 @@ func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
 
 	if sl.ISIN != nil {
 		out.ISIN = *sl.ISIN
+	}
+	if sn := strings.TrimSpace(sl.ShortName); sn != "" {
+		out.ShortName = sn
 	}
 	return out
 }

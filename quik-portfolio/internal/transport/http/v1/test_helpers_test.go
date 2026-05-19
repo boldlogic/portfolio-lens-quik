@@ -15,12 +15,13 @@ import (
 )
 
 type svc struct {
-	err                  error
-	getLimits            func(ctx context.Context, date time.Time) ([]quik.Limit, error)
-	getMoneyLimits       func(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	getSecurityLimits    func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	getSecurityLimitsOtc func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	getPortfolio         func(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
+	err                       error
+	getLimits                 func(ctx context.Context, date time.Time) ([]quik.Limit, error)
+	getMoneyLimits            func(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
+	getMoneyLimitsWithFilters func(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error)
+	getSecurityLimits         func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	getSecurityLimitsOtc      func(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	getPortfolio              func(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
 }
 
 func (s svc) GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error) {
@@ -35,6 +36,17 @@ func (s svc) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLi
 		return s.getMoneyLimits(ctx, date)
 	}
 	return []quik.MoneyLimit{}, s.err
+}
+
+func (s svc) GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error) {
+	if s.getMoneyLimitsWithFilters != nil {
+		return s.getMoneyLimitsWithFilters(ctx, date, limit, offset, clientCodes)
+	}
+	if s.getMoneyLimits != nil {
+		limits, err := s.getMoneyLimits(ctx, date)
+		return limits, len(limits), err
+	}
+	return []quik.MoneyLimit{}, 0, s.err
 }
 
 func (s svc) GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {

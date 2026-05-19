@@ -76,5 +76,5 @@ type limitDTO struct {
 	FirmCode       string          `json:"firmCode"`
 	FirmName       string          `json:"firmName"`
 	Balance        decimal.Decimal `json:"balance"`
-	AcquisitionCcy string          `json:"acquisitionCcy"`
+	AcquisitionCcy string          `json:"acquisitionCcy,omitempty"`
 }

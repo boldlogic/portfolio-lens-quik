@@ -12,6 +12,7 @@ import (
 type MoneyLimitsRepo interface {
 	SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
 	SelectMoneyLimitsMaxDate(ctx context.Context) (*time.Time, error)
+	SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error)
 }
 
 type SecurityLimitsRepo interface {

@@ -5,16 +5,14 @@ import (
 	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
+	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1"
 	"go.uber.org/zap"
 )
 
 type Service interface {
 	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
 	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetCurrentQuotes(ctx context.Context) ([]models.CurrentQuote, error)
-	GetCurrentQuotesForKeys(ctx context.Context, keys []string) ([]models.CurrentQuote, error)
+	GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
 }
 
 type Handler struct {
@@ -30,6 +28,6 @@ func NewHandler(svc Service, logger *zap.Logger) *Handler {
 	}
 }
 
-func ptr(s string) *string {
-	return &s
-}
+// func ptr(s string) *string {
+// 	return &s
+// }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
+	"go.uber.org/zap"
 )
 
 func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
@@ -19,6 +20,7 @@ func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, err.Error(), err
 		}
+		h.logger.Error("лимиты бумаги: чтение HTTP", zap.Error(err), zap.Time("date", date))
 
 		return nil, "", err
 	}

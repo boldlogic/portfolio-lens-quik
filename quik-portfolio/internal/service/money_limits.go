@@ -8,15 +8,9 @@ import (
 )
 
 func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
-	maxDate, err := s.repo.SelectMoneyLimitsMaxDate(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if maxDate == nil {
-		return []quik.MoneyLimit{}, nil
-	}
-	if err := checkLimitDate(date, *maxDate); err != nil {
-		return nil, err
-	}
 	return s.repo.SelectMoneyLimits(ctx, date)
+}
+
+func (s *Service) GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error) {
+	return s.repo.SelectMoneyLimitsWithFilters(ctx, date, limit, offset, clientCodes)
 }

@@ -3,8 +3,8 @@ package grpc
 import (
 	"net"
 
+	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1"
 	grpcv1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/grpc/v1"
-	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
