@@ -20,11 +20,3 @@ func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.Mo
 	}
 	return s.repo.SelectMoneyLimits(ctx, date)
 }
-
-func (s *Service) DoRollForwardMoneyLimits(ctx context.Context) error {
-	return doRollForward(ctx,
-		s.repo.SelectMoneyLimitsMaxDate,
-		s.repo.InsertMoneyLimitsCopy,
-		s.repo.DeleteMoneyLimits,
-	)
-}

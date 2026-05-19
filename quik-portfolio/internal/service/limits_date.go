@@ -23,10 +23,3 @@ func checkLimitDate(date time.Time, minAvailable time.Time) error {
 	}
 	return nil
 }
-
-func minRollForwardDate(maxDate *time.Time) time.Time {
-	if maxDate == nil {
-		return dates.Today()
-	}
-	return *maxDate
-}

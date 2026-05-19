@@ -34,19 +34,3 @@ func (s *Service) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]q
 	}
 	return s.repo.SelectSecurityLimitsOtc(ctx, date)
 }
-
-func (s *Service) DoRollForwardOtc(ctx context.Context) error {
-	return doRollForward(ctx,
-		s.repo.SelectSecurityLimitsOtcMaxDate,
-		s.repo.InsertSecurityLimitsOtcCopy,
-		s.repo.DeleteSecurityLimitsOtc,
-	)
-}
-
-func (s *Service) DoRollForwardSecurityLimits(ctx context.Context) error {
-	return doRollForward(ctx,
-		s.repo.SelectSecurityLimitsMaxDate,
-		s.repo.InsertSecurityLimitsCopy,
-		s.repo.DeleteSecurityLimits,
-	)
-}

@@ -30,6 +30,8 @@ func LoadConfig(configPath string) (*Config, error) {
 	return &cfg, nil
 }
 
+//
+
 func (c *Config) validate() []error {
 	var errs []error
 

@@ -18,16 +18,17 @@ func main() {
 
 	app, err := application.New()
 	if err != nil {
-		log.Fatalf("Не удалось создать приложение: %v", err)
+		log.Fatalf("не удалось создать приложение: %v", err)
 	}
 
 	if err = app.Start(ctx); err != nil {
-		log.Fatalf("Не удалось запустить приложение: %v", err)
+		log.Fatalf("не удалось запустить приложение: %v", err)
 	}
-	app.Logger.Info("Приложение запущено")
+	log.Println("приложение запущено")
+
 	err = app.Wait(ctx, cancel)
 	if err != nil {
-		log.Fatalf("Приложение завершилось с ошибкой: %v", err)
+		log.Fatalf("приложение завершилось с ошибкой: %v", err)
 	}
-	app.Logger.Info("Приложение завершилось без ошибок")
+	log.Println("приложение завершилось без ошибок")
 }

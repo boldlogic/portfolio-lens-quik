@@ -17,11 +17,3 @@ func TestCheckLimitDate_после_сегодня_ErrBusinessValidation(t *testi
 		t.Fatalf("ожидали ErrBusinessValidation: %v", err)
 	}
 }
-
-func TestMinRollForwardDate_nil_совпадает_с_Today(t *testing.T) {
-	got := minRollForwardDate(nil)
-	want := dates.Today()
-	if dates.DateToYYYYMMDD(got) != dates.DateToYYYYMMDD(want) {
-		t.Fatalf("ожидали сегодняшнюю дату: got=%v want=%v", got, want)
-	}
-}

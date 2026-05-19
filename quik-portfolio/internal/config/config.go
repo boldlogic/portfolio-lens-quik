@@ -34,10 +34,10 @@ func (g *GrpcConfig) Addr() string {
 func Load(configPath string) (*Config, error) {
 
 	cfg, err := commonconfig.DecodeConfigStrict[Config](configPath)
-
 	if err != nil {
 		return nil, err
 	}
+
 	cfg.applyDefaults()
 	errs := cfg.validate()
 	if err := errors.Join(errs...); err != nil {
