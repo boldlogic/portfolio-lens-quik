@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/boldlogic/packages/transport/httputils"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"go.uber.org/zap"
 )
@@ -15,14 +16,22 @@ func (h *Handler) GetSecurityLimits(r *http.Request) (any, string, error) {
 		return nil, err.Error(), md.ErrValidation
 	}
 
-	sls, err := h.service.GetSecurityLimits(ctx, date)
+	limit, offset, err := httputils.ParseListPagination(r)
+	if err != nil {
+		return nil, err.Error(), md.ErrValidation
+	}
+	clients, err := h.extractClientsQueryParam(r)
+	if err != nil {
+		return nil, err.Error(), md.ErrValidation
+	}
+
+	sls, totalCount, err := h.service.GetSecurityLimitsWithFilters(ctx, date, limit, offset, clients)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, err.Error(), err
 		}
 		h.logger.Error("лимиты бумаги: чтение HTTP", zap.Error(err), zap.Time("date", date))
-
 		return nil, "", err
 	}
-	return securityLimitsToResp(sls), "", nil
+	return securityLimitsWithPaginationToResp(sls, totalCount, limit, offset), "", nil
 }

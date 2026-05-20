@@ -18,11 +18,13 @@ type MoneyLimitsRepo interface {
 type SecurityLimitsRepo interface {
 	SelectSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
 	SelectSecurityLimitsMaxDate(ctx context.Context) (*time.Time, error)
+	SelectSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
 }
 
 type SecurityLimitsOtcRepo interface {
 	SelectSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
 	SelectSecurityLimitsOtcMaxDate(ctx context.Context) (*time.Time, error)
+	SelectSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
 }
 
 type PortfolioRepo interface {

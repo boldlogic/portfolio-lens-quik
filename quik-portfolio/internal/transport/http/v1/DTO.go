@@ -8,6 +8,22 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type securityLimitsDTO struct {
+	Limits     []securityLimitDTO `json:"limits"`
+	TotalCount int                `json:"totalCount"`
+	Limit      int                `json:"limit"`
+	Offset     int                `json:"offset"`
+}
+
+func securityLimitsWithPaginationToResp(sls []quik.SecurityLimit, totalCount, limit, offset int) securityLimitsDTO {
+	return securityLimitsDTO{
+		Limits:     securityLimitsToResp(sls),
+		TotalCount: totalCount,
+		Limit:      limit,
+		Offset:     offset,
+	}
+}
+
 type securityLimitDTO struct {
 	LoadDate       string          `json:"loadDate"`
 	SourceDate     string          `json:"sourceDate"`

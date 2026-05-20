@@ -5,10 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/boldlogic/packages/shutdown"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	mssql "github.com/microsoft/go-mssqldb"
 	"go.uber.org/zap"
 )
 
@@ -47,33 +44,24 @@ const (
 `
 )
 
-func (r *Repository) SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
-	var result []quik.MoneyLimit
+func (r *Repository) SelectMoneyLimits(ctx context.Context, date time.Time) (result []quik.MoneyLimit, err error) {
+	defer func() { err = r.finalizeSelectErr("SelectMoneyLimits", date, err) }()
 
 	rows, err := r.Db.QueryContext(ctx, selectMoneyLimitsByDate, date)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
-			return nil, err
-		}
-		r.Logger.Error("ошибка выполнения запроса на получение позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-		return nil, models.ErrRetrievingData
+		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		row, err := r.scanMoneyLimit(rows)
 		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, err
-			}
-			r.Logger.Error("ошибка чтения позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
+			return nil, err
 		}
 		result = append(result, row)
 	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка чтения позиций по деньгам", zap.Time("load_date", date), zap.Error(rows.Err()))
-		return nil, models.ErrRetrievingData
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	r.Logger.Debug("результаты получения позиций по деньгам", zap.Time("load_date", date), zap.Int("count", len(result)))
@@ -101,8 +89,14 @@ WHERE 1 = 1
         when isnull(@p1, '') = '' then cast(getdate() as date) 
         else cast(@p1 as date) 
         end
-ORDER BY 1, 2, 3,4 DESC 
-OFFSET @p2 ROWS FETCH NEXT @p3 ROWS ONLY`
+ORDER BY li.load_date, 
+	li.client_code, 
+	li.ccy,
+	li.position_code,
+    li.settle_code,
+    li.firm_code DESC 
+OFFSET @p2 ROWS 
+FETCH NEXT @p3 ROWS ONLY`
 
 const selectMoneyLimitsAllClients = `SELECT
     li.load_date,
@@ -120,8 +114,14 @@ WHERE 1 = 1
         when isnull(@p1, '') = '' then cast(getdate() as date) 
         else cast(@p1 as date) 
         end
-ORDER BY 1, 2, 3,4 DESC 
-OFFSET @p2 ROWS FETCH NEXT @p3 ROWS ONLY`
+ORDER BY li.load_date, 
+	li.client_code, 
+	li.ccy,
+	li.position_code,
+    li.settle_code,
+    li.firm_code DESC 
+OFFSET @p2 ROWS 
+FETCH NEXT @p3 ROWS ONLY`
 
 const countMoneyLimitsByClients = `SELECT COUNT(*)
 FROM quik.money_limits li
@@ -157,91 +157,60 @@ func (r *Repository) scanMoneyLimit(row *sql.Rows) (quik.MoneyLimit, error) {
 	return out, nil
 }
 
-func (r *Repository) SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error) {
-	var result []quik.MoneyLimit
+func (r *Repository) SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) (result []quik.MoneyLimit, totalCount int, err error) {
 
-	clients, ok := r.makeClientCodeList(clientCodes)
-	totalCount, err := r.countMoneyLimitsWithFilters(ctx, date, clients, ok)
+	defer func() { err = r.finalizeSelectErr("SelectMoneyLimitsWithFilters", date, err) }()
+
+	clients, hasClients := r.makeClientCodeList(clientCodes)
+
+	tx, err := r.Db.BeginTx(ctx, nil)
+
 	if err != nil {
 		return nil, 0, err
 	}
+	defer tx.Rollback()
 
 	var rows *sql.Rows
-	if ok {
-		rows, err = r.Db.QueryContext(ctx, selectMoneyLimitsByClients, date, offset, limit, sql.Named("codes", clients))
-		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, 0, err
-			}
-			r.Logger.Error("ошибка выполнения запроса на получение позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-			return nil, 0, models.ErrRetrievingData
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
 		}
-		defer rows.Close()
+	}()
+
+	if hasClients {
+		err = tx.QueryRowContext(ctx, countMoneyLimitsByClients, date, sql.Named("codes", clients)).Scan(&totalCount)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		rows, err = tx.QueryContext(ctx, selectMoneyLimitsByClients, date, offset, limit, sql.Named("codes", clients))
+		if err != nil {
+			return nil, 0, err
+		}
 
 	} else {
-		rows, err = r.Db.QueryContext(ctx, selectMoneyLimitsAllClients, date, offset, limit)
+		err = tx.QueryRowContext(ctx, countMoneyLimitsAllClients, date).Scan(&totalCount)
 		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, 0, err
-			}
-			r.Logger.Error("ошибка выполнения запроса на получение позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-			return nil, 0, models.ErrRetrievingData
+			return nil, 0, err
 		}
-		defer rows.Close()
+		rows, err = tx.QueryContext(ctx, selectMoneyLimitsAllClients, date, offset, limit)
+		if err != nil {
+			return nil, 0, err
+		}
+
 	}
 
 	for rows.Next() {
-		row, err := r.scanMoneyLimit(rows)
+		var row quik.MoneyLimit
+		row, err = r.scanMoneyLimit(rows)
 		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, 0, err
-			}
-			r.Logger.Error("ошибка чтения позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-			return nil, 0, models.ErrRetrievingData
+			return nil, 0, err
 		}
 		result = append(result, row)
 	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка чтения позиций по деньгам", zap.Time("load_date", date), zap.Error(rows.Err()))
-		return nil, 0, models.ErrRetrievingData
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
 	}
 	return result, totalCount, nil
 
-}
-
-func (r *Repository) countMoneyLimitsWithFilters(ctx context.Context, date time.Time, clients mssql.TVP, hasClients bool) (int, error) {
-	var totalCount int
-	var err error
-	if hasClients {
-		err = r.Db.QueryRowContext(ctx, countMoneyLimitsByClients, date, sql.Named("codes", clients)).Scan(&totalCount)
-	} else {
-		err = r.Db.QueryRowContext(ctx, countMoneyLimitsAllClients, date).Scan(&totalCount)
-	}
-	if err != nil {
-		if shutdown.IsExceeded(err) {
-			return 0, err
-		}
-		r.Logger.Error("ошибка выполнения запроса на подсчет позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-		return 0, models.ErrRetrievingData
-	}
-	return totalCount, nil
-}
-
-type clientRows struct {
-	ClientCode string `tvp:"client_code"`
-}
-
-func (r *Repository) makeClientCodeList(clientCodes []string) (mssql.TVP, bool) {
-	if len(clientCodes) == 0 {
-		return mssql.TVP{}, false
-	}
-
-	clients := make([]clientRows, 0, len(clientCodes))
-	for _, code := range clientCodes {
-		clients = append(clients, clientRows{ClientCode: code})
-	}
-	return mssql.TVP{
-		TypeName: "api.client_code_list",
-		Value:    clients,
-	}, true
 }

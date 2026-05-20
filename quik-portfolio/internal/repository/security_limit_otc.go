@@ -5,14 +5,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/boldlogic/packages/shutdown"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"go.uber.org/zap"
 )
 
 const (
-	getSecurityLimitsOtc = `
+	selectSecurityLimitsOtcByDate = `
 			WITH cte AS (
 			SELECT
 				li.load_date,
@@ -59,56 +57,130 @@ const (
 		WHERE 1=1
 		ORDER BY cte.load_date, cte.client_code, cte.ticker, cte.trade_account, cte.firm_code
 	`
+
+	selectSecurityLimitsOtcByClients = `SELECT
+    li.load_date,
+    li.source_date,
+    li.client_code,
+    li.ticker,
+    li.settle_code,
+    li.trade_account,
+    li.firm_code,
+    li.firm_name,
+    li.balance,
+    li.acquisition_ccy,
+    li.isin,
+    short_disp.short_name
+FROM quik.security_limits_otc li
+join @codes c on c.client_code = li.client_code
+` + securityLimitShortNameApply + `
+WHERE li.load_date = cast(@p1 as date)
+ORDER BY li.load_date, li.client_code, li.ticker, li.trade_account, li.firm_code
+OFFSET @p2 ROWS FETCH NEXT @p3 ROWS ONLY`
+
+	selectSecurityLimitsOtcAllClients = `SELECT
+    li.load_date,
+    li.source_date,
+    li.client_code,
+    li.ticker,
+    li.settle_code,
+    li.trade_account,
+    li.firm_code,
+    li.firm_name,
+    li.balance,
+    li.acquisition_ccy,
+    li.isin,
+    short_disp.short_name
+FROM quik.security_limits_otc li
+` + securityLimitShortNameApply + `
+WHERE li.load_date = cast(@p1 as date)
+ORDER BY li.load_date, li.client_code, li.ticker, li.trade_account, li.firm_code
+OFFSET @p2 ROWS FETCH NEXT @p3 ROWS ONLY`
+
+	countSecurityLimitsOtcByClients = `SELECT COUNT(*)
+FROM quik.security_limits_otc li
+join @codes c on c.client_code = li.client_code
+WHERE li.load_date = cast(@p1 as date)`
+
+	countSecurityLimitsOtcAllClients = `SELECT COUNT(*)
+FROM quik.security_limits_otc li
+WHERE li.load_date = cast(@p1 as date)`
 )
 
-func (r *Repository) SelectSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
-	var result []quik.SecurityLimit
-	rows, err := r.Db.QueryContext(ctx, getSecurityLimitsOtc, date)
+func (r *Repository) SelectSecurityLimitsOtc(ctx context.Context, date time.Time) (result []quik.SecurityLimit, err error) {
+	defer func() { err = r.finalizeSelectErr("SelectSecurityLimitsOtc", date, err) }()
+
+	rows, err := r.Db.QueryContext(ctx, selectSecurityLimitsOtcByDate, date)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
-			return nil, err
-		}
-		r.Logger.Error("ошибка запроса позиций OTC по бумагам", zap.Time("load_date", date), zap.Error(err))
-		return nil, models.ErrRetrievingData
+		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		row := quik.SecurityLimit{}
-		var shortName sql.NullString
-		err = rows.Scan(
-			&row.LoadDate,
-			&row.SourceDate,
-			&row.ClientCode,
-			&row.Ticker,
-			&row.SettleCode,
-			&row.TradeAccount,
-			&row.FirmCode,
-			&row.FirmName,
-			&row.Balance,
-			&row.AcquisitionCcy,
-			&row.ISIN,
-			&shortName,
-		)
-		if shortName.Valid {
-			row.ShortName = shortName.String
-		}
+		row, err := r.scanSecurityLimit(rows)
 		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, err
-			}
-			r.Logger.Error("ошибка при чтении позиции OTC по бумагам", zap.Time("load_date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
+			return nil, err
 		}
 		result = append(result, row)
 	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка чтения позиций OTC по бумагам", zap.Time("load_date", date), zap.Error(rows.Err()))
-		return nil, models.ErrRetrievingData
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 	r.Logger.Debug("результаты получения позиций OTC по бумагам", zap.Time("load_date", date), zap.Int("count", len(result)))
 	if len(result) == 0 {
 		r.Logger.Warn("позиции OTC по бумагам не найдены", zap.Time("load_date", date))
 	}
 	return result, nil
+}
+
+func (r *Repository) SelectSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) (result []quik.SecurityLimit, totalCount int, err error) {
+	defer func() { err = r.finalizeSelectErr("SelectSecurityLimitsOtcWithFilters", date, err) }()
+
+	clients, hasClients := r.makeClientCodeList(clientCodes)
+
+	tx, err := r.Db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer tx.Rollback()
+
+	var rows *sql.Rows
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if hasClients {
+		err = tx.QueryRowContext(ctx, countSecurityLimitsOtcByClients, date, sql.Named("codes", clients)).Scan(&totalCount)
+		if err != nil {
+			return nil, 0, err
+		}
+		rows, err = tx.QueryContext(ctx, selectSecurityLimitsOtcByClients, date, offset, limit, sql.Named("codes", clients))
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		err = tx.QueryRowContext(ctx, countSecurityLimitsOtcAllClients, date).Scan(&totalCount)
+		if err != nil {
+			return nil, 0, err
+		}
+		rows, err = tx.QueryContext(ctx, selectSecurityLimitsOtcAllClients, date, offset, limit)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	for rows.Next() {
+		var row quik.SecurityLimit
+		row, err = r.scanSecurityLimit(rows)
+		if err != nil {
+			return nil, 0, err
+		}
+		result = append(result, row)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return result, totalCount, nil
 }

@@ -32,7 +32,9 @@ type Service interface {
 	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
 	GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error)
 	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
 	GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
 	GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error)
 	GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
 }
