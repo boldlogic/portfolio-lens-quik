@@ -117,7 +117,7 @@ func (a *Application) Wait(ctx context.Context, cancel context.CancelFunc) error
 	<-ctx.Done()
 
 	if a.server != nil {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), time.Duration(a.cfg.Server.Opts.ShutdownTimeout)*time.Second)
 		defer shutdownCancel()
 		_ = a.server.Shutdown(shutdownCtx)
 	}

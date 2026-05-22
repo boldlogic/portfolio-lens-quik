@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/boldlogic/packages/dbzap"
-	"github.com/boldlogic/packages/shutdown"
 	"go.uber.org/zap"
 )
 
@@ -18,8 +17,4 @@ func NewRepository(ctx context.Context, dsn string, logger *zap.Logger) (*Reposi
 		return nil, err
 	}
 	return &Repository{Pool: pool}, nil
-}
-
-func (r *Repository) isShutdown(err error) bool {
-	return shutdown.IsExceeded(err)
 }

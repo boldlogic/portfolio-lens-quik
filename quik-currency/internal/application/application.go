@@ -8,7 +8,6 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/periodic"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/config"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/repository"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/service"
@@ -17,19 +16,14 @@ import (
 )
 
 type Application struct {
-	cfg     *config.Config
-	logger  *zap.Logger
-	svc     *service.Service
-	repo    *repository.Repository
-	server  *httpserver.Server
-	errChan chan error
-	wg      sync.WaitGroup
+	cfg    *config.Config
+	logger *zap.Logger
+	svc    *service.Service
+	repo   *repository.Repository
+	wg     sync.WaitGroup
 }
 
-const (
-	defaultConfigPath = "quik-currency/internal/configs/config.yaml"
-	errChanBufSize    = 1
-)
+const defaultConfigPath = "quik-currency/internal/configs/config.yaml"
 
 func New() (*Application, error) {
 	configPath := commonconfig.GetConfigPath(defaultConfigPath)
@@ -39,9 +33,8 @@ func New() (*Application, error) {
 	}
 	log := logger.New(cfg.Log)
 	return &Application{
-		cfg:     cfg,
-		logger:  log,
-		errChan: make(chan error, errChanBufSize),
+		cfg:    cfg,
+		logger: log,
 	}, nil
 }
 
@@ -71,25 +64,7 @@ func (a *Application) Start(ctx context.Context) error {
 	return nil
 }
 
-func (a *Application) Wait(ctx context.Context, cancel context.CancelFunc) error {
-	var appErr error
-
-	errWg := sync.WaitGroup{}
-	errWg.Add(1)
-
-	go func() {
-		defer errWg.Done()
-		for err := range a.errChan {
-			cancel()
-			appErr = err
-		}
-	}()
-
+func (a *Application) Wait(ctx context.Context) {
 	<-ctx.Done()
-
 	a.wg.Wait()
-	close(a.errChan)
-	errWg.Wait()
-
-	return appErr
 }

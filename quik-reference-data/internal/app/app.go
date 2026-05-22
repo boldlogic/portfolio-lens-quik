@@ -12,7 +12,7 @@ import (
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/periodic"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
+	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	referencehttp "github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/api/http"
 	apiv1 "github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/api/http/v1"
@@ -114,7 +114,7 @@ func (a *application) Wait(ctx context.Context, cancel context.CancelFunc) error
 	<-ctx.Done()
 
 	if a.server != nil {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), time.Duration(a.config.Server.Opts.ShutdownTimeout)*time.Second)
 		defer shutdownCancel()
 		_ = a.server.Shutdown(shutdownCtx)
 	}
