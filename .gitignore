@@ -44,3 +44,4 @@ configs
 loadtests
 grafana
 prometheus
+AGENTS.md

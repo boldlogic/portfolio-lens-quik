@@ -32,6 +32,9 @@ func protoDateToTime(d *datepb.Date) (time.Time, error) {
 	}
 
 	t := time.Date(y, time.Month(m), day, 0, 0, 0, 0, time.Local)
+	if t.Year() != y || int(t.Month()) != m || t.Day() != day {
+		return time.Time{}, fmt.Errorf("%w: некорректная дата", md.ErrValidation)
+	}
 
 	return t, nil
 }

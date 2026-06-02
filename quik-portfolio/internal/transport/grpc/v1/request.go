@@ -29,17 +29,14 @@ func extractReqFields(req *quikv1.LimitsRequest) (limitsListQuery, error) {
 	clients := req.GetClientCodes()
 
 	limit := req.GetLimit()
-	if limit > maxLimit {
-		return limitsListQuery{}, fmt.Errorf("некорректный limit %d", limit)
-	}
 	if limit == 0 {
 		limit = defaultLimit
 	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
 
 	offset := req.GetOffset()
-	// if offset < 0 {
-	// 	return limitsListQuery{}, fmt.Errorf("некорректный offset %d", offset)
-	// }
 	count := req.GetIncludeTotalCount()
 
 	return limitsListQuery{
