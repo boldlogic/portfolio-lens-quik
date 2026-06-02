@@ -7,10 +7,10 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
-func (s *Service) GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
-	return s.repo.SelectMoneyLimits(ctx, date)
-}
-
-func (s *Service) GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error) {
-	return s.repo.SelectMoneyLimitsWithFilters(ctx, date, limit, offset, clientCodes)
+func (s *Service) GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error) {
+	dedublicated, err := validateLimitsContract(date, clientCodes)
+	if err != nil {
+		return nil, nil, err
+	}
+	return s.repo.SelectMoneyLimitsWithFilters(ctx, date, limit, offset, dedublicated, includeTotalCount)
 }

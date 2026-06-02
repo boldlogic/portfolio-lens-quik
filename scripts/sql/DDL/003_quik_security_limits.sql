@@ -20,6 +20,7 @@ CREATE TABLE
         balance DECIMAL(19,4) NULL,
         acquisition_ccy varchar(4) NULL,
         isin varchar(12) NULL,
+        sec_name           varchar(128) NULL,
         source_date date NOT NULL DEFAULT (getdate()),
         ts timestamp NOT NULL,
         

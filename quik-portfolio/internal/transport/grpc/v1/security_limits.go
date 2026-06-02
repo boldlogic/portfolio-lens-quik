@@ -8,7 +8,6 @@ import (
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -42,22 +41,32 @@ func securityLimitsToResp(l []quik.SecurityLimit) []*quikv1.SecurityLimit {
 	}
 	return out
 }
-func (h *Handler) GetSecurityLimits(ctx context.Context, req *quikv1.GetSecurityLimitsRequest) (*quikv1.GetSecurityLimitsResponse, error) {
-	date, err := protoDateToTime(req.GetDate())
+func (h *Handler) GetSecurityLimits(ctx context.Context, req *quikv1.LimitsRequest) (*quikv1.GetSecurityLimitsResponse, error) {
+	r, err := extractReqFields(req)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+
 	}
 
-	limits, err := h.service.GetSecurityLimits(ctx, date)
+	limits, total, err := h.service.GetSecurityLimitsWithFilters(ctx, r.Date, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 		}
-		h.logger.Error("лимиты бумаги: чтение gRPC", zap.Error(err), zap.Time("date", date))
 		return nil, status.Errorf(codes.Internal, "не удалось получить security limits")
+	}
+	if r.IncludeTotalCount && total == nil {
+		var z uint64 = 0
+		total = new(z)
 	}
 
 	pbLimits := securityLimitsToResp(limits)
 
-	return &quikv1.GetSecurityLimitsResponse{Limits: pbLimits}, nil
+	return &quikv1.GetSecurityLimitsResponse{
+		Limits: pbLimits,
+		Pagination: &quikv1.Pagination{
+			Limit:  r.Limit,
+			Offset: r.Offset,
+			Total:  total,
+		}}, nil
 }

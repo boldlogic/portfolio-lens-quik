@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/application"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -24,11 +25,11 @@ func main() {
 	if err = app.Start(ctx); err != nil {
 		log.Fatalf("не удалось запустить приложение: %v", err)
 	}
-	log.Println("приложение запущено")
 
-	err = app.Wait(ctx, cancel)
+	app.Logger.Info("приложение запущено")
+	err = app.Wait()
 	if err != nil {
-		log.Fatalf("приложение завершилось с ошибкой: %v", err)
+		app.Logger.Fatal("приложение завершилось с ошибкой", zap.Error(err))
 	}
-	log.Println("приложение завершилось без ошибок")
+	app.Logger.Info("приложение завершилось без ошибок")
 }

@@ -1,112 +1,66 @@
 syntax = "proto3";
 
-
-
 package quikportfolio.v1;
-
 
 
 option go_package = "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1;quikportfoliov1";
 
-
-
 import "google/type/date.proto";
 
-
-
 service LimitsService {
-
-  rpc GetSecurityLimits(GetSecurityLimitsRequest) returns (GetSecurityLimitsResponse);
-
-  rpc GetSecurityLimitsOtc(GetSecurityLimitsRequest) returns (GetSecurityLimitsResponse);
-
-  rpc GetMoneyLimits(GetMoneyLimitsRequest) returns (GetMoneyLimitsResponse);
-
+  rpc GetSecurityLimits(LimitsRequest) returns (GetSecurityLimitsResponse);
+  rpc GetSecurityLimitsOtc(LimitsRequest) returns (GetSecurityLimitsResponse);
+  rpc GetMoneyLimits(LimitsRequest) returns (GetMoneyLimitsResponse);
 }
 
-
-
-message GetSecurityLimitsRequest {
-
-  google.type.Date date = 1;
-
+message Pagination {
+  uint32  limit = 1;
+  uint64  offset = 2;
+  optional uint64  total = 3;
 }
-
-
 
 message GetSecurityLimitsResponse {
-
   repeated SecurityLimit limits = 1;
-
+  Pagination pagination =2;
 }
 
-
-
-message GetMoneyLimitsRequest {
-
-  google.type.Date date = 1;
-
+message LimitsRequest {
+  google.type.Date load_date = 1;
+  repeated string client_codes = 2;
+  bool include_total_count = 3;
+  uint32  limit = 4;
+  uint64 offset = 5;
 }
-
-
 
 message GetMoneyLimitsResponse {
-
   repeated MoneyLimit limits = 1;
-
+  Pagination pagination =2;
 }
-
-
 
 message SecurityLimit {
-
   string client_code = 1;
-
   string ticker = 2;
-
   optional string isin = 3;
-
   string balance = 4;
-
   string acquisition_ccy = 5;
-
   string firm_code = 6;
-
   string firm_name = 7;
-
   string trade_account = 8;
-
   string settle_code = 9;
-
   google.type.Date source_date = 10;
-
   google.type.Date load_date = 11;
-
   optional string short_name = 12;
-
 }
 
-
-
 message MoneyLimit {
-
   string client_code = 1;
-
   string currency = 2;
-
   string balance = 3;
-
   string firm_code = 4;
-
   string firm_name = 5;
-
   string position_code = 6;
-
   string settle_code = 7;
-
   google.type.Date source_date = 8;
-
   google.type.Date load_date = 9;
-
 }
 

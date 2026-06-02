@@ -39,8 +39,7 @@ func New() (*Application, error) {
 }
 
 func (a *Application) Start(ctx context.Context) error {
-	dsn := a.cfg.Db.GetDSN()
-	repo, err := repository.NewRepository(ctx, dsn, a.logger)
+	repo, err := repository.NewRepository(ctx, a.cfg.Db, a.logger)
 	if err != nil {
 		return err
 	}

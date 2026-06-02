@@ -2,17 +2,38 @@ package v1
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/boldlogic/packages/transport/httputils"
 	"github.com/boldlogic/packages/utils/dates"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
+
+func (h *Handler) getMoneyLimits(r *http.Request) (any, string, error) {
+	q, err := parseLimitsListQuery(r)
+	if err != nil {
+		return nil, err.Error(), md.ErrValidation
+	}
+
+	mls, totalCount, err := h.service.GetMoneyLimitsWithFilters(
+		r.Context(), q.Date, q.Limit, q.Offset, q.ClientCodes, q.IncludeTotalCount,
+	)
+	if err != nil {
+		if errors.Is(err, md.ErrBusinessValidation) {
+			return nil, err.Error(), err
+		}
+		return nil, "", err
+	}
+	return moneyLimitsWithPaginationToResp(mls, q.Limit, q.Offset, totalCount, q.IncludeTotalCount), "", nil
+}
+
+type moneyLimitsDTO struct {
+	Limits     []moneyLimitDTO `json:"limits"`
+	TotalCount *uint64         `json:"totalCount,omitempty"`
+	Limit      uint32          `json:"limit"`
+	Offset     uint64          `json:"offset"`
+}
 
 type moneyLimitDTO struct {
 	LoadDate     string          `json:"loadDate"`
@@ -26,32 +47,28 @@ type moneyLimitDTO struct {
 	Balance      decimal.Decimal `json:"balance"`
 }
 
-type moneyLimitsDTO struct {
-	Limits     []moneyLimitDTO `json:"limits"`
-	TotalCount int             `json:"totalCount"`
-	Limit      int             `json:"limit"`
-	Offset     int             `json:"offset"`
-}
+func moneyLimitsWithPaginationToResp(mls []quik.MoneyLimit, limit uint32, offset uint64, totalCount *uint64, includeTotalCount bool) moneyLimitsDTO {
 
-func moneyLimitsToResp(mls []quik.MoneyLimit) []moneyLimitDTO {
-	if len(mls) == 0 {
-		return []moneyLimitDTO{}
+	if includeTotalCount && totalCount == nil {
+		var z uint64 = 0
+		totalCount = new(z)
 	}
 
-	resp := make([]moneyLimitDTO, 0, len(mls))
-	for _, ml := range mls {
-		resp = append(resp, moneyLimitToDTO(ml))
-	}
-	return resp
-}
-
-func moneyLimitsWithPaginationToResp(mls []quik.MoneyLimit, totalCount, limit, offset int) moneyLimitsDTO {
-	return moneyLimitsDTO{
+	out := moneyLimitsDTO{
 		Limits:     moneyLimitsToResp(mls),
 		TotalCount: totalCount,
 		Limit:      limit,
 		Offset:     offset,
 	}
+	return out
+}
+
+func moneyLimitsToResp(mls []quik.MoneyLimit) []moneyLimitDTO {
+	resp := make([]moneyLimitDTO, 0, len(mls))
+	for _, ml := range mls {
+		resp = append(resp, moneyLimitToDTO(ml))
+	}
+	return resp
 }
 
 func moneyLimitToDTO(ml quik.MoneyLimit) moneyLimitDTO {
@@ -66,60 +83,4 @@ func moneyLimitToDTO(ml quik.MoneyLimit) moneyLimitDTO {
 		FirmName:     ml.FirmName,
 		Balance:      ml.Balance,
 	}
-}
-
-const maxClientCodeLen = 12
-
-func normalizeClientCodes(raw string) ([]string, error) {
-	if strings.TrimSpace(raw) == "" {
-		return nil, nil
-	}
-	parts := strings.Split(raw, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		p = strings.ToUpper(strings.TrimSpace(p))
-		if p != "" {
-			if len(p) > maxClientCodeLen {
-				return nil, fmt.Errorf("clientCode %s longer than %d chars", p, maxClientCodeLen)
-			}
-			out = append(out, p)
-		}
-	}
-	if len(out) == 0 {
-		return nil, nil
-	}
-	return out, nil
-}
-
-func (h *Handler) extractClientsQueryParam(r *http.Request) ([]string, error) {
-	return normalizeClientCodes(r.URL.Query().Get("clientCodes"))
-}
-
-func (h *Handler) GetMoneyLimits(r *http.Request) (any, string, error) {
-	ctx := r.Context()
-	date, err := h.extractDateQueryParam(r)
-	if err != nil {
-		return nil, err.Error(), md.ErrValidation
-	}
-
-	limit, offset, err := httputils.ParseListPagination(r)
-	if err != nil {
-		return nil, err.Error(), md.ErrValidation
-	}
-	clients, err := h.extractClientsQueryParam(r)
-	if err != nil {
-		return nil, err.Error(), md.ErrValidation
-	}
-
-	mls, totalCount, err := h.service.GetMoneyLimitsWithFilters(ctx, date, limit, offset, clients)
-	if err != nil {
-		if errors.Is(err, md.ErrBusinessValidation) {
-			return nil, err.Error(), err
-		}
-
-		h.logger.Error("лимиты ДС: чтение HTTP", zap.Error(err), zap.Time("date", date))
-		return nil, "", err
-	}
-
-	return moneyLimitsWithPaginationToResp(mls, totalCount, limit, offset), "", nil
 }

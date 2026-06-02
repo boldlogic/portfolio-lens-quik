@@ -11,6 +11,6 @@ END;
 GO
 
 CREATE TYPE api.client_code_list AS TABLE (
-    client_code nvarchar(12) NOT NULL
+    client_code varchar(12) NOT NULL
 );
 GO

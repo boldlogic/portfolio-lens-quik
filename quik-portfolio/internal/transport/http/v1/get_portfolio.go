@@ -31,10 +31,10 @@ type portfolioEntryDTO struct {
 	TargetCurrency string          `json:"targetCurrency,omitempty"`
 }
 
-func (h *Handler) GetPortfolio(r *http.Request) (any, string, error) {
+func (h *Handler) getPortfolio(r *http.Request) (any, string, error) {
 	ctx := r.Context()
 
-	targetCcy := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("targetCcy")))
+	targetCcy := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get(currencyQuery)))
 	if targetCcy == "" {
 		targetCcy = "RUB"
 	}

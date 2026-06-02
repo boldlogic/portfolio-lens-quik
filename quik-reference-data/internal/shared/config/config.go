@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/boldlogic/packages/commonconfig"
-	"github.com/boldlogic/packages/dbzap"
+	"github.com/boldlogic/packages/dbconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/transport/httpserver"
 )
@@ -13,7 +13,7 @@ import (
 type Config struct {
 	Log    logger.Config           `yaml:"log" json:"log"`
 	Server httpserver.ServerConfig `yaml:"server" json:"server"`
-	Db     dbzap.DBConfig          `yaml:"db" json:"db"`
+	Db     dbconfig.DBConfig       `yaml:"db" json:"db"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {

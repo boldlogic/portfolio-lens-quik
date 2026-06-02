@@ -139,14 +139,28 @@ func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Ti
 		var mvISOCharCode, targetISOCharCode, shortName sql.NullString
 		var mvMinorUnits, targetMinorUnits sql.NullInt32
 		var quoteDate sql.NullTime
-
+		//TO-DO
 		err = rows.Scan(
-			&row.LoadDate, &row.SourceDate, &row.ClientCode, &row.Instrument, &row.TradeAccount,
-			&row.FirmCode, &row.FirmName, &row.Balance, &row.AcquisitionCcy,
+			&row.LoadDate,
+			&row.SourceDate,
+			&row.ClientCode,
+			&row.Instrument,
+			&row.TradeAccount,
+			&row.FirmCode,
+			&row.FirmName,
+			&row.Balance,
+			&row.AcquisitionCcy,
 			&row.ISIN,
-			&mvISOCharCode, &mvMinorUnits,
-			&row.MvInCcy, &row.MvPrice, &row.MvAccrued, &row.MvTotal,
-			&targetISOCharCode, &targetMinorUnits,
+			&mvISOCharCode,
+
+			&mvMinorUnits,
+
+			&row.MvInCcy,
+			&row.MvPrice,
+			&row.MvAccrued,
+			&row.MvTotal,
+			&targetISOCharCode,
+			&targetMinorUnits,
 			&shortName,
 			&quoteDate,
 		)
@@ -169,6 +183,7 @@ func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Ti
 			}
 		}
 		row.MvCurrency = mvISOCharCode.String
+
 		if targetISOCharCode.Valid {
 			row.TargetCurrency = targetISOCharCode.String
 		} else {
@@ -320,12 +335,24 @@ func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time
 		var quoteDate sql.NullTime
 
 		err = rows.Scan(
-			&row.LoadDate, &row.SourceDate, &row.ClientCode, &row.Instrument, &row.TradeAccount,
-			&row.FirmCode, &row.FirmName, &row.Balance, &row.AcquisitionCcy,
+			&row.LoadDate,
+			&row.SourceDate,
+			&row.ClientCode,
+			&row.Instrument,
+			&row.TradeAccount,
+			&row.FirmCode,
+			&row.FirmName,
+			&row.Balance,
+			&row.AcquisitionCcy,
 			&row.ISIN,
-			&mvISOCharCode, &mvMinorUnits,
-			&row.MvInCcy, &row.MvPrice, &row.MvAccrued, &row.MvTotal,
-			&targetISOCharCode, &targetMinorUnits,
+			&mvISOCharCode,
+			&mvMinorUnits,
+			&row.MvInCcy,
+			&row.MvPrice,
+			&row.MvAccrued,
+			&row.MvTotal,
+			&targetISOCharCode,
+			&targetMinorUnits,
 			&shortName,
 			&quoteDate,
 		)
@@ -448,13 +475,21 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 			row                                   quik.PortfolioEntry
 		)
 		err = rows.Scan(
-			&row.LoadDate, &row.SourceDate, &row.ClientCode, &ccy, &positionCode,
-			&firmCode, &firmName, &row.Balance,
+			&row.LoadDate,
+			&row.SourceDate,
+			&row.ClientCode,
+			&ccy,
+			&positionCode,
+			&firmCode,
+			&firmName,
+			&row.Balance,
 			&balanceTarget,
 			&quoteDate,
-			&mvISO, &mvMinorUnits,
+			&mvISO,
+			&mvMinorUnits,
 			&shortName,
-			&tgtISO, &tgtMinorUnits,
+			&tgtISO,
+			&tgtMinorUnits,
 		)
 		if err != nil {
 			if shutdown.IsExceeded(err) {

@@ -29,12 +29,8 @@ func (h *Handler) Adapt(fn handler.HandlerFunc) http.HandlerFunc {
 }
 
 type Service interface {
-	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error)
-	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
-	GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
-	GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error)
+	GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error)
+	GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
+	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 	GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
 }

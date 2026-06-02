@@ -5,26 +5,19 @@ import (
 	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"go.uber.org/zap"
 )
 
 type MoneyLimitsRepo interface {
-	SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	SelectMoneyLimitsMaxDate(ctx context.Context) (*time.Time, error)
-	SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.MoneyLimit, int, error)
+	SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error)
 }
 
 type SecurityLimitsRepo interface {
-	SelectSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	SelectSecurityLimitsMaxDate(ctx context.Context) (*time.Time, error)
-	SelectSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
+	SelectSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 }
 
 type SecurityLimitsOtcRepo interface {
-	SelectSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	SelectSecurityLimitsOtcMaxDate(ctx context.Context) (*time.Time, error)
-	SelectSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit, offset int, clientCodes []string) ([]quik.SecurityLimit, int, error)
+	SelectSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 }
 
 type PortfolioRepo interface {
@@ -33,17 +26,11 @@ type PortfolioRepo interface {
 	SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
 }
 
-type CurrentQuotesRepo interface {
-	SelectCurrentQuotes(ctx context.Context) ([]models.CurrentQuote, error)
-	SelectCurrentQuotesForKeys(ctx context.Context, keys []string) ([]models.CurrentQuote, error)
-}
-
 type Repository interface {
 	MoneyLimitsRepo
 	SecurityLimitsRepo
 	SecurityLimitsOtcRepo
 	PortfolioRepo
-	CurrentQuotesRepo
 }
 
 type Service struct {

@@ -22,27 +22,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetSecurityLimitsRequest struct {
+type Pagination struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Date          *date.Date             `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	Limit         uint32                 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        uint64                 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Total         *uint64                `protobuf:"varint,3,opt,name=total,proto3,oneof" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetSecurityLimitsRequest) Reset() {
-	*x = GetSecurityLimitsRequest{}
+func (x *Pagination) Reset() {
+	*x = Pagination{}
 	mi := &file_quik_portfolio_v1_limits_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetSecurityLimitsRequest) String() string {
+func (x *Pagination) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSecurityLimitsRequest) ProtoMessage() {}
+func (*Pagination) ProtoMessage() {}
 
-func (x *GetSecurityLimitsRequest) ProtoReflect() protoreflect.Message {
+func (x *Pagination) ProtoReflect() protoreflect.Message {
 	mi := &file_quik_portfolio_v1_limits_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,21 +56,36 @@ func (x *GetSecurityLimitsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetSecurityLimitsRequest.ProtoReflect.Descriptor instead.
-func (*GetSecurityLimitsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use Pagination.ProtoReflect.Descriptor instead.
+func (*Pagination) Descriptor() ([]byte, []int) {
 	return file_quik_portfolio_v1_limits_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetSecurityLimitsRequest) GetDate() *date.Date {
+func (x *Pagination) GetLimit() uint32 {
 	if x != nil {
-		return x.Date
+		return x.Limit
 	}
-	return nil
+	return 0
+}
+
+func (x *Pagination) GetOffset() uint64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *Pagination) GetTotal() uint64 {
+	if x != nil && x.Total != nil {
+		return *x.Total
+	}
+	return 0
 }
 
 type GetSecurityLimitsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Limits        []*SecurityLimit       `protobuf:"bytes,1,rep,name=limits,proto3" json:"limits,omitempty"`
+	Pagination    *Pagination            `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -110,27 +127,38 @@ func (x *GetSecurityLimitsResponse) GetLimits() []*SecurityLimit {
 	return nil
 }
 
-type GetMoneyLimitsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Date          *date.Date             `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+func (x *GetSecurityLimitsResponse) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
 }
 
-func (x *GetMoneyLimitsRequest) Reset() {
-	*x = GetMoneyLimitsRequest{}
+type LimitsRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	LoadDate          *date.Date             `protobuf:"bytes,1,opt,name=load_date,json=loadDate,proto3" json:"load_date,omitempty"`
+	ClientCodes       []string               `protobuf:"bytes,2,rep,name=client_codes,json=clientCodes,proto3" json:"client_codes,omitempty"`
+	IncludeTotalCount bool                   `protobuf:"varint,3,opt,name=include_total_count,json=includeTotalCount,proto3" json:"include_total_count,omitempty"`
+	Limit             uint32                 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset            uint64                 `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *LimitsRequest) Reset() {
+	*x = LimitsRequest{}
 	mi := &file_quik_portfolio_v1_limits_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMoneyLimitsRequest) String() string {
+func (x *LimitsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMoneyLimitsRequest) ProtoMessage() {}
+func (*LimitsRequest) ProtoMessage() {}
 
-func (x *GetMoneyLimitsRequest) ProtoReflect() protoreflect.Message {
+func (x *LimitsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_quik_portfolio_v1_limits_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -142,21 +170,50 @@ func (x *GetMoneyLimitsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMoneyLimitsRequest.ProtoReflect.Descriptor instead.
-func (*GetMoneyLimitsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use LimitsRequest.ProtoReflect.Descriptor instead.
+func (*LimitsRequest) Descriptor() ([]byte, []int) {
 	return file_quik_portfolio_v1_limits_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetMoneyLimitsRequest) GetDate() *date.Date {
+func (x *LimitsRequest) GetLoadDate() *date.Date {
 	if x != nil {
-		return x.Date
+		return x.LoadDate
 	}
 	return nil
+}
+
+func (x *LimitsRequest) GetClientCodes() []string {
+	if x != nil {
+		return x.ClientCodes
+	}
+	return nil
+}
+
+func (x *LimitsRequest) GetIncludeTotalCount() bool {
+	if x != nil {
+		return x.IncludeTotalCount
+	}
+	return false
+}
+
+func (x *LimitsRequest) GetLimit() uint32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *LimitsRequest) GetOffset() uint64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 type GetMoneyLimitsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Limits        []*MoneyLimit          `protobuf:"bytes,1,rep,name=limits,proto3" json:"limits,omitempty"`
+	Pagination    *Pagination            `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -194,6 +251,13 @@ func (*GetMoneyLimitsResponse) Descriptor() ([]byte, []int) {
 func (x *GetMoneyLimitsResponse) GetLimits() []*MoneyLimit {
 	if x != nil {
 		return x.Limits
+	}
+	return nil
+}
+
+func (x *GetMoneyLimitsResponse) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
 	}
 	return nil
 }
@@ -442,15 +506,29 @@ var File_quik_portfolio_v1_limits_proto protoreflect.FileDescriptor
 
 const file_quik_portfolio_v1_limits_proto_rawDesc = "" +
 	"\n" +
-	"\x1equik-portfolio/v1/limits.proto\x12\x10quikportfolio.v1\x1a\x16google/type/date.proto\"A\n" +
-	"\x18GetSecurityLimitsRequest\x12%\n" +
-	"\x04date\x18\x01 \x01(\v2\x11.google.type.DateR\x04date\"T\n" +
+	"\x1equik-portfolio/v1/limits.proto\x12\x10quikportfolio.v1\x1a\x16google/type/date.proto\"_\n" +
+	"\n" +
+	"Pagination\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\rR\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x19\n" +
+	"\x05total\x18\x03 \x01(\x04H\x00R\x05total\x88\x01\x01B\b\n" +
+	"\x06_total\"\x92\x01\n" +
 	"\x19GetSecurityLimitsResponse\x127\n" +
-	"\x06limits\x18\x01 \x03(\v2\x1f.quikportfolio.v1.SecurityLimitR\x06limits\">\n" +
-	"\x15GetMoneyLimitsRequest\x12%\n" +
-	"\x04date\x18\x01 \x01(\v2\x11.google.type.DateR\x04date\"N\n" +
+	"\x06limits\x18\x01 \x03(\v2\x1f.quikportfolio.v1.SecurityLimitR\x06limits\x12<\n" +
+	"\n" +
+	"pagination\x18\x02 \x01(\v2\x1c.quikportfolio.v1.PaginationR\n" +
+	"pagination\"\xc0\x01\n" +
+	"\rLimitsRequest\x12.\n" +
+	"\tload_date\x18\x01 \x01(\v2\x11.google.type.DateR\bloadDate\x12!\n" +
+	"\fclient_codes\x18\x02 \x03(\tR\vclientCodes\x12.\n" +
+	"\x13include_total_count\x18\x03 \x01(\bR\x11includeTotalCount\x12\x14\n" +
+	"\x05limit\x18\x04 \x01(\rR\x05limit\x12\x16\n" +
+	"\x06offset\x18\x05 \x01(\x04R\x06offset\"\x8c\x01\n" +
 	"\x16GetMoneyLimitsResponse\x124\n" +
-	"\x06limits\x18\x01 \x03(\v2\x1c.quikportfolio.v1.MoneyLimitR\x06limits\"\xc4\x03\n" +
+	"\x06limits\x18\x01 \x03(\v2\x1c.quikportfolio.v1.MoneyLimitR\x06limits\x12<\n" +
+	"\n" +
+	"pagination\x18\x02 \x01(\v2\x1c.quikportfolio.v1.PaginationR\n" +
+	"pagination\"\xc4\x03\n" +
 	"\rSecurityLimit\x12\x1f\n" +
 	"\vclient_code\x18\x01 \x01(\tR\n" +
 	"clientCode\x12\x16\n" +
@@ -484,11 +562,11 @@ const file_quik_portfolio_v1_limits_proto_rawDesc = "" +
 	"settleCode\x122\n" +
 	"\vsource_date\x18\b \x01(\v2\x11.google.type.DateR\n" +
 	"sourceDate\x12.\n" +
-	"\tload_date\x18\t \x01(\v2\x11.google.type.DateR\bloadDate2\xd3\x02\n" +
-	"\rLimitsService\x12l\n" +
-	"\x11GetSecurityLimits\x12*.quikportfolio.v1.GetSecurityLimitsRequest\x1a+.quikportfolio.v1.GetSecurityLimitsResponse\x12o\n" +
-	"\x14GetSecurityLimitsOtc\x12*.quikportfolio.v1.GetSecurityLimitsRequest\x1a+.quikportfolio.v1.GetSecurityLimitsResponse\x12c\n" +
-	"\x0eGetMoneyLimits\x12'.quikportfolio.v1.GetMoneyLimitsRequest\x1a(.quikportfolio.v1.GetMoneyLimitsResponseBYZWgithub.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1;quikportfoliov1b\x06proto3"
+	"\tload_date\x18\t \x01(\v2\x11.google.type.DateR\bloadDate2\xb5\x02\n" +
+	"\rLimitsService\x12a\n" +
+	"\x11GetSecurityLimits\x12\x1f.quikportfolio.v1.LimitsRequest\x1a+.quikportfolio.v1.GetSecurityLimitsResponse\x12d\n" +
+	"\x14GetSecurityLimitsOtc\x12\x1f.quikportfolio.v1.LimitsRequest\x1a+.quikportfolio.v1.GetSecurityLimitsResponse\x12[\n" +
+	"\x0eGetMoneyLimits\x12\x1f.quikportfolio.v1.LimitsRequest\x1a(.quikportfolio.v1.GetMoneyLimitsResponseBYZWgithub.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1;quikportfoliov1b\x06proto3"
 
 var (
 	file_quik_portfolio_v1_limits_proto_rawDescOnce sync.Once
@@ -504,34 +582,35 @@ func file_quik_portfolio_v1_limits_proto_rawDescGZIP() []byte {
 
 var file_quik_portfolio_v1_limits_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_quik_portfolio_v1_limits_proto_goTypes = []any{
-	(*GetSecurityLimitsRequest)(nil),  // 0: quikportfolio.v1.GetSecurityLimitsRequest
+	(*Pagination)(nil),                // 0: quikportfolio.v1.Pagination
 	(*GetSecurityLimitsResponse)(nil), // 1: quikportfolio.v1.GetSecurityLimitsResponse
-	(*GetMoneyLimitsRequest)(nil),     // 2: quikportfolio.v1.GetMoneyLimitsRequest
+	(*LimitsRequest)(nil),             // 2: quikportfolio.v1.LimitsRequest
 	(*GetMoneyLimitsResponse)(nil),    // 3: quikportfolio.v1.GetMoneyLimitsResponse
 	(*SecurityLimit)(nil),             // 4: quikportfolio.v1.SecurityLimit
 	(*MoneyLimit)(nil),                // 5: quikportfolio.v1.MoneyLimit
 	(*date.Date)(nil),                 // 6: google.type.Date
 }
 var file_quik_portfolio_v1_limits_proto_depIdxs = []int32{
-	6,  // 0: quikportfolio.v1.GetSecurityLimitsRequest.date:type_name -> google.type.Date
-	4,  // 1: quikportfolio.v1.GetSecurityLimitsResponse.limits:type_name -> quikportfolio.v1.SecurityLimit
-	6,  // 2: quikportfolio.v1.GetMoneyLimitsRequest.date:type_name -> google.type.Date
+	4,  // 0: quikportfolio.v1.GetSecurityLimitsResponse.limits:type_name -> quikportfolio.v1.SecurityLimit
+	0,  // 1: quikportfolio.v1.GetSecurityLimitsResponse.pagination:type_name -> quikportfolio.v1.Pagination
+	6,  // 2: quikportfolio.v1.LimitsRequest.load_date:type_name -> google.type.Date
 	5,  // 3: quikportfolio.v1.GetMoneyLimitsResponse.limits:type_name -> quikportfolio.v1.MoneyLimit
-	6,  // 4: quikportfolio.v1.SecurityLimit.source_date:type_name -> google.type.Date
-	6,  // 5: quikportfolio.v1.SecurityLimit.load_date:type_name -> google.type.Date
-	6,  // 6: quikportfolio.v1.MoneyLimit.source_date:type_name -> google.type.Date
-	6,  // 7: quikportfolio.v1.MoneyLimit.load_date:type_name -> google.type.Date
-	0,  // 8: quikportfolio.v1.LimitsService.GetSecurityLimits:input_type -> quikportfolio.v1.GetSecurityLimitsRequest
-	0,  // 9: quikportfolio.v1.LimitsService.GetSecurityLimitsOtc:input_type -> quikportfolio.v1.GetSecurityLimitsRequest
-	2,  // 10: quikportfolio.v1.LimitsService.GetMoneyLimits:input_type -> quikportfolio.v1.GetMoneyLimitsRequest
-	1,  // 11: quikportfolio.v1.LimitsService.GetSecurityLimits:output_type -> quikportfolio.v1.GetSecurityLimitsResponse
-	1,  // 12: quikportfolio.v1.LimitsService.GetSecurityLimitsOtc:output_type -> quikportfolio.v1.GetSecurityLimitsResponse
-	3,  // 13: quikportfolio.v1.LimitsService.GetMoneyLimits:output_type -> quikportfolio.v1.GetMoneyLimitsResponse
-	11, // [11:14] is the sub-list for method output_type
-	8,  // [8:11] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	0,  // 4: quikportfolio.v1.GetMoneyLimitsResponse.pagination:type_name -> quikportfolio.v1.Pagination
+	6,  // 5: quikportfolio.v1.SecurityLimit.source_date:type_name -> google.type.Date
+	6,  // 6: quikportfolio.v1.SecurityLimit.load_date:type_name -> google.type.Date
+	6,  // 7: quikportfolio.v1.MoneyLimit.source_date:type_name -> google.type.Date
+	6,  // 8: quikportfolio.v1.MoneyLimit.load_date:type_name -> google.type.Date
+	2,  // 9: quikportfolio.v1.LimitsService.GetSecurityLimits:input_type -> quikportfolio.v1.LimitsRequest
+	2,  // 10: quikportfolio.v1.LimitsService.GetSecurityLimitsOtc:input_type -> quikportfolio.v1.LimitsRequest
+	2,  // 11: quikportfolio.v1.LimitsService.GetMoneyLimits:input_type -> quikportfolio.v1.LimitsRequest
+	1,  // 12: quikportfolio.v1.LimitsService.GetSecurityLimits:output_type -> quikportfolio.v1.GetSecurityLimitsResponse
+	1,  // 13: quikportfolio.v1.LimitsService.GetSecurityLimitsOtc:output_type -> quikportfolio.v1.GetSecurityLimitsResponse
+	3,  // 14: quikportfolio.v1.LimitsService.GetMoneyLimits:output_type -> quikportfolio.v1.GetMoneyLimitsResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_quik_portfolio_v1_limits_proto_init() }
@@ -539,6 +618,7 @@ func file_quik_portfolio_v1_limits_proto_init() {
 	if File_quik_portfolio_v1_limits_proto != nil {
 		return
 	}
+	file_quik_portfolio_v1_limits_proto_msgTypes[0].OneofWrappers = []any{}
 	file_quik_portfolio_v1_limits_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

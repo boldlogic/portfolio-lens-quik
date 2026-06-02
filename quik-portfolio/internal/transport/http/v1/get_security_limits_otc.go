@@ -4,34 +4,25 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/boldlogic/packages/transport/httputils"
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"go.uber.org/zap"
 )
 
-func (h *Handler) GetSecurityLimitsOtc(r *http.Request) (any, string, error) {
-	ctx := r.Context()
-	date, err := h.extractDateQueryParam(r)
+func (h *Handler) getSecurityLimitsOtc(r *http.Request) (any, string, error) {
+	q, err := parseLimitsListQuery(r)
 	if err != nil {
 		return nil, err.Error(), md.ErrValidation
 	}
 
-	limit, offset, err := httputils.ParseListPagination(r)
-	if err != nil {
-		return nil, err.Error(), md.ErrValidation
-	}
-	clients, err := h.extractClientsQueryParam(r)
-	if err != nil {
-		return nil, err.Error(), md.ErrValidation
-	}
-
-	sls, totalCount, err := h.service.GetSecurityLimitsOtcWithFilters(ctx, date, limit, offset, clients)
+	sls, totalCount, err := h.service.GetSecurityLimitsOtcWithFilters(
+		r.Context(), q.Date, q.Limit, q.Offset, q.ClientCodes, q.IncludeTotalCount,
+	)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, err.Error(), err
 		}
-		h.logger.Error("лимиты OTC по бумагам: чтение HTTP", zap.Error(err), zap.Time("date", date))
+		h.logger.Error("лимиты OTC по бумагам: чтение HTTP", zap.Error(err), zap.Time("date", q.Date))
 		return nil, "", err
 	}
-	return securityLimitsWithPaginationToResp(sls, totalCount, limit, offset), "", nil
+	return securityLimitsWithPaginationToResp(sls, q.Limit, q.Offset, totalCount, q.IncludeTotalCount), "", nil
 }

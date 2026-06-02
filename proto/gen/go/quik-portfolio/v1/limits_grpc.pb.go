@@ -28,9 +28,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LimitsServiceClient interface {
-	GetSecurityLimits(ctx context.Context, in *GetSecurityLimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error)
-	GetSecurityLimitsOtc(ctx context.Context, in *GetSecurityLimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error)
-	GetMoneyLimits(ctx context.Context, in *GetMoneyLimitsRequest, opts ...grpc.CallOption) (*GetMoneyLimitsResponse, error)
+	GetSecurityLimits(ctx context.Context, in *LimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error)
+	GetSecurityLimitsOtc(ctx context.Context, in *LimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error)
+	GetMoneyLimits(ctx context.Context, in *LimitsRequest, opts ...grpc.CallOption) (*GetMoneyLimitsResponse, error)
 }
 
 type limitsServiceClient struct {
@@ -41,7 +41,7 @@ func NewLimitsServiceClient(cc grpc.ClientConnInterface) LimitsServiceClient {
 	return &limitsServiceClient{cc}
 }
 
-func (c *limitsServiceClient) GetSecurityLimits(ctx context.Context, in *GetSecurityLimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error) {
+func (c *limitsServiceClient) GetSecurityLimits(ctx context.Context, in *LimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetSecurityLimitsResponse)
 	err := c.cc.Invoke(ctx, LimitsService_GetSecurityLimits_FullMethodName, in, out, cOpts...)
@@ -51,7 +51,7 @@ func (c *limitsServiceClient) GetSecurityLimits(ctx context.Context, in *GetSecu
 	return out, nil
 }
 
-func (c *limitsServiceClient) GetSecurityLimitsOtc(ctx context.Context, in *GetSecurityLimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error) {
+func (c *limitsServiceClient) GetSecurityLimitsOtc(ctx context.Context, in *LimitsRequest, opts ...grpc.CallOption) (*GetSecurityLimitsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetSecurityLimitsResponse)
 	err := c.cc.Invoke(ctx, LimitsService_GetSecurityLimitsOtc_FullMethodName, in, out, cOpts...)
@@ -61,7 +61,7 @@ func (c *limitsServiceClient) GetSecurityLimitsOtc(ctx context.Context, in *GetS
 	return out, nil
 }
 
-func (c *limitsServiceClient) GetMoneyLimits(ctx context.Context, in *GetMoneyLimitsRequest, opts ...grpc.CallOption) (*GetMoneyLimitsResponse, error) {
+func (c *limitsServiceClient) GetMoneyLimits(ctx context.Context, in *LimitsRequest, opts ...grpc.CallOption) (*GetMoneyLimitsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetMoneyLimitsResponse)
 	err := c.cc.Invoke(ctx, LimitsService_GetMoneyLimits_FullMethodName, in, out, cOpts...)
@@ -75,9 +75,9 @@ func (c *limitsServiceClient) GetMoneyLimits(ctx context.Context, in *GetMoneyLi
 // All implementations must embed UnimplementedLimitsServiceServer
 // for forward compatibility.
 type LimitsServiceServer interface {
-	GetSecurityLimits(context.Context, *GetSecurityLimitsRequest) (*GetSecurityLimitsResponse, error)
-	GetSecurityLimitsOtc(context.Context, *GetSecurityLimitsRequest) (*GetSecurityLimitsResponse, error)
-	GetMoneyLimits(context.Context, *GetMoneyLimitsRequest) (*GetMoneyLimitsResponse, error)
+	GetSecurityLimits(context.Context, *LimitsRequest) (*GetSecurityLimitsResponse, error)
+	GetSecurityLimitsOtc(context.Context, *LimitsRequest) (*GetSecurityLimitsResponse, error)
+	GetMoneyLimits(context.Context, *LimitsRequest) (*GetMoneyLimitsResponse, error)
 	mustEmbedUnimplementedLimitsServiceServer()
 }
 
@@ -88,13 +88,13 @@ type LimitsServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedLimitsServiceServer struct{}
 
-func (UnimplementedLimitsServiceServer) GetSecurityLimits(context.Context, *GetSecurityLimitsRequest) (*GetSecurityLimitsResponse, error) {
+func (UnimplementedLimitsServiceServer) GetSecurityLimits(context.Context, *LimitsRequest) (*GetSecurityLimitsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSecurityLimits not implemented")
 }
-func (UnimplementedLimitsServiceServer) GetSecurityLimitsOtc(context.Context, *GetSecurityLimitsRequest) (*GetSecurityLimitsResponse, error) {
+func (UnimplementedLimitsServiceServer) GetSecurityLimitsOtc(context.Context, *LimitsRequest) (*GetSecurityLimitsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSecurityLimitsOtc not implemented")
 }
-func (UnimplementedLimitsServiceServer) GetMoneyLimits(context.Context, *GetMoneyLimitsRequest) (*GetMoneyLimitsResponse, error) {
+func (UnimplementedLimitsServiceServer) GetMoneyLimits(context.Context, *LimitsRequest) (*GetMoneyLimitsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMoneyLimits not implemented")
 }
 func (UnimplementedLimitsServiceServer) mustEmbedUnimplementedLimitsServiceServer() {}
@@ -119,7 +119,7 @@ func RegisterLimitsServiceServer(s grpc.ServiceRegistrar, srv LimitsServiceServe
 }
 
 func _LimitsService_GetSecurityLimits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSecurityLimitsRequest)
+	in := new(LimitsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -131,13 +131,13 @@ func _LimitsService_GetSecurityLimits_Handler(srv interface{}, ctx context.Conte
 		FullMethod: LimitsService_GetSecurityLimits_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LimitsServiceServer).GetSecurityLimits(ctx, req.(*GetSecurityLimitsRequest))
+		return srv.(LimitsServiceServer).GetSecurityLimits(ctx, req.(*LimitsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _LimitsService_GetSecurityLimitsOtc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSecurityLimitsRequest)
+	in := new(LimitsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -149,13 +149,13 @@ func _LimitsService_GetSecurityLimitsOtc_Handler(srv interface{}, ctx context.Co
 		FullMethod: LimitsService_GetSecurityLimitsOtc_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LimitsServiceServer).GetSecurityLimitsOtc(ctx, req.(*GetSecurityLimitsRequest))
+		return srv.(LimitsServiceServer).GetSecurityLimitsOtc(ctx, req.(*LimitsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _LimitsService_GetMoneyLimits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMoneyLimitsRequest)
+	in := new(LimitsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func _LimitsService_GetMoneyLimits_Handler(srv interface{}, ctx context.Context,
 		FullMethod: LimitsService_GetMoneyLimits_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LimitsServiceServer).GetMoneyLimits(ctx, req.(*GetMoneyLimitsRequest))
+		return srv.(LimitsServiceServer).GetMoneyLimits(ctx, req.(*LimitsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

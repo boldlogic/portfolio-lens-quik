@@ -10,9 +10,9 @@ import (
 )
 
 type Service interface {
-	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
+	GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error)
+	GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
+	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 }
 
 type Handler struct {
@@ -27,7 +27,3 @@ func NewHandler(svc Service, logger *zap.Logger) *Handler {
 		logger:  logger,
 	}
 }
-
-// func ptr(s string) *string {
-// 	return &s
-// }

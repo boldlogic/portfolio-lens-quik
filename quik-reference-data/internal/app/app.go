@@ -59,7 +59,7 @@ func (a *application) Init() (*zap.Logger, error) {
 }
 
 func (a *application) Start(ctx context.Context) error {
-	repo, err := db.NewRepository(ctx, a.config.Db.GetDSN(), a.logger)
+	repo, err := db.NewRepository(ctx, a.config.Db, a.logger)
 	if err != nil {
 		return err
 	}

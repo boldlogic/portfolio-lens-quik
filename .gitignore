@@ -41,3 +41,6 @@ configs
 
 .obsidian
 .vscode
+loadtests
+grafana
+prometheus

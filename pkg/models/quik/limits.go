@@ -14,6 +14,11 @@ const (
 	LimitTypeMoney         LimitType = "money"          // денежные средства
 )
 
+const (
+	MaxClientCodeLen = 12
+	MinClientCodeLen = 1
+)
+
 type MoneyLimit struct {
 	LoadDate     time.Time
 	SourceDate   time.Time
