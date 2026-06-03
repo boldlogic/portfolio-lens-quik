@@ -97,13 +97,9 @@ func (r *Repository) SelectSecurityLimitsWithFilters(ctx context.Context, date t
 	defer func() { r.metrics.ObserveRepository("SelectSecurityLimitsWithFilters", time.Since(start), err) }()
 
 	return selectLimitsWithFilters(r, ctx, "SelectSecurityLimitsWithFilters", date, limit, offset, clientCodes, includeTotalCount, limitFilterSQL{
-		countByClients:    countSecurityLimitsByClients,
-		countByClientsOp:  "security_limits.count_by_clients",
-		countAll:          countSecurityLimitsAllClients,
-		countAllOp:        "security_limits.count_all",
-		selectByClients:   selectSecurityLimitsByClients,
-		selectByClientsOp: "security_limits.select_by_clients",
-		selectAll:         selectSecurityLimitsAllClients,
-		selectAllOp:       "security_limits.select_all",
+		countByClients:  countSecurityLimitsByClients,
+		countAll:        countSecurityLimitsAllClients,
+		selectByClients: selectSecurityLimitsByClients,
+		selectAll:       selectSecurityLimitsAllClients,
 	}, r.scanSecurityLimit)
 }

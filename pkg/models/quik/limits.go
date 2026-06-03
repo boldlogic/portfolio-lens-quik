@@ -46,20 +46,52 @@ type SecurityLimit struct {
 	ShortName      string
 }
 
-type Limit struct {
-	LimitType      LimitType
-	LoadDate       time.Time
-	SourceDate     time.Time
-	ClientCode     string
-	InstrumentCode string
-	ISIN           *string
-	SettleCode     SettleCode
-	FirmCode       string
-	FirmName       string
-	Balance        decimal.Decimal
-	AcquisitionCcy string
-}
+// type Limit struct {
+// 	LimitType      LimitType
+// 	LoadDate       time.Time
+// 	SourceDate     time.Time
+// 	ClientCode     string
+// 	InstrumentCode string
+// 	ISIN           *string
+// 	SettleCode     SettleCode
+// 	FirmCode       string
+// 	FirmName       string
+// 	Balance        decimal.Decimal
+// 	AcquisitionCcy string
+// }
 
+type Position struct {
+	LimitType  LimitType
+	LoadDate   time.Time
+	SourceDate time.Time
+	ClientCode string
+	FirmCode   string
+	FirmName   string
+	Ticker     string
+	Name       string
+	Balance    decimal.Decimal
+	MVInstr    decimal.Decimal
+	MVTotal    decimal.Decimal
+
+	// TradeAccount string
+
+	// PositionCode string
+	// ISIN         *string
+	// MvCurrency   sql.NullString
+
+	// MinorUnits sql.NullInt32
+
+	// AcquisitionCcy string
+
+	// QuoteDate      sql.NullTime
+
+	// MvInCcy          decimal.Decimal
+	// MvPrice          decimal.Decimal
+	// MvAccrued        decimal.Decimal
+	// MvTotal          decimal.Decimal
+	// TargetCurrency   sql.NullString
+	// TargetMinorUnits sql.NullInt32
+}
 type PortfolioEntry struct {
 	LimitType      LimitType
 	LoadDate       time.Time

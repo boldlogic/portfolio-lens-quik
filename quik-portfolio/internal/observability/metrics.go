@@ -18,7 +18,6 @@ var durationBuckets = []float64{.0005, .001, .0025, .005, .01, .025, .05, .1, .2
 
 type Recorder interface {
 	ObserveRepository(operation string, duration time.Duration, err error)
-	ObserveDBQuery(operation string, duration time.Duration, err error)
 }
 
 type noopRecorder struct{}
@@ -28,11 +27,9 @@ func Noop() Recorder {
 }
 
 func (noopRecorder) ObserveRepository(string, time.Duration, error) {}
-func (noopRecorder) ObserveDBQuery(string, time.Duration, error)    {}
 
 type Metrics struct {
 	repositoryDuration *prometheus.HistogramVec
-	dbQueryDuration    *prometheus.HistogramVec
 }
 
 func New(reg metrics.Registry) *Metrics {
@@ -42,7 +39,6 @@ func New(reg metrics.Registry) *Metrics {
 
 	return &Metrics{
 		repositoryDuration: registerOrGetHistogramVec(reg, newRepositoryDuration()),
-		dbQueryDuration:    registerOrGetHistogramVec(reg, newDBQueryDuration()),
 	}
 }
 
@@ -51,13 +47,6 @@ func (m *Metrics) ObserveRepository(operation string, duration time.Duration, er
 		return
 	}
 	m.repositoryDuration.WithLabelValues(operation, status(err)).Observe(duration.Seconds())
-}
-
-func (m *Metrics) ObserveDBQuery(operation string, duration time.Duration, err error) {
-	if m == nil || m.dbQueryDuration == nil {
-		return
-	}
-	m.dbQueryDuration.WithLabelValues(operation, status(err)).Observe(duration.Seconds())
 }
 
 func EnsureRecorder(rec Recorder) Recorder {
@@ -103,14 +92,6 @@ func newRepositoryDuration() *prometheus.HistogramVec {
 	return prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "quik_portfolio_repository_duration_seconds",
 		Help:    "Repository operation duration in seconds.",
-		Buckets: durationBuckets,
-	}, []string{"operation", "status"})
-}
-
-func newDBQueryDuration() *prometheus.HistogramVec {
-	return prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "quik_portfolio_db_query_duration_seconds",
-		Help:    "Database query duration in seconds.",
 		Buckets: durationBuckets,
 	}, []string{"operation", "status"})
 }

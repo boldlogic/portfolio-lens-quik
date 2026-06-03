@@ -118,84 +118,22 @@ CROSS APPLY dbo.fnFxRateToRub(norm.norm_tgt, c.load_date) ft
 ORDER BY c.load_date, c.client_code, c.ticker, c.trade_account, c.firm_code
 `
 
-func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error) {
-	var result []quik.PortfolioEntry
+func (r *Repository) SelectSecuritiesPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.PortfolioEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository("SelectSecuritiesPortfolio", time.Since(start), err) }()
+
 	r.Logger.Debug("запрос портфеля по бумагам", zap.Time("date", date), zap.String("target_ccy", targetCcy))
 
-	rows, err := r.Db.QueryContext(ctx, selectSecuritiesPortfolio, date, targetCcy)
+	scanFn := r.scanSecuritiesPortfolioRow(
+		date, targetCcy, quik.LimitTypeSecurities, "портфеля",
+		"ошибка при сканировании строки портфеля по бумагам",
+	)
+	result, err = selectRows(ctx, r.Db, selectSecuritiesPortfolio, scanFn, date, targetCcy)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
+		if shutdown.IsExceeded(err) || err == models.ErrRetrievingData {
 			return nil, err
 		}
 		r.Logger.Error("ошибка запроса портфеля по бумагам", zap.Time("date", date), zap.String("target_ccy", targetCcy), zap.Error(err))
-		return nil, models.ErrRetrievingData
-	}
-	defer rows.Close()
-
-	dateTrunc := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
-
-	for rows.Next() {
-		var row quik.PortfolioEntry
-		var mvISOCharCode, targetISOCharCode, shortName sql.NullString
-		var mvMinorUnits, targetMinorUnits sql.NullInt32
-		var quoteDate sql.NullTime
-		//TO-DO
-		err = rows.Scan(
-			&row.LoadDate,
-			&row.SourceDate,
-			&row.ClientCode,
-			&row.Instrument,
-			&row.TradeAccount,
-			&row.FirmCode,
-			&row.FirmName,
-			&row.Balance,
-			&row.AcquisitionCcy,
-			&row.ISIN,
-			&mvISOCharCode,
-
-			&mvMinorUnits,
-
-			&row.MvInCcy,
-			&row.MvPrice,
-			&row.MvAccrued,
-			&row.MvTotal,
-			&targetISOCharCode,
-			&targetMinorUnits,
-			&shortName,
-			&quoteDate,
-		)
-		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, err
-			}
-			r.Logger.Error("ошибка при сканировании строки портфеля по бумагам", zap.Time("date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
-		}
-		row.LimitType = quik.LimitTypeSecurities
-		if quoteDate.Valid {
-			row.QuoteDate = &quoteDate.Time
-			qt := time.Date(quoteDate.Time.Year(), quoteDate.Time.Month(), quoteDate.Time.Day(), 0, 0, 0, 0, quoteDate.Time.Location())
-			if qt.Before(dateTrunc) {
-				r.Logger.Warn("устаревшая котировка для портфеля",
-					zap.String("ticker", row.Instrument),
-					zap.Time("quote_date", quoteDate.Time),
-					zap.Time("load_date", date))
-			}
-		}
-		row.MvCurrency = mvISOCharCode.String
-
-		if targetISOCharCode.Valid {
-			row.TargetCurrency = targetISOCharCode.String
-		} else {
-			row.TargetCurrency = targetCcy
-		}
-		if shortName.Valid {
-			row.ShortName = &shortName.String
-		}
-		result = append(result, row)
-	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка при чтении портфеля по бумагам", zap.Time("date", date), zap.Error(rows.Err()))
 		return nil, models.ErrRetrievingData
 	}
 	if len(result) == 0 {
@@ -312,81 +250,22 @@ CROSS APPLY dbo.fnFxRateToRub(norm.norm_tgt, c.load_date) ft
 ORDER BY c.load_date, c.client_code, c.ticker, c.trade_account, c.firm_code
 `
 
-func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error) {
-	var result []quik.PortfolioEntry
+func (r *Repository) SelectSecuritiesOtcPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.PortfolioEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository("SelectSecuritiesOtcPortfolio", time.Since(start), err) }()
+
 	r.Logger.Debug("запрос портфеля по OTC-бумагам", zap.Time("date", date), zap.String("target_ccy", targetCcy))
 
-	rows, err := r.Db.QueryContext(ctx, selectSecuritiesOtcPortfolio, date, targetCcy)
+	scanFn := r.scanSecuritiesPortfolioRow(
+		date, targetCcy, quik.LimitTypeSecuritiesOtc, "OTC-портфеля",
+		"ошибка при сканировании строки портфеля по OTC-бумагам",
+	)
+	result, err = selectRows(ctx, r.Db, selectSecuritiesOtcPortfolio, scanFn, date, targetCcy)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
+		if shutdown.IsExceeded(err) || err == models.ErrRetrievingData {
 			return nil, err
 		}
 		r.Logger.Error("ошибка запроса портфеля по OTC-бумагам", zap.Time("date", date), zap.String("target_ccy", targetCcy), zap.Error(err))
-		return nil, models.ErrRetrievingData
-	}
-	defer rows.Close()
-
-	dateTrunc := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
-
-	for rows.Next() {
-		var row quik.PortfolioEntry
-		var mvISOCharCode, targetISOCharCode, shortName sql.NullString
-		var mvMinorUnits, targetMinorUnits sql.NullInt32
-		var quoteDate sql.NullTime
-
-		err = rows.Scan(
-			&row.LoadDate,
-			&row.SourceDate,
-			&row.ClientCode,
-			&row.Instrument,
-			&row.TradeAccount,
-			&row.FirmCode,
-			&row.FirmName,
-			&row.Balance,
-			&row.AcquisitionCcy,
-			&row.ISIN,
-			&mvISOCharCode,
-			&mvMinorUnits,
-			&row.MvInCcy,
-			&row.MvPrice,
-			&row.MvAccrued,
-			&row.MvTotal,
-			&targetISOCharCode,
-			&targetMinorUnits,
-			&shortName,
-			&quoteDate,
-		)
-		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, err
-			}
-			r.Logger.Error("ошибка при сканировании строки портфеля по OTC-бумагам", zap.Time("date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
-		}
-		row.LimitType = quik.LimitTypeSecuritiesOtc
-		if quoteDate.Valid {
-			row.QuoteDate = &quoteDate.Time
-			qt := time.Date(quoteDate.Time.Year(), quoteDate.Time.Month(), quoteDate.Time.Day(), 0, 0, 0, 0, quoteDate.Time.Location())
-			if qt.Before(dateTrunc) {
-				r.Logger.Warn("устаревшая котировка для OTC-портфеля",
-					zap.String("ticker", row.Instrument),
-					zap.Time("quote_date", quoteDate.Time),
-					zap.Time("load_date", date))
-			}
-		}
-		row.MvCurrency = mvISOCharCode.String
-		if targetISOCharCode.Valid {
-			row.TargetCurrency = targetISOCharCode.String
-		} else {
-			row.TargetCurrency = targetCcy
-		}
-		if shortName.Valid {
-			row.ShortName = &shortName.String
-		}
-		result = append(result, row)
-	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка при чтении портфеля по OTC-бумагам", zap.Time("date", date), zap.Error(rows.Err()))
 		return nil, models.ErrRetrievingData
 	}
 	if len(result) == 0 {
@@ -451,21 +330,98 @@ WHERE c.settle_code = c.settle_max AND c.balance <> 0
 ORDER BY c.load_date, c.client_code, c.ccy, c.position_code, c.firm_code;
 `
 
-func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error) {
+func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.PortfolioEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository("SelectMoneyLimitsPortfolio", time.Since(start), err) }()
+
 	r.Logger.Debug("запрос денежных позиций для портфеля", zap.Time("date", date), zap.String("target_ccy", targetCcy))
 
-	rows, err := r.Db.QueryContext(ctx, selectMoneyLimitsPortfolio, date, targetCcy)
+	scanFn := r.scanMoneyLimitsPortfolioRow(date, targetCcy)
+	result, err = selectRows(ctx, r.Db, selectMoneyLimitsPortfolio, scanFn, date, targetCcy)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
+		if shutdown.IsExceeded(err) || err == models.ErrRetrievingData {
 			return nil, err
 		}
 		r.Logger.Error("ошибка запроса денежных позиций для портфеля", zap.Time("date", date), zap.String("target_ccy", targetCcy), zap.Error(err))
 		return nil, models.ErrRetrievingData
 	}
-	defer rows.Close()
+	if len(result) == 0 {
+		r.Logger.Warn("денежные позиции для портфеля не найдены", zap.Time("date", date))
+	} else {
+		r.Logger.Debug("денежные позиции для портфеля получены", zap.Time("date", date), zap.Int("count", len(result)))
+	}
+	return result, nil
+}
 
-	var result []quik.PortfolioEntry
-	for rows.Next() {
+func (r *Repository) scanSecuritiesPortfolioRow(
+	date time.Time,
+	targetCcy string,
+	limitType quik.LimitType,
+	staleWarnSuffix string,
+	scanErrLog string,
+) func(*sql.Rows) (quik.PortfolioEntry, error) {
+	dateTrunc := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+	return func(rows *sql.Rows) (quik.PortfolioEntry, error) {
+		var row quik.PortfolioEntry
+		var mvISOCharCode, targetISOCharCode, shortName sql.NullString
+		var mvMinorUnits, targetMinorUnits sql.NullInt32
+		var quoteDate sql.NullTime
+
+		err := rows.Scan(
+			&row.LoadDate,
+			&row.SourceDate,
+			&row.ClientCode,
+			&row.Instrument,
+			&row.TradeAccount,
+			&row.FirmCode,
+			&row.FirmName,
+			&row.Balance,
+			&row.AcquisitionCcy,
+			&row.ISIN,
+			&mvISOCharCode,
+			&mvMinorUnits,
+			&row.MvInCcy,
+			&row.MvPrice,
+			&row.MvAccrued,
+			&row.MvTotal,
+			&targetISOCharCode,
+			&targetMinorUnits,
+			&shortName,
+			&quoteDate,
+		)
+		if err != nil {
+			if shutdown.IsExceeded(err) {
+				return quik.PortfolioEntry{}, err
+			}
+			r.Logger.Error(scanErrLog, zap.Time("date", date), zap.Error(err))
+			return quik.PortfolioEntry{}, models.ErrRetrievingData
+		}
+		row.LimitType = limitType
+		if quoteDate.Valid {
+			row.QuoteDate = &quoteDate.Time
+			qt := time.Date(quoteDate.Time.Year(), quoteDate.Time.Month(), quoteDate.Time.Day(), 0, 0, 0, 0, quoteDate.Time.Location())
+			if qt.Before(dateTrunc) {
+				r.Logger.Warn("устаревшая котировка для "+staleWarnSuffix,
+					zap.String("ticker", row.Instrument),
+					zap.Time("quote_date", quoteDate.Time),
+					zap.Time("load_date", date))
+			}
+		}
+		row.MvCurrency = mvISOCharCode.String
+		if targetISOCharCode.Valid {
+			row.TargetCurrency = targetISOCharCode.String
+		} else {
+			row.TargetCurrency = targetCcy
+		}
+		if shortName.Valid {
+			row.ShortName = &shortName.String
+		}
+		return row, nil
+	}
+}
+
+func (r *Repository) scanMoneyLimitsPortfolioRow(date time.Time, targetCcy string) func(*sql.Rows) (quik.PortfolioEntry, error) {
+	return func(rows *sql.Rows) (quik.PortfolioEntry, error) {
 		var (
 			ccy, positionCode, firmCode, firmName string
 			balanceTarget                         decimal.Decimal
@@ -474,7 +430,7 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 			mvMinorUnits, tgtMinorUnits           sql.NullInt32
 			row                                   quik.PortfolioEntry
 		)
-		err = rows.Scan(
+		err := rows.Scan(
 			&row.LoadDate,
 			&row.SourceDate,
 			&row.ClientCode,
@@ -493,10 +449,10 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 		)
 		if err != nil {
 			if shutdown.IsExceeded(err) {
-				return nil, err
+				return quik.PortfolioEntry{}, err
 			}
 			r.Logger.Error("ошибка чтения денежной позиции для портфеля", zap.Time("date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
+			return quik.PortfolioEntry{}, models.ErrRetrievingData
 		}
 
 		row.LimitType = quik.LimitTypeMoney
@@ -509,28 +465,17 @@ func (r *Repository) SelectMoneyLimitsPortfolio(ctx context.Context, date time.T
 		if quoteDate.Valid {
 			row.QuoteDate = &quoteDate.Time
 		} else {
-			row.QuoteDate = &row.LoadDate // fallback: курс не найден (rate=1), показываем дату лимита
+			row.QuoteDate = &row.LoadDate
 		}
 		if shortName.Valid {
 			row.ShortName = &shortName.String
 		}
-
 		row.MvCurrency = mvISO.String
 		if tgtISO.Valid {
 			row.TargetCurrency = tgtISO.String
 		} else {
 			row.TargetCurrency = targetCcy
 		}
-		result = append(result, row)
+		return row, nil
 	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка чтения денежных позиций для портфеля", zap.Time("date", date), zap.Error(rows.Err()))
-		return nil, models.ErrRetrievingData
-	}
-	if len(result) == 0 {
-		r.Logger.Warn("денежные позиции для портфеля не найдены", zap.Time("date", date))
-	} else {
-		r.Logger.Debug("денежные позиции для портфеля получены", zap.Time("date", date), zap.Int("count", len(result)))
-	}
-	return result, nil
 }

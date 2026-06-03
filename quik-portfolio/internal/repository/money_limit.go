@@ -88,13 +88,9 @@ func (r *Repository) SelectMoneyLimitsWithFilters(ctx context.Context, date time
 	defer func() { r.metrics.ObserveRepository("SelectMoneyLimitsWithFilters", time.Since(start), err) }()
 
 	return selectLimitsWithFilters(r, ctx, "SelectMoneyLimitsWithFilters", date, limit, offset, clientCodes, includeTotalCount, limitFilterSQL{
-		countByClients:    countMoneyLimitsByClients,
-		countByClientsOp:  "money_limits.count_by_clients",
-		countAll:          countMoneyLimitsAllClients,
-		countAllOp:        "money_limits.count_all",
-		selectByClients:   selectMoneyLimitsByClients,
-		selectByClientsOp: "money_limits.select_by_clients",
-		selectAll:         selectMoneyLimitsAllClients,
-		selectAllOp:       "money_limits.select_all",
+		countByClients:  countMoneyLimitsByClients,
+		countAll:        countMoneyLimitsAllClients,
+		selectByClients: selectMoneyLimitsByClients,
+		selectAll:       selectMoneyLimitsAllClients,
 	}, r.scanMoneyLimit)
 }

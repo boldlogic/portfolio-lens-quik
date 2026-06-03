@@ -7,6 +7,7 @@ import (
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -32,5 +33,6 @@ type Service interface {
 	GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error)
 	GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
-	GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
+	// GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
+	GetMoneyPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error)
 }
