@@ -21,11 +21,8 @@ type SecurityLimitsOtcRepo interface {
 }
 
 type PortfolioRepo interface {
-	SelectSecuritiesPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
-	SelectSecuritiesOtcPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
-	SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
-
 	SelectMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error)
+	SelectSecPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error)
 }
 
 type Repository interface {

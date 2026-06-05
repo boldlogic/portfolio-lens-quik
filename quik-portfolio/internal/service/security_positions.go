@@ -10,9 +10,10 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
-func (s *Service) GetMoneyPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error) {
+func (s *Service) GetSecurityPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error) {
 	if currency == nil {
 		currency = new("RUB")
 	} else {
@@ -22,31 +23,18 @@ func (s *Service) GetMoneyPositions(ctx context.Context, currency *string) ([]qu
 		}
 		currency = new(ccy.String())
 	}
-
-	date := dates.Today()
-
 	c, ok := iso4217.LookupByAlpha3(*currency)
 	var minorUnits int32 = 2
 	if ok {
 		minorUnits = int32(c.MinorUnits)
 	}
+	s.logger.Debug("mi", zap.Int32("minorUnits", minorUnits))
+	date := dates.Today()
 
-	positions, err := s.repo.SelectMoneyPortfolio(ctx, date, *currency)
+	positions, err := s.repo.SelectSecPortfolio(ctx, date, *currency)
 	if err != nil {
 		return nil, decimal.Decimal{}, "", err
 	}
 
 	return positions, sumTotalMarketValue(positions, minorUnits), *currency, nil
-}
-
-func sumTotalMarketValue(positions []quik.Position, minorUnits int32) decimal.Decimal {
-
-	var total decimal.Decimal
-	for _, pos := range positions {
-		total = decimal.Sum(total, pos.MVTotal)
-
-	}
-
-	total.Round(minorUnits)
-	return total
 }

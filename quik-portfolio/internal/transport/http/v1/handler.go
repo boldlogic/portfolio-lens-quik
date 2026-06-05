@@ -35,4 +35,5 @@ type Service interface {
 	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 	// GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
 	GetMoneyPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error)
+	GetSecurityPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error)
 }

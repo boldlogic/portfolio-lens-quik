@@ -36,13 +36,14 @@ const (
 		SELECT
 			c.load_date,
 			c.source_date,
+			cr.rate_date,
 			c.client_code,
 			c.firm_code,
 			c.firm_name,
 			c.currency_code,
 			currency_name=COALESCE(cv_ec.currency_name,   cv_iso.currency_name),
-			c.balance,
-			market_value=round(c.balance  *f.rate/ ft.rate,isnull(ct.minor_units, 2))
+			balance=cast(c.balance as decimal(18,2)),
+			market_value=cast(c.balance *cr.rate as decimal(18,2))
 			FROM cte c
 		LEFT JOIN dbo.external_codes ec_ccy 
 			ON ec_ccy.ext_system_id = (select
@@ -55,32 +56,12 @@ const (
 			AND ec_ccy.ext_code = c.currency_code
 		LEFT JOIN currencies cv_ec  ON cv_ec.iso_code  = ec_ccy.internal_id
 		LEFT JOIN currencies cv_iso ON cv_iso.iso_char_code = c.currency_code
-		JOIN currencies ct ON ct.iso_char_code = @p2
-		CROSS APPLY dbo.fnFxRateToRub(ISNULL(COALESCE(cv_ec.iso_char_code,   cv_iso.iso_char_code), ''), c.load_date) f
-		CROSS APPLY dbo.fnFxRateToRub(@p2,            c.load_date) ft
+		cross apply dbo.fnFxRateCross(ISNULL(COALESCE(cv_ec.iso_char_code,cv_iso.iso_char_code), ''),@p2,@p1) cr
 		WHERE c.settle_code = c.settle_max	
 	`
 )
 
-func scanMoneyToPosition(row *sql.Rows) (moneyPosition, error) {
-	var out moneyPosition
-	err := row.Scan(
-		&out.LoadDate,
-		&out.SourceDate,
-		&out.ClientCode,
-		&out.FirmCode,
-		&out.FirmName,
-		&out.CurrencyCode,
-		&out.CurrencyName,
-		&out.Balance,
-		&out.MV,
-	)
-	if err != nil {
-		return moneyPosition{}, err
-	}
 
-	return out, nil
-}
 
 func (r *Repository) SelectMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
 	start := time.Now()
@@ -94,11 +75,30 @@ func (r *Repository) SelectMoneyPortfolio(ctx context.Context, date time.Time, t
 		date,
 		targetCcy)
 	if err != nil {
+		return nil, err
+	}
+	result = toPosition(pos)
+
+	return result, nil
+}
+
+func (r *Repository) SelectSecPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository("SelectSecPortfolio", time.Since(start), err) }()
+
+	pos, err := selectRows(
+		ctx,
+		r.Db,
+		selectSecurityPositions,
+		scanSecurityToPosition,
+		date,
+		targetCcy)
+	if err != nil {
 		r.Logger.Error("", zap.Error(err))
 
 		return nil, err
 	}
-	result = toPosition(pos)
+	result = rawToPosition(pos)
 
 	return result, nil
 }

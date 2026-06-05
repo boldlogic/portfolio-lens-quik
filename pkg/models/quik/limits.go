@@ -46,71 +46,22 @@ type SecurityLimit struct {
 	ShortName      string
 }
 
-// type Limit struct {
-// 	LimitType      LimitType
-// 	LoadDate       time.Time
-// 	SourceDate     time.Time
-// 	ClientCode     string
-// 	InstrumentCode string
-// 	ISIN           *string
-// 	SettleCode     SettleCode
-// 	FirmCode       string
-// 	FirmName       string
-// 	Balance        decimal.Decimal
-// 	AcquisitionCcy string
-// }
 
 type Position struct {
-	LimitType  LimitType
-	LoadDate   time.Time
-	SourceDate time.Time
-	ClientCode string
-	FirmCode   string
-	FirmName   string
-	Ticker     string
-	Name       string
-	Balance    decimal.Decimal
-	MVInstr    decimal.Decimal
-	MVTotal    decimal.Decimal
+	LimitType    LimitType
+	LoadDate     time.Time       //дата исходного лимита
+	SourceDate   time.Time       // если не равен LoadDate то означает дату, с которой перенесен лимит
+	ClientCode   string          //код клиента
+	FirmCode     string          //код фирмы
+	FirmName     string          //название фирмы
+	Ticker       string          //код инструмента
+	Name         string          //название инструмента
+	Balance      decimal.Decimal //текущее количество на максимальную дату расчета
+	Price        decimal.Decimal //цена позиции
+	AccruedInt   decimal.Decimal //НКД в валюте инструмента
+	MVInstr      decimal.Decimal //оценка позиции в валюте инструмента
+	MVTotal      decimal.Decimal // оценка позиции в валюте запроса
+	CurrencyCode string          //валюта инструмента
 
-	// TradeAccount string
-
-	// PositionCode string
-	// ISIN         *string
-	// MvCurrency   sql.NullString
-
-	// MinorUnits sql.NullInt32
-
-	// AcquisitionCcy string
-
-	// QuoteDate      sql.NullTime
-
-	// MvInCcy          decimal.Decimal
-	// MvPrice          decimal.Decimal
-	// MvAccrued        decimal.Decimal
-	// MvTotal          decimal.Decimal
-	// TargetCurrency   sql.NullString
-	// TargetMinorUnits sql.NullInt32
 }
-type PortfolioEntry struct {
-	LimitType      LimitType
-	LoadDate       time.Time
-	SourceDate     time.Time
-	ClientCode     string
-	FirmCode       string
-	FirmName       string
-	Instrument     string
-	TradeAccount   string
-	PositionCode   string
-	ISIN           *string
-	AcquisitionCcy string
-	ShortName      *string
-	QuoteDate      *time.Time
-	Balance        decimal.Decimal
-	MvCurrency     string
-	MvInCcy        decimal.Decimal
-	MvPrice        decimal.Decimal
-	MvAccrued      decimal.Decimal
-	MvTotal        decimal.Decimal
-	TargetCurrency string
-}
+

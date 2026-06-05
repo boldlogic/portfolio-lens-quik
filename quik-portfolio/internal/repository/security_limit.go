@@ -66,31 +66,7 @@ FROM quik.security_limits li
 WHERE li.load_date = cast(@p1 as date)`
 )
 
-func (r *Repository) scanSecurityLimit(row *sql.Rows) (quik.SecurityLimit, error) {
-	out := quik.SecurityLimit{}
-	var shortName sql.NullString
-	err := row.Scan(
-		&out.LoadDate,
-		&out.SourceDate,
-		&out.ClientCode,
-		&out.Ticker,
-		&out.SettleCode,
-		&out.TradeAccount,
-		&out.FirmCode,
-		&out.FirmName,
-		&out.Balance,
-		&out.AcquisitionCcy,
-		&out.ISIN,
-		&shortName,
-	)
-	if err != nil {
-		return quik.SecurityLimit{}, err
-	}
-	if shortName.Valid {
-		out.ShortName = shortName.String
-	}
-	return out, nil
-}
+
 
 func (r *Repository) SelectSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error) {
 	start := time.Now()
@@ -101,5 +77,5 @@ func (r *Repository) SelectSecurityLimitsWithFilters(ctx context.Context, date t
 		countAll:        countSecurityLimitsAllClients,
 		selectByClients: selectSecurityLimitsByClients,
 		selectAll:       selectSecurityLimitsAllClients,
-	}, r.scanSecurityLimit)
+	}, scanSecurityLimit)
 }

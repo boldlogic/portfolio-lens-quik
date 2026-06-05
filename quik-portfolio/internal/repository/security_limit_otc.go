@@ -74,5 +74,5 @@ func (r *Repository) SelectSecurityLimitsOtcWithFilters(ctx context.Context, dat
 		countAll:        countSecurityLimitsOtcAllClients,
 		selectByClients: selectSecurityLimitsOtcByClients,
 		selectAll:       selectSecurityLimitsOtcAllClients,
-	}, r.scanSecurityLimit)
+	}, scanSecurityLimit)
 }

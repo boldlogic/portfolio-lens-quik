@@ -32,7 +32,8 @@ ORDER BY li.load_date,
 OFFSET @p2 ROWS 
 FETCH NEXT @p3 ROWS ONLY`
 
-const selectMoneyLimitsAllClients = `SELECT
+const selectMoneyLimitsAllClients = `
+SELECT
     li.load_date,
     li.source_date,
     li.client_code,
@@ -64,24 +65,7 @@ const countMoneyLimitsAllClients = `SELECT COUNT(*)
 FROM quik.money_limits li
 WHERE li.load_date = cast(@p1 as date) `
 
-func (r *Repository) scanMoneyLimit(row *sql.Rows) (quik.MoneyLimit, error) {
-	out := quik.MoneyLimit{}
-	err := row.Scan(
-		&out.LoadDate,
-		&out.SourceDate,
-		&out.ClientCode,
-		&out.Currency,
-		&out.PositionCode,
-		&out.SettleCode,
-		&out.FirmCode,
-		&out.FirmName,
-		&out.Balance,
-	)
-	if err != nil {
-		return quik.MoneyLimit{}, err
-	}
-	return out, nil
-}
+
 
 func (r *Repository) SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error) {
 	start := time.Now()
@@ -92,5 +76,5 @@ func (r *Repository) SelectMoneyLimitsWithFilters(ctx context.Context, date time
 		countAll:        countMoneyLimitsAllClients,
 		selectByClients: selectMoneyLimitsByClients,
 		selectAll:       selectMoneyLimitsAllClients,
-	}, r.scanMoneyLimit)
+	}, scanMoneyLimit)
 }
