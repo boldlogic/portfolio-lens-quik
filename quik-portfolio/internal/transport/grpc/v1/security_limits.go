@@ -25,8 +25,8 @@ func securityLimitToProto(l quik.SecurityLimit) *quikv1.SecurityLimit {
 		SourceDate:     timeToProtoDate(l.SourceDate),
 		LoadDate:       timeToProtoDate(l.LoadDate),
 	}
-	if l.ISIN != nil {
-		pb.Isin = l.ISIN
+	if l.ISIN != "" {
+		pb.Isin = &l.ISIN
 	}
 	if sn := strings.TrimSpace(l.ShortName); sn != "" {
 		pb.ShortName = &sn

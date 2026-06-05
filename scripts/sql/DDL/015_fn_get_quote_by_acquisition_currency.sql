@@ -1,51 +1,63 @@
 CREATE OR ALTER FUNCTION dbo.fnGetQuoteByAcquisitionCurrency 
 (
-@ticker CHAR(12), 
-@currency CHAR(4)
+@sec_code varchar(12), 
+@acquisition_currency_code varchar(4)
 ) 
 RETURNS 
 TABLE 
 AS RETURN (
     SELECT
-        TOP 1 market_value = ROUND(instr.price + ai_instr.ai, 4),
-        price = ROUND(instr.price, 4),
-        ai = ROUND(ai_instr.ai, 4),
-        short_name=trim(q.short_name),
+        TOP 1 market_value = CAST(ROUND(instr.price + ai_instr.ai, 4) AS DECIMAL(19, 4)),
+        price = CAST(ROUND(instr.price, 4) AS DECIMAL(19, 4)),
+        ai = CAST(ROUND(ai_instr.ai, 4) AS DECIMAL(19, 4)),
+        short_name = TRIM(q.short_name),
         q.quote_date,
         instr.currency
     FROM
         quik.current_quotes q
-        outer apply (
-            select
-                interest = isnull(q.accrued_int, 0),
-                currency = case when q.instrument_type = 'Облигации' then isnull(q.counter_currency, q.currency) else null end
+        OUTER APPLY (
+            SELECT
+                interest = ISNULL(q.accrued_int, CAST(0 AS DECIMAL(19, 8))),
+                currency = CASE WHEN q.instrument_type = N'Облигации' THEN ISNULL(q.counter_currency, q.currency) ELSE NULL END
         ) accrued
-        outer apply (
-            select
-                price = case when q.instrument_type = 'Облигации' then (isnull(q.face_value, 0) / 100.0) * (
-                    case when isnull(q.last_price, 0) <> 0 then q.last_price else isnull(q.close_price, 0) end
-                ) else (
-                    case when isnull(q.last_price, 0) <> 0 then q.last_price else q.close_price end
-                ) end,
-                currency = case when q.instrument_type = 'Облигации' then coalesce(
-                    nullif(trim(q.base_currency), ''),
-                    nullif(trim(q.quote_currency), ''),
-                    nullif(trim(q.currency), '')
-                ) else isnull(q.counter_currency, q.base_currency) end
+        OUTER APPLY (
+            SELECT
+                price = CASE WHEN q.instrument_type = N'Облигации' THEN
+                    (ISNULL(q.face_value, CAST(0 AS DECIMAL(19, 8))) / CAST(100 AS DECIMAL(19, 8)))
+                    * CASE
+                        WHEN ISNULL(q.last_price, CAST(0 AS DECIMAL(19, 8))) <> 0 THEN q.last_price
+                        ELSE ISNULL(q.close_price, CAST(0 AS DECIMAL(19, 8)))
+                    END
+                ELSE
+                    CASE
+                        WHEN ISNULL(q.last_price, CAST(0 AS DECIMAL(19, 8))) <> 0 THEN q.last_price
+                        ELSE q.close_price
+                    END
+                END,
+                currency = CASE WHEN q.instrument_type = N'Облигации' THEN COALESCE(
+                    NULLIF(TRIM(q.base_currency), N''),
+                    NULLIF(TRIM(q.quote_currency), N''),
+                    NULLIF(TRIM(q.currency), N'')
+                ) ELSE ISNULL(q.counter_currency, q.base_currency) END
         ) instr
-        outer apply (
-            select
-                ai = case when q.instrument_type = 'Облигации'
-                and accrued.currency <> instr.currency then (
-                    select
-                        accrued.interest * rate
-                    from
+        OUTER APPLY (
+            SELECT
+                ai = CASE WHEN q.instrument_type = N'Облигации'
+                AND accrued.currency <> instr.currency THEN (
+                    SELECT
+                        CAST(accrued.interest * rate AS DECIMAL(19, 8))
+                    FROM
                         dbo.fnFxRateCross (accrued.currency, instr.currency, q.quote_date)
-                ) else accrued.interest end
+                ) ELSE accrued.interest END
         ) ai_instr
     WHERE
-        q.ticker = @ticker
+        q.sec_code = @sec_code
     ORDER BY
-        case when @currency = q.base_currency
-        and @currency = q.counter_currency then 0 when @currency = q.base_currency then 1 when @currency = q.counter_currency then 2 else 3 end
+        CASE
+            WHEN @acquisition_currency_code = q.base_currency
+                AND @acquisition_currency_code = q.counter_currency THEN 0
+            WHEN @acquisition_currency_code = q.base_currency THEN 1
+            WHEN @acquisition_currency_code = q.counter_currency THEN 2
+            ELSE 3
+        END
 );

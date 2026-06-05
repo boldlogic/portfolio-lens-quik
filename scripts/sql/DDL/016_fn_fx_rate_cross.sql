@@ -1,7 +1,7 @@
 CREATE OR ALTER FUNCTION dbo.fnFxRateCross 
 (
-    @fromIsoCode CHAR(3),
-    @toIsoCode CHAR(3),
+    @fromIsoCode varchar(4),
+    @toIsoCode varchar(4),
     @date DATE
 ) 
 RETURNS 

@@ -1,17 +1,10 @@
 package repository
 
 import (
-	"database/sql"
-	"time"
-
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/shopspring/decimal"
 )
 
-
-
-
-func toPosition(positions []moneyPosition) []quik.Position {
+func moneyPortfolioRowsToPositions(positions []moneyPortfolioRow) []quik.Position {
 	var out = make([]quik.Position, 0, len(positions))
 
 	for _, p := range positions {
@@ -29,14 +22,14 @@ func toPosition(positions []moneyPosition) []quik.Position {
 			Name:       currencyName,
 			Balance:    p.Balance,
 			MVInstr:    p.Balance,
-			MVTotal:    p.MV,
+			MVTotal:    p.MarketValueInTargetCurrency,
 		})
 	}
 
 	return out
 }
 
-func (p securityPosition) convertToPosition() quik.Position {
+func (p securityPortfolioRow) toQuikPosition() quik.Position {
 	out := quik.Position{
 		LimitType:  quik.LimitTypeSecurities,
 		LoadDate:   p.LoadDate,
@@ -50,49 +43,30 @@ func (p securityPosition) convertToPosition() quik.Position {
 
 	out.Balance = p.Balance
 
-	if p.Price != nil {
-		out.Price = *p.Price
+	if p.UnitPrice != nil {
+		out.Price = *p.UnitPrice
 	}
 
-	if p.AccruedInt != nil {
-		out.AccruedInt = *p.AccruedInt
+	if p.AccruedInterest != nil {
+		out.AccruedInt = *p.AccruedInterest
 	}
-	if p.MVInstr != nil {
-		out.MVInstr = *p.MVInstr
+	if p.MarketValueInInstrCurrency != nil {
+		out.MVInstr = *p.MarketValueInInstrCurrency
 	}
 
-	if p.MV != nil {
-		out.MVTotal = *p.MV
+	if p.MarketValueInTargetCurrency != nil {
+		out.MVTotal = *p.MarketValueInTargetCurrency
 	}
 
 	return out
 }
 
-func rawToPosition(positions []securityPosition) []quik.Position {
+func securityPortfolioRowsToPositions(positions []securityPortfolioRow) []quik.Position {
 	var out = make([]quik.Position, 0, len(positions))
 
 	for _, p := range positions {
-		out = append(out, p.convertToPosition())
+		out = append(out, p.toQuikPosition())
 	}
 
 	return out
-}
-
-
-type securityPosition struct {
-	LoadDate     time.Time
-	SourceDate   time.Time
-	QuoteDate    sql.NullTime
-	RateDate     sql.NullTime
-	ClientCode   string
-	FirmCode     string
-	FirmName     sql.NullString
-	SecCode      string
-	SecName      sql.NullString
-	Balance      decimal.Decimal
-	Price        *decimal.Decimal
-	AccruedInt   *decimal.Decimal
-	MVInstr      *decimal.Decimal
-	MV           *decimal.Decimal
-	CurrencyCode string
 }

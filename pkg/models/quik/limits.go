@@ -19,6 +19,18 @@ const (
 	MinClientCodeLen = 1
 )
 
+type Limit struct {
+	LoadDate     time.Time
+	SourceDate   time.Time
+	ClientCode   string
+	Currency     string
+	PositionCode string
+	SettleCode   SettleCode
+	FirmCode     string
+	FirmName     string
+	Balance      decimal.Decimal
+}
+
 type MoneyLimit struct {
 	LoadDate     time.Time
 	SourceDate   time.Time
@@ -42,10 +54,9 @@ type SecurityLimit struct {
 	FirmName       string
 	Balance        decimal.Decimal
 	AcquisitionCcy string
-	ISIN           *string
+	ISIN           string
 	ShortName      string
 }
-
 
 type Position struct {
 	LimitType    LimitType
@@ -64,4 +75,3 @@ type Position struct {
 	CurrencyCode string          //валюта инструмента
 
 }
-

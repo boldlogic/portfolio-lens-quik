@@ -5,56 +5,10 @@ import (
 	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"go.uber.org/zap"
 )
 
 const (
-	selectSecurityLimitsOtcByClients = `SELECT
-    li.load_date,
-    li.source_date,
-    li.client_code,
-    li.ticker,
-    li.settle_code,
-    li.trade_account,
-    li.firm_code,
-    li.firm_name,
-    li.balance,
-    li.acquisition_ccy,
-    li.isin,
-    li.sec_name
-FROM quik.security_limits_otc li
-join @codes c on c.client_code = li.client_code
-WHERE li.load_date = cast(@p1 as date)
-ORDER BY li.load_date, 
-li.client_code, 
-li.ticker, 
-li.trade_account, 
-li.settle_code,
-li.firm_code
-OFFSET @p2 ROWS FETCH NEXT @p3 ROWS ONLY`
-
-	selectSecurityLimitsOtcAllClients = `SELECT
-    li.load_date,
-    li.source_date,
-    li.client_code,
-    li.ticker,
-    li.settle_code,
-    li.trade_account,
-    li.firm_code,
-    li.firm_name,
-    li.balance,
-    li.acquisition_ccy,
-    li.isin,
-    li.sec_name
-FROM quik.security_limits_otc li
-WHERE li.load_date = cast(@p1 as date)
-ORDER BY li.load_date, 
-li.client_code, 
-li.ticker, 
-li.trade_account, 
-li.settle_code,
-li.firm_code
-OFFSET @p2 ROWS FETCH NEXT @p3 ROWS ONLY`
-
 	countSecurityLimitsOtcByClients = `SELECT COUNT(*)
 FROM quik.security_limits_otc li
 join @codes c on c.client_code = li.client_code
@@ -69,10 +23,40 @@ func (r *Repository) SelectSecurityLimitsOtcWithFilters(ctx context.Context, dat
 	start := time.Now()
 	defer func() { r.metrics.ObserveRepository("SelectSecurityLimitsOtcWithFilters", time.Since(start), err) }()
 
-	return selectLimitsWithFilters(r, ctx, "SelectSecurityLimitsOtcWithFilters", date, limit, offset, clientCodes, includeTotalCount, limitFilterSQL{
+	limits, totalCount, err := selectLimitsWithFilters(r, ctx, "SelectSecurityLimitsOtcWithFilters", date, limit, offset, clientCodes, includeTotalCount, limitFilterSQL{
 		countByClients:  countSecurityLimitsOtcByClients,
 		countAll:        countSecurityLimitsOtcAllClients,
 		selectByClients: selectSecurityLimitsOtcByClients,
 		selectAll:       selectSecurityLimitsOtcAllClients,
-	}, scanSecurityLimit)
+	}, scanSecurityLimitRow)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, raw := range limits {
+		limit, validationErr := raw.toQuik()
+		if validationErr != nil {
+			r.Logger.Warn("нужно завести новый код", zap.Error(validationErr),
+				zap.Time("load_date", raw.LoadDate),
+				zap.String("client_code", raw.ClientCode),
+				zap.String("sec_code", raw.SecCode),
+				zap.String("trade_account", raw.TradeAccount),
+				zap.String("settle_code", raw.SettleCode),
+				zap.String("firm_code", raw.FirmCode),
+			)
+		}
+		result = append(result, limit)
+		if raw.LoadDate.Before(date) {
+			r.Logger.Warn("устаревший лимит по деньгам", zap.Time("запрошена дата", date),
+				zap.Time("load_date", raw.LoadDate),
+				zap.String("client_code", raw.ClientCode),
+				zap.String("sec_code", raw.SecCode),
+				zap.String("trade_account", raw.TradeAccount),
+				zap.String("settle_code", raw.SettleCode),
+				zap.String("firm_code", raw.FirmCode),
+			)
+
+		}
+	}
+	return result, totalCount, nil
+
 }

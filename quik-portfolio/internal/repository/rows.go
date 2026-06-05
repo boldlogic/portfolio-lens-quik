@@ -3,12 +3,18 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type queryRunner interface {
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
+
+
+var (
+	ErrScan = errors.New("ошибка чтения строки")
+)
 
 func selectRows[T any](
 	ctx context.Context,
