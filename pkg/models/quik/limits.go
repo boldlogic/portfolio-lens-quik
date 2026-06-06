@@ -59,19 +59,18 @@ type SecurityLimit struct {
 }
 
 type Position struct {
-	LimitType    LimitType
-	LoadDate     time.Time       //дата исходного лимита
-	SourceDate   time.Time       // если не равен LoadDate то означает дату, с которой перенесен лимит
-	ClientCode   string          //код клиента
-	FirmCode     string          //код фирмы
-	FirmName     string          //название фирмы
-	Ticker       string          //код инструмента
-	Name         string          //название инструмента
-	Balance      decimal.Decimal //текущее количество на максимальную дату расчета
-	Price        decimal.Decimal //цена позиции
-	AccruedInt   decimal.Decimal //НКД в валюте инструмента
-	MVInstr      decimal.Decimal //оценка позиции в валюте инструмента
-	MVTotal      decimal.Decimal // оценка позиции в валюте запроса
-	CurrencyCode string          //валюта инструмента
-
+	LimitType                   LimitType
+	LoadDate                    time.Time       //дата исходного лимита
+	SourceDate                  time.Time       // если не равен LoadDate то означает дату, с которой перенесен лимит
+	ClientCode                  string          //код клиента
+	FirmCode                    string          //код фирмы
+	FirmName                    string          //название фирмы
+	Ticker                      string          //код инструмента
+	Name                        string          //название инструмента
+	Amount                      decimal.Decimal //текущее фактическое количество
+	UnitPrice                   decimal.Decimal //цена позиции
+	AccruedInterest             decimal.Decimal //НКД в валюте инструмента
+	MarketValueInInstrCurrency  decimal.Decimal //оценка позиции в валюте инструмента
+	MarketValueInTargetCurrency decimal.Decimal // оценка позиции в валюте запроса
+	InstrumentCurrencyCode      string          //валюта инструмента
 }

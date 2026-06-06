@@ -3,28 +3,27 @@ package v1
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
 )
 
-type portfolio struct {
-	MVTotal   decimal.Decimal `json:"marketValueTotal"`
-	Currency  string          `json:"currency"`
-	Positions []position      `json:"positions"`
+type portfolioDTO struct {
+	MarketValueTotal decimal.Decimal `json:"marketValueTotal"`
+	TargetCurrency   string          `json:"targetCurrency"`
+	Positions        []positionDTO   `json:"positions"`
 }
 
-func portfolioToDTO(positions []quik.Position, total decimal.Decimal, portfolioCCY string) portfolio {
+func positionsToPortfolioDTO(positions []quik.Position, total decimal.Decimal, portfolioCCY string) portfolioDTO {
 
-	out := portfolio{
-		MVTotal:  total,
-		Currency: portfolioCCY,
+	out := portfolioDTO{
+		MarketValueTotal: total,
+		TargetCurrency:   portfolioCCY,
 	}
-	pos := make([]position, 0, len(positions))
+	pos := make([]positionDTO, 0, len(positions))
 	for _, p := range positions {
-		pos = append(pos, toDTO(p))
+		pos = append(pos, positionToDTO(p))
 	}
 	out.Positions = pos
 	return out
@@ -32,18 +31,14 @@ func portfolioToDTO(positions []quik.Position, total decimal.Decimal, portfolioC
 
 func (h *Handler) getMoneyPositions(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	var currency *string
-	targetCcy := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get(currencyQuery)))
-	if targetCcy != "" {
-		currency = &targetCcy
-	}
+	targetCurrency := parseCurrencyQueryParam(r)
 
-	positions, total, portfolioCCY, err := h.service.GetMoneyPositions(ctx, currency)
+	positions, total, portfolioCCY, err := h.service.GetMoneyPositions(ctx, targetCurrency)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, err.Error(), err
 		}
 		return nil, "", err
 	}
-	return portfolioToDTO(positions, total, portfolioCCY), "", nil
+	return positionsToPortfolioDTO(positions, total, portfolioCCY), "", nil
 }

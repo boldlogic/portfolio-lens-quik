@@ -11,13 +11,13 @@ import (
 )
 
 func (h *Handler) GetSecurityLimitsOtc(ctx context.Context, req *quikv1.LimitsRequest) (*quikv1.GetSecurityLimitsResponse, error) {
-	r, err := extractReqFields(req)
+	r, err := parseLimitsRequestParams(req)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 
 	}
 
-	limits, total, err := h.service.GetSecurityLimitsOtcWithFilters(ctx, r.Date, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
+	limits, total, err := h.service.GetSecurityLimitsOtcWithFilters(ctx, r.LoadDate, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -32,7 +32,7 @@ func (h *Handler) GetSecurityLimitsOtc(ctx context.Context, req *quikv1.LimitsRe
 	}
 
 	return &quikv1.GetSecurityLimitsResponse{
-		Limits: securityLimitsToResp(limits),
+		Limits: securityLimitsToProto(limits),
 		Pagination: &quikv1.Pagination{
 			Limit:  r.Limit,
 			Offset: r.Offset,

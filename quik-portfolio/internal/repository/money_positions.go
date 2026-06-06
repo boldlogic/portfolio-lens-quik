@@ -11,16 +11,16 @@ import (
 )
 
 type moneyPortfolioRow struct {
-	LoadDate                     time.Time
-	SourceDate                   time.Time
-	FxRateDate                   sql.NullTime
-	ClientCode                   string
-	FirmCode                     string
-	FirmName                     string
-	CurrencyCode                 string
-	CurrencyName                 sql.NullString
-	Balance                      decimal.Decimal
-	MarketValueInTargetCurrency  decimal.Decimal
+	LoadDate                    time.Time
+	SourceDate                  time.Time
+	FxRateDate                  sql.NullTime
+	ClientCode                  string
+	FirmCode                    string
+	FirmName                    string
+	CurrencyCode                string
+	CurrencyName                sql.NullString
+	Balance                     decimal.Decimal
+	MarketValueInTargetCurrency decimal.Decimal
 }
 
 func scanMoneyPortfolioRow(row *sql.Rows) (moneyPortfolioRow, error) {
@@ -103,21 +103,17 @@ const (
 	selectMoneyPortfolioRowsSQL = moneyPortfolioLatestSettleCTESQL + moneyPortfolioSelectColumnsSQL + moneyPortfolioFxJoinSQL
 )
 
-func (r *Repository) SelectMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
-	start := time.Now()
-	defer func() { r.metrics.ObserveRepository("SelectMoneyPortfolio", time.Since(start), err) }()
-
-	pos, err := selectRows(
+func (r *Repository) ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
+	pos, err := selectPortfolioRows(
+		r,
 		ctx,
-		r.Db,
+		"ListMoneyPortfolio",
 		selectMoneyPortfolioRowsSQL,
 		scanMoneyPortfolioRow,
-		date,
-		targetCcy)
+		portfolioQuery{date: date, targetCcy: targetCcy},
+	)
 	if err != nil {
 		return nil, err
 	}
-	result = moneyPortfolioRowsToPositions(pos)
-
-	return result, nil
+	return mapRows(pos, moneyPortfolioRow.toQuikPosition), nil
 }

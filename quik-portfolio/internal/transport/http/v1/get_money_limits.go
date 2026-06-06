@@ -11,13 +11,13 @@ import (
 )
 
 func (h *Handler) getMoneyLimits(r *http.Request) (any, string, error) {
-	q, err := parseLimitsListQuery(r)
+	q, err := parseLimitsQueryParams(r)
 	if err != nil {
 		return nil, err.Error(), md.ErrValidation
 	}
 
 	mls, totalCount, err := h.service.GetMoneyLimitsWithFilters(
-		r.Context(), q.Date, q.Limit, q.Offset, q.ClientCodes, q.IncludeTotalCount,
+		r.Context(), q.LoadDate, q.Limit, q.Offset, q.ClientCodes, q.IncludeTotalCount,
 	)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
@@ -25,10 +25,10 @@ func (h *Handler) getMoneyLimits(r *http.Request) (any, string, error) {
 		}
 		return nil, "", err
 	}
-	return moneyLimitsWithPaginationToResp(mls, q.Limit, q.Offset, totalCount, q.IncludeTotalCount), "", nil
+	return moneyLimitsToResponseDTO(mls, q.Limit, q.Offset, totalCount, q.IncludeTotalCount), "", nil
 }
 
-type moneyLimitsDTO struct {
+type moneyLimitsResponseDTO struct {
 	Limits     []moneyLimitDTO `json:"limits"`
 	TotalCount *uint64         `json:"totalCount,omitempty"`
 	Limit      uint32          `json:"limit"`
@@ -47,15 +47,15 @@ type moneyLimitDTO struct {
 	Balance      decimal.Decimal `json:"balance"`
 }
 
-func moneyLimitsWithPaginationToResp(mls []quik.MoneyLimit, limit uint32, offset uint64, totalCount *uint64, includeTotalCount bool) moneyLimitsDTO {
+func moneyLimitsToResponseDTO(mls []quik.MoneyLimit, limit uint32, offset uint64, totalCount *uint64, includeTotalCount bool) moneyLimitsResponseDTO {
 
 	if includeTotalCount && totalCount == nil {
 		var z uint64 = 0
 		totalCount = new(z)
 	}
 
-	out := moneyLimitsDTO{
-		Limits:     moneyLimitsToResp(mls),
+	out := moneyLimitsResponseDTO{
+		Limits:     moneyLimitsToDTO(mls),
 		TotalCount: totalCount,
 		Limit:      limit,
 		Offset:     offset,
@@ -63,7 +63,7 @@ func moneyLimitsWithPaginationToResp(mls []quik.MoneyLimit, limit uint32, offset
 	return out
 }
 
-func moneyLimitsToResp(mls []quik.MoneyLimit) []moneyLimitDTO {
+func moneyLimitsToDTO(mls []quik.MoneyLimit) []moneyLimitDTO {
 	resp := make([]moneyLimitDTO, 0, len(mls))
 	for _, ml := range mls {
 		resp = append(resp, moneyLimitToDTO(ml))

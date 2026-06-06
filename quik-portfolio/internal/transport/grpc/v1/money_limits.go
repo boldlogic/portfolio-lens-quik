@@ -25,7 +25,7 @@ func moneyLimitToProto(l quik.MoneyLimit) *quikv1.MoneyLimit {
 	}
 }
 
-func moneyLimitsToResp(l []quik.MoneyLimit) []*quikv1.MoneyLimit {
+func moneyLimitsToProto(l []quik.MoneyLimit) []*quikv1.MoneyLimit {
 	out := make([]*quikv1.MoneyLimit, 0, len(l))
 	for _, o := range l {
 		out = append(out, moneyLimitToProto(o))
@@ -35,13 +35,13 @@ func moneyLimitsToResp(l []quik.MoneyLimit) []*quikv1.MoneyLimit {
 
 func (h *Handler) GetMoneyLimits(ctx context.Context, req *quikv1.LimitsRequest) (*quikv1.GetMoneyLimitsResponse, error) {
 
-	r, err := extractReqFields(req)
+	r, err := parseLimitsRequestParams(req)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 
 	}
 
-	limits, total, err := h.service.GetMoneyLimitsWithFilters(ctx, r.Date, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
+	limits, total, err := h.service.GetMoneyLimitsWithFilters(ctx, r.LoadDate, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -49,7 +49,7 @@ func (h *Handler) GetMoneyLimits(ctx context.Context, req *quikv1.LimitsRequest)
 		return nil, status.Errorf(codes.Internal, "что-то не так")
 	}
 
-	pbLimits := moneyLimitsToResp(limits)
+	pbLimits := moneyLimitsToProto(limits)
 	if r.IncludeTotalCount && total == nil {
 		var z uint64 = 0
 		total = new(z)

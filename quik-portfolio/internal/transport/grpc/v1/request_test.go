@@ -11,11 +11,11 @@ import (
 	datepb "google.golang.org/genproto/googleapis/type/date"
 )
 
-func Test_extractReqFields(t *testing.T) {
+func Test_parseLimitsRequestParams(t *testing.T) {
 	tests := []struct {
 		name    string
 		req     *quikv1.LimitsRequest
-		want    limitsListQuery
+		want    limitsRequestParams
 		wantErr error
 	}{
 		{
@@ -27,8 +27,8 @@ func Test_extractReqFields(t *testing.T) {
 				Limit:             25,
 				Offset:            7,
 			},
-			want: limitsListQuery{
-				Date:              time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
+			want: limitsRequestParams{
+				LoadDate:          time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
 				Limit:             25,
 				Offset:            7,
 				ClientCodes:       []string{"AA", "BB"},
@@ -40,20 +40,20 @@ func Test_extractReqFields(t *testing.T) {
 			req: &quikv1.LimitsRequest{
 				LoadDate: &datepb.Date{Year: 2026, Month: 5, Day: 31},
 			},
-			want: limitsListQuery{
-				Date:  time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
-				Limit: defaultLimit,
+			want: limitsRequestParams{
+				LoadDate: time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
+				Limit:    defaultPageLimit,
 			},
 		},
 		{
 			name: "limit_больше_максимального_срезается_до_максимума",
 			req: &quikv1.LimitsRequest{
 				LoadDate: &datepb.Date{Year: 2026, Month: 5, Day: 31},
-				Limit:    maxLimit + 1,
+				Limit:    maxPageLimit + 1,
 			},
-			want: limitsListQuery{
-				Date:  time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
-				Limit: maxLimit,
+			want: limitsRequestParams{
+				LoadDate: time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
+				Limit:    maxPageLimit,
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func Test_extractReqFields(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := extractReqFields(tt.req)
+			got, gotErr := parseLimitsRequestParams(tt.req)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, gotErr, tt.wantErr)
 				return

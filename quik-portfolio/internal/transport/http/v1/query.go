@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	clientCodesQuery    = "clientCodes"
-	totalCountQueryFlag = "includeTotalCount"
-	dateQuery           = "loadDate"
-	currencyQuery       = "currency"
+	queryParamClientCodes       = "clientCodes"
+	queryParamIncludeTotalCount = "includeTotalCount"
+	queryParamLoadDate          = "loadDate"
+	queryParamCurrency          = "currency"
 )
 
-func extractClientsQueryParam(r *http.Request) []string {
-	raw := r.URL.Query().Get(clientCodesQuery)
+func parseClientCodesQueryParam(r *http.Request) []string {
+	raw := r.URL.Query().Get(queryParamClientCodes)
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
 	for _, part := range parts {
@@ -35,49 +35,57 @@ func extractClientsQueryParam(r *http.Request) []string {
 	return out
 }
 
-func extractDateQueryParam(r *http.Request) (time.Time, error) {
-	dateReq := r.URL.Query().Get(dateQuery)
+func parseLoadDateQueryParam(r *http.Request) (time.Time, error) {
+	dateReq := r.URL.Query().Get(queryParamLoadDate)
 	return dates.ParseWithDefaultNow(dateReq, dates.ISODateFormat)
 }
 
-func extractTotalCountFlag(r *http.Request) (bool, error) {
-	flag, err := request.ParseBoolQuery(r, totalCountQueryFlag, false)
+func parseIncludeTotalCountQueryParam(r *http.Request) (bool, error) {
+	flag, err := request.ParseBoolQuery(r, queryParamIncludeTotalCount, false)
 	if err != nil {
-		return false, fmt.Errorf("%w %s", err, totalCountQueryFlag)
+		return false, fmt.Errorf("%w %s", err, queryParamIncludeTotalCount)
 	}
 
 	return flag, nil
 
 }
 
-type limitsListQuery struct {
-	Date              time.Time
+func parseCurrencyQueryParam(r *http.Request) *string {
+	targetCurrency := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get(queryParamCurrency)))
+	if targetCurrency == "" {
+		return nil
+	}
+	return &targetCurrency
+}
+
+type limitsQueryParams struct {
+	LoadDate          time.Time
 	Limit             uint32
 	Offset            uint64
 	ClientCodes       []string
 	IncludeTotalCount bool
 }
 
-func parseLimitsListQuery(r *http.Request) (limitsListQuery, error) {
-	date, err := extractDateQueryParam(r)
+func parseLimitsQueryParams(r *http.Request) (limitsQueryParams, error) {
+	date, err := parseLoadDateQueryParam(r)
 	if err != nil {
-		return limitsListQuery{}, fmt.Errorf("%w. Ожидается YYYY-MM-DD", err)
+		return limitsQueryParams{}, fmt.Errorf("%w. Ожидается YYYY-MM-DD", err)
 	}
 
 	limit, offset, err := request.ParseListPagination(r)
 	if err != nil {
-		return limitsListQuery{}, err
+		return limitsQueryParams{}, err
 	}
 
-	clients := extractClientsQueryParam(r)
+	clients := parseClientCodesQueryParam(r)
 
-	countFlag, err := extractTotalCountFlag(r)
+	countFlag, err := parseIncludeTotalCountQueryParam(r)
 	if err != nil {
-		return limitsListQuery{}, err
+		return limitsQueryParams{}, err
 	}
 
-	return limitsListQuery{
-		Date:              date,
+	return limitsQueryParams{
+		LoadDate:          date,
 		Limit:             limit,
 		Offset:            offset,
 		ClientCodes:       clients,

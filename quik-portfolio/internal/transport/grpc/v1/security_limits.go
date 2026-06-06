@@ -34,7 +34,7 @@ func securityLimitToProto(l quik.SecurityLimit) *quikv1.SecurityLimit {
 	return pb
 }
 
-func securityLimitsToResp(l []quik.SecurityLimit) []*quikv1.SecurityLimit {
+func securityLimitsToProto(l []quik.SecurityLimit) []*quikv1.SecurityLimit {
 	out := make([]*quikv1.SecurityLimit, 0, len(l))
 	for _, o := range l {
 		out = append(out, securityLimitToProto(o))
@@ -42,13 +42,13 @@ func securityLimitsToResp(l []quik.SecurityLimit) []*quikv1.SecurityLimit {
 	return out
 }
 func (h *Handler) GetSecurityLimits(ctx context.Context, req *quikv1.LimitsRequest) (*quikv1.GetSecurityLimitsResponse, error) {
-	r, err := extractReqFields(req)
+	r, err := parseLimitsRequestParams(req)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 
 	}
 
-	limits, total, err := h.service.GetSecurityLimitsWithFilters(ctx, r.Date, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
+	limits, total, err := h.service.GetSecurityLimitsWithFilters(ctx, r.LoadDate, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -60,7 +60,7 @@ func (h *Handler) GetSecurityLimits(ctx context.Context, req *quikv1.LimitsReque
 		total = new(z)
 	}
 
-	pbLimits := securityLimitsToResp(limits)
+	pbLimits := securityLimitsToProto(limits)
 
 	return &quikv1.GetSecurityLimitsResponse{
 		Limits: pbLimits,

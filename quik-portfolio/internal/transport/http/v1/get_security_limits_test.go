@@ -10,10 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_securityLimitsWithPaginationToResp(t *testing.T) {
+func Test_securityLimitsToResponseDTO(t *testing.T) {
 	totalCount := uint64(2)
 	zeroTotalCount := uint64(0)
-	isin := "RU000A0JX0J2"
 
 	tests := []struct {
 		name              string
@@ -22,7 +21,7 @@ func Test_securityLimitsWithPaginationToResp(t *testing.T) {
 		offset            uint64
 		totalCount        *uint64
 		includeTotalCount bool
-		want              securityLimitsDTO
+		want              securityLimitsResponseDTO
 	}{
 		{
 			name: "есть_лимиты_и_totalCount",
@@ -38,7 +37,7 @@ func Test_securityLimitsWithPaginationToResp(t *testing.T) {
 					FirmName:       "Брокер",
 					Balance:        decimal.RequireFromString("10.25"),
 					AcquisitionCcy: "RUB",
-					ISIN:           &isin,
+					ISIN:           "RU000A0JX0J2",
 					ShortName:      " Сбербанк ",
 				},
 				{
@@ -58,7 +57,7 @@ func Test_securityLimitsWithPaginationToResp(t *testing.T) {
 			offset:            7,
 			totalCount:        &totalCount,
 			includeTotalCount: true,
-			want: securityLimitsDTO{
+			want: securityLimitsResponseDTO{
 				Limits: []securityLimitDTO{
 					{
 						LoadDate:       "2026-05-31",
@@ -98,7 +97,7 @@ func Test_securityLimitsWithPaginationToResp(t *testing.T) {
 			offset:            0,
 			totalCount:        &zeroTotalCount,
 			includeTotalCount: true,
-			want: securityLimitsDTO{
+			want: securityLimitsResponseDTO{
 				Limits:     []securityLimitDTO{},
 				TotalCount: &zeroTotalCount,
 				Limit:      10,
@@ -108,7 +107,7 @@ func Test_securityLimitsWithPaginationToResp(t *testing.T) {
 			name:   "totalCount_не_запрошен",
 			limit:  10,
 			offset: 5,
-			want: securityLimitsDTO{
+			want: securityLimitsResponseDTO{
 				Limits: []securityLimitDTO{},
 				Limit:  10,
 				Offset: 5,
@@ -117,7 +116,7 @@ func Test_securityLimitsWithPaginationToResp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := securityLimitsWithPaginationToResp(tt.sls, tt.limit, tt.offset, tt.totalCount, tt.includeTotalCount)
+			got := securityLimitsToResponseDTO(tt.sls, tt.limit, tt.offset, tt.totalCount, tt.includeTotalCount)
 			if tt.includeTotalCount {
 				require.NotNil(t, got.TotalCount)
 			}

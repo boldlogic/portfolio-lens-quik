@@ -12,5 +12,5 @@ func (s *Service) GetMoneyLimitsWithFilters(ctx context.Context, date time.Time,
 	if err != nil {
 		return nil, nil, err
 	}
-	return s.repo.SelectMoneyLimitsWithFilters(ctx, date, limit, offset, dedublicated, includeTotalCount)
+	return s.repo.ListMoneyLimits(ctx, date, limit, offset, dedublicated, includeTotalCount)
 }

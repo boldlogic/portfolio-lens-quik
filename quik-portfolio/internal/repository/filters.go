@@ -3,8 +3,10 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	mssql "github.com/microsoft/go-mssqldb"
 )
 
@@ -34,26 +36,69 @@ type limitFilterSQL struct {
 	selectAll       string
 }
 
-func selectLimitsWithFilters[T any](
+type limitListQuery struct {
+	date              time.Time
+	limit             uint32
+	offset            uint64
+	clientCodes       []string
+	includeTotalCount bool
+}
+
+type portfolioQuery struct {
+	date      time.Time
+	targetCcy string
+}
+
+func limitFilterSQLByType(limitType quik.LimitType) (limitFilterSQL, error) {
+	switch limitType {
+	case quik.LimitTypeMoney:
+		return limitFilterSQL{
+			countByClients:  countMoneyLimitsByClients,
+			countAll:        countMoneyLimitsAllClients,
+			selectByClients: selectMoneyLimitsByClients,
+			selectAll:       selectMoneyLimitsAllClients,
+		}, nil
+	case quik.LimitTypeSecurities:
+		return limitFilterSQL{
+			countByClients:  countSecurityLimitsByClients,
+			countAll:        countSecurityLimitsAllClients,
+			selectByClients: selectSecurityLimitsByClients,
+			selectAll:       selectSecurityLimitsAllClients,
+		}, nil
+	case quik.LimitTypeSecuritiesOtc:
+		return limitFilterSQL{
+			countByClients:  countSecurityLimitsOtcByClients,
+			countAll:        countSecurityLimitsOtcAllClients,
+			selectByClients: selectSecurityLimitsOtcByClients,
+			selectAll:       selectSecurityLimitsOtcAllClients,
+		}, nil
+	default:
+		return limitFilterSQL{}, fmt.Errorf("неподдерживаемый тип лимита: %s", limitType)
+	}
+}
+
+func selectLimitRows[T any](
 	r *Repository,
 	ctx context.Context,
 	opName string,
-	date time.Time,
-	limit uint32, offset uint64,
-	clientCodes []string,
-	includeTotalCount bool,
-	q limitFilterSQL,
+	query limitListQuery,
+	limitType quik.LimitType,
 	scanRow func(*sql.Rows) (T, error),
 ) (result []T, totalCount *uint64, err error) {
-	defer func() { err = r.finalizeSelectErr(opName, date, err) }()
+	defer func() { err = r.finalizeSelectErr(opName, query.date, err) }()
 
-	clients, hasClients := r.makeClientCodeList(clientCodes)
+	q, err := limitFilterSQLByType(limitType)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	query := queryRunner(r.Db)
+	clients, hasClients := r.makeClientCodeList(query.clientCodes)
+
+	db := queryRunner(r.Db)
 
 	if hasClients {
-		if includeTotalCount {
-			err = query.QueryRowContext(ctx, q.countByClients, date, sql.Named("codes", clients)).Scan(&totalCount)
+		if query.includeTotalCount {
+			err = db.QueryRowContext(ctx, q.countByClients, query.date, sql.Named("codes", clients)).Scan(&totalCount)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -63,18 +108,18 @@ func selectLimitsWithFilters[T any](
 		}
 		result, err = selectRows(
 			ctx,
-			query,
+			db,
 			q.selectByClients,
 			scanRow,
-			date,
-			offset,
-			limit,
+			query.date,
+			query.offset,
+			query.limit,
 			sql.Named("codes", clients))
 		return result, totalCount, err
 	}
 
-	if includeTotalCount {
-		err = query.QueryRowContext(ctx, q.countAll, date).Scan(&totalCount)
+	if query.includeTotalCount {
+		err = db.QueryRowContext(ctx, q.countAll, query.date).Scan(&totalCount)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -82,6 +127,20 @@ func selectLimitsWithFilters[T any](
 			return result, totalCount, err
 		}
 	}
-	result, err = selectRows(ctx, query, q.selectAll, scanRow, date, offset, limit)
+	result, err = selectRows(ctx, db, q.selectAll, scanRow, query.date, query.offset, query.limit)
 	return result, totalCount, err
+}
+
+func selectPortfolioRows[T any](
+	r *Repository,
+	ctx context.Context,
+	opName string,
+	sqlText string,
+	scanRow func(*sql.Rows) (T, error),
+	query portfolioQuery,
+) (result []T, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository(opName, time.Since(start), err) }()
+
+	return selectRows(ctx, r.Db, sqlText, scanRow, query.date, query.targetCcy)
 }

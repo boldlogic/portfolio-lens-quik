@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_extractClientsQueryParam(t *testing.T) {
+func Test_parseClientCodesQueryParam(t *testing.T) {
 	tests := []struct {
 		name string
 		r    *http.Request
@@ -47,25 +47,25 @@ func Test_extractClientsQueryParam(t *testing.T) {
 	for _, tt := range tests {
 		testCase := tt
 		t.Run(testCase.name, func(t *testing.T) {
-			got := extractClientsQueryParam(testCase.r)
+			got := parseClientCodesQueryParam(testCase.r)
 			assert.Equal(t, testCase.want, got)
 		})
 	}
 }
 
-func Test_parseLimitsListQuery(t *testing.T) {
+func Test_parseLimitsQueryParams(t *testing.T) {
 	wantDate := time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local)
 	tests := []struct {
 		name    string
 		target  string
-		want    limitsListQuery
+		want    limitsQueryParams
 		wantErr error
 	}{
 		{
 			name:   "все_параметры_переданы",
 			target: "/?loadDate=2026-05-31&limit=25&offset=7&clientCodes=AA,%20BB&includeTotalCount=true",
-			want: limitsListQuery{
-				Date:              wantDate,
+			want: limitsQueryParams{
+				LoadDate:          wantDate,
 				Limit:             25,
 				Offset:            7,
 				ClientCodes:       []string{"AA", "BB"},
@@ -97,7 +97,7 @@ func Test_parseLimitsListQuery(t *testing.T) {
 	for _, tt := range tests {
 		testCase := tt
 		t.Run(testCase.name, func(t *testing.T) {
-			got, err := parseLimitsListQuery(httptest.NewRequest(http.MethodGet, testCase.target, nil))
+			got, err := parseLimitsQueryParams(httptest.NewRequest(http.MethodGet, testCase.target, nil))
 
 			if testCase.wantErr != nil {
 				assert.True(t, errors.Is(err, testCase.wantErr), "err = %v", err)

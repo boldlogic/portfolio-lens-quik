@@ -12,13 +12,13 @@ import (
 )
 
 func (h *Handler) getSecurityLimits(r *http.Request) (any, string, error) {
-	q, err := parseLimitsListQuery(r)
+	q, err := parseLimitsQueryParams(r)
 	if err != nil {
 		return nil, err.Error(), md.ErrValidation
 	}
 
 	sls, totalCount, err := h.service.GetSecurityLimitsWithFilters(
-		r.Context(), q.Date, q.Limit, q.Offset, q.ClientCodes, q.IncludeTotalCount,
+		r.Context(), q.LoadDate, q.Limit, q.Offset, q.ClientCodes, q.IncludeTotalCount,
 	)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
@@ -26,10 +26,10 @@ func (h *Handler) getSecurityLimits(r *http.Request) (any, string, error) {
 		}
 		return nil, "", err
 	}
-	return securityLimitsWithPaginationToResp(sls, q.Limit, q.Offset, totalCount, q.IncludeTotalCount), "", nil
+	return securityLimitsToResponseDTO(sls, q.Limit, q.Offset, totalCount, q.IncludeTotalCount), "", nil
 }
 
-type securityLimitsDTO struct {
+type securityLimitsResponseDTO struct {
 	Limits     []securityLimitDTO `json:"limits"`
 	TotalCount *uint64            `json:"totalCount,omitempty"`
 	Limit      uint32             `json:"limit"`
@@ -51,20 +51,20 @@ type securityLimitDTO struct {
 	ShortName      string          `json:"shortName,omitempty"`
 }
 
-func securityLimitsWithPaginationToResp(sls []quik.SecurityLimit, limit uint32, offset uint64, totalCount *uint64, includeTotalCount bool) securityLimitsDTO {
+func securityLimitsToResponseDTO(sls []quik.SecurityLimit, limit uint32, offset uint64, totalCount *uint64, includeTotalCount bool) securityLimitsResponseDTO {
 	if includeTotalCount && totalCount == nil {
 		var z uint64 = 0
 		totalCount = new(z)
 	}
-	return securityLimitsDTO{
-		Limits:     securityLimitsToResp(sls),
+	return securityLimitsResponseDTO{
+		Limits:     securityLimitsToDTO(sls),
 		TotalCount: totalCount,
 		Limit:      limit,
 		Offset:     offset,
 	}
 }
 
-func securityLimitsToResp(sls []quik.SecurityLimit) []securityLimitDTO {
+func securityLimitsToDTO(sls []quik.SecurityLimit) []securityLimitDTO {
 	res := make([]securityLimitDTO, 0, len(sls))
 	for _, sl := range sls {
 		res = append(res, securityLimitToDTO(sl))

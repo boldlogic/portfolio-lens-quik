@@ -7,8 +7,8 @@ import (
 	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1"
 )
 
-type limitsListQuery struct {
-	Date              time.Time
+type limitsRequestParams struct {
+	LoadDate          time.Time
 	Limit             uint32
 	Offset            uint64
 	ClientCodes       []string
@@ -16,31 +16,31 @@ type limitsListQuery struct {
 }
 
 const (
-	defaultLimit uint32 = 100
-	maxLimit     uint32 = 500
+	defaultPageLimit uint32 = 100
+	maxPageLimit     uint32 = 500
 )
 
-func extractReqFields(req *quikv1.LimitsRequest) (limitsListQuery, error) {
+func parseLimitsRequestParams(req *quikv1.LimitsRequest) (limitsRequestParams, error) {
 	date, err := protoDateToTime(req.GetLoadDate())
 	if err != nil {
-		return limitsListQuery{}, fmt.Errorf("%w", err)
+		return limitsRequestParams{}, fmt.Errorf("%w", err)
 	}
 
 	clients := req.GetClientCodes()
 
 	limit := req.GetLimit()
 	if limit == 0 {
-		limit = defaultLimit
+		limit = defaultPageLimit
 	}
-	if limit > maxLimit {
-		limit = maxLimit
+	if limit > maxPageLimit {
+		limit = maxPageLimit
 	}
 
 	offset := req.GetOffset()
 	count := req.GetIncludeTotalCount()
 
-	return limitsListQuery{
-		Date:              date,
+	return limitsRequestParams{
+		LoadDate:          date,
 		ClientCodes:       clients,
 		Limit:             limit,
 		Offset:            offset,

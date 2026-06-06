@@ -8,7 +8,6 @@ import (
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
 
 type moneyLimitRow struct {
@@ -69,7 +68,7 @@ const (
         FETCH NEXT @p3 ROWS ONLY
 `
 	selectMoneyLimitsAllClients = moneyLimitSelectColumnsSQL + moneyLimitPageClauseSQL
-	selectMoneyLimitsByClients  = moneyLimitSelectColumnsSQL + "join @codes c on c.client_code = li.client_code" + moneyLimitPageClauseSQL
+	selectMoneyLimitsByClients  = moneyLimitSelectColumnsSQL + " join @codes c on c.client_code = li.client_code" + moneyLimitPageClauseSQL
 	countMoneyLimitsByClients   = `
         SELECT COUNT(*)
         FROM quik.money_limits li
@@ -82,70 +81,20 @@ const (
         WHERE li.load_date = cast(@p1 as date) `
 )
 
-func (r *Repository) SelectMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error) {
+func (r *Repository) ListMoneyLimits(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error) {
 	start := time.Now()
-	defer func() { r.metrics.ObserveRepository("SelectMoneyLimitsWithFilters", time.Since(start), err) }()
+	defer func() { r.metrics.ObserveRepository("ListMoneyLimits", time.Since(start), err) }()
 
-	limits, totalCount, err := selectLimitsWithFilters(r, ctx, "SelectMoneyLimitsWithFilters", date, limit, offset, clientCodes, includeTotalCount, limitFilterSQL{
-		countByClients:  countMoneyLimitsByClients,
-		countAll:        countMoneyLimitsAllClients,
-		selectByClients: selectMoneyLimitsByClients,
-		selectAll:       selectMoneyLimitsAllClients,
-	}, scanMoneyLimitRow)
+	limits, totalCount, err := selectLimitRows(r, ctx, "ListMoneyLimits", limitListQuery{
+		date:              date,
+		limit:             limit,
+		offset:            offset,
+		clientCodes:       clientCodes,
+		includeTotalCount: includeTotalCount,
+	}, quik.LimitTypeMoney, scanMoneyLimitRow)
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, raw := range limits {
-		limit, validationErr := raw.toQuik()
-		if validationErr != nil {
-			r.Logger.Warn("нужно завести новый код", zap.Error(validationErr),
-				zap.Time("load_date", raw.LoadDate),
-				zap.String("client_code", raw.ClientCode),
-				zap.String("currency_code", raw.CurrencyCode),
-				zap.String("position_code", raw.PositionCode),
-				zap.String("settle_code", raw.SettleCode),
-				zap.String("firm_code", raw.FirmCode),
-			)
-		}
-		result = append(result, limit)
-		if raw.LoadDate.Before(date) {
-			r.Logger.Warn("устаревший лимит по деньгам", zap.Time("запрошена дата", date),
-				zap.Time("load_date", raw.LoadDate),
-				zap.String("client_code", raw.ClientCode),
-				zap.String("currency_code", raw.CurrencyCode),
-				zap.String("position_code", raw.PositionCode),
-				zap.String("settle_code", raw.SettleCode),
-				zap.String("firm_code", raw.FirmCode),
-			)
 
-		}
-	}
-
-	return result, totalCount, nil
-}
-
-func (m moneyLimitRow) toQuik() (quik.MoneyLimit, error) {
-	ml := quik.MoneyLimit{
-		LoadDate:     m.LoadDate,
-		SourceDate:   m.SourceDate,
-		ClientCode:   m.ClientCode,
-		Currency:     m.CurrencyCode,
-		PositionCode: m.PositionCode,
-		FirmCode:     m.FirmCode,
-	}
-
-	if m.Balance != nil {
-		ml.Balance = *m.Balance
-	}
-	if m.FirmName.Valid {
-		ml.FirmName = m.FirmName.String
-	}
-	ml.SettleCode = quik.SettleCode(m.SettleCode)
-
-	err := ml.SettleCode.Validate()
-	if err != nil {
-		return ml, err
-	}
-
-	return ml, nil
+	return mapRows(limits, moneyLimitRow.toQuik), totalCount, nil
 }

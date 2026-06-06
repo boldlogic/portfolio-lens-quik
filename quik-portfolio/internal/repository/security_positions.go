@@ -8,25 +8,24 @@ import (
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
 
 type securityPortfolioRow struct {
-	LoadDate                      time.Time
-	SourceDate                    time.Time
-	QuoteDate                     sql.NullTime
-	FxRateDate                    sql.NullTime
-	ClientCode                    string
-	FirmCode                      string
-	FirmName                      sql.NullString
-	SecCode                       string
-	SecName                       sql.NullString
-	Balance                       decimal.Decimal
-	UnitPrice                     *decimal.Decimal
-	AccruedInterest               *decimal.Decimal
-	MarketValueInInstrCurrency    *decimal.Decimal
-	InstrumentCurrencyCode        string
-	MarketValueInTargetCurrency   *decimal.Decimal
+	LoadDate                    time.Time
+	SourceDate                  time.Time
+	QuoteDate                   sql.NullTime
+	FxRateDate                  sql.NullTime
+	ClientCode                  string
+	FirmCode                    string
+	FirmName                    sql.NullString
+	SecCode                     string
+	SecName                     sql.NullString
+	Balance                     decimal.Decimal
+	UnitPrice                   *decimal.Decimal
+	AccruedInterest             *decimal.Decimal
+	MarketValueInInstrCurrency  *decimal.Decimal
+	InstrumentCurrencyCode      string
+	MarketValueInTargetCurrency *decimal.Decimal
 }
 
 func scanSecurityPortfolioRow(row *sql.Rows) (securityPortfolioRow, error) {
@@ -123,23 +122,17 @@ const (
 	selectSecurityPortfolioRowsSQL = securityPortfolioLatestSettleCTESQL + securityPortfolioSourceTableSQL + securityPortfolioDateFilterSQL + securityPortfolioSelectColumnsSQL + securityPortfolioQuoteAndFxJoinSQL
 )
 
-func (r *Repository) SelectSecPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
-	start := time.Now()
-	defer func() { r.metrics.ObserveRepository("SelectSecPortfolio", time.Since(start), err) }()
-
-	pos, err := selectRows(
+func (r *Repository) ListSecurityPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
+	pos, err := selectPortfolioRows(
+		r,
 		ctx,
-		r.Db,
+		"ListSecurityPortfolio",
 		selectSecurityPortfolioRowsSQL,
 		scanSecurityPortfolioRow,
-		date,
-		targetCcy)
+		portfolioQuery{date: date, targetCcy: targetCcy},
+	)
 	if err != nil {
-		r.Logger.Error("", zap.Error(err))
-
 		return nil, err
 	}
-	result = securityPortfolioRowsToPositions(pos)
-
-	return result, nil
+	return mapRows(pos, securityPortfolioRow.toQuikPosition), nil
 }

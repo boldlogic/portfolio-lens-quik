@@ -12,7 +12,7 @@ func (s *Service) GetSecurityLimitsWithFilters(ctx context.Context, date time.Ti
 	if err != nil {
 		return nil, nil, err
 	}
-	return s.repo.SelectSecurityLimitsWithFilters(ctx, date, limit, offset, dedublicated, includeTotalCount)
+	return s.repo.ListSecurityLimits(ctx, quik.LimitTypeSecurities, date, limit, offset, dedublicated, includeTotalCount)
 }
 
 func (s *Service) GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error) {
@@ -20,5 +20,5 @@ func (s *Service) GetSecurityLimitsOtcWithFilters(ctx context.Context, date time
 	if err != nil {
 		return nil, nil, err
 	}
-	return s.repo.SelectSecurityLimitsOtcWithFilters(ctx, date, limit, offset, dedublicated, includeTotalCount)
+	return s.repo.ListSecurityLimits(ctx, quik.LimitTypeSecuritiesOtc, date, limit, offset, dedublicated, includeTotalCount)
 }

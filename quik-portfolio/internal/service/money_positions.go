@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/JohannesJHN/iso4217"
 	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
@@ -25,28 +24,21 @@ func (s *Service) GetMoneyPositions(ctx context.Context, currency *string) ([]qu
 
 	date := dates.Today()
 
-	c, ok := iso4217.LookupByAlpha3(*currency)
-	var minorUnits int32 = 2
-	if ok {
-		minorUnits = int32(c.MinorUnits)
-	}
-
-	positions, err := s.repo.SelectMoneyPortfolio(ctx, date, *currency)
+	positions, err := s.repo.ListMoneyPortfolio(ctx, date, *currency)
 	if err != nil {
 		return nil, decimal.Decimal{}, "", err
 	}
 
-	return positions, sumTotalMarketValue(positions, minorUnits), *currency, nil
+	return positions, sumTotalMarketValue(positions), *currency, nil
 }
 
-func sumTotalMarketValue(positions []quik.Position, minorUnits int32) decimal.Decimal {
+func sumTotalMarketValue(positions []quik.Position) decimal.Decimal {
 
 	var total decimal.Decimal
 	for _, pos := range positions {
-		total = decimal.Sum(total, pos.MVTotal)
+		total = decimal.Sum(total, pos.MarketValueInTargetCurrency)
 
 	}
 
-	total.Round(minorUnits)
 	return total
 }
