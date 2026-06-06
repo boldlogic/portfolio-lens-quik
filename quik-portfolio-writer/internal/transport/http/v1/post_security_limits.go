@@ -36,10 +36,7 @@ func (h *Handler) CreateSecurityLimit(r *http.Request) (any, string, error) {
 }
 
 func (req securityLimitReqDTO) convertToSecurityLimit() (quik.SecurityLimit, error) {
-	var isin *string
-	if req.ISIN != "" {
-		isin = &req.ISIN
-	}
+
 	return quik.SecurityLimit{
 		ClientCode:     req.ClientCode,
 		Ticker:         req.Ticker,
@@ -48,7 +45,7 @@ func (req securityLimitReqDTO) convertToSecurityLimit() (quik.SecurityLimit, err
 		FirmCode:       req.FirmCode,
 		Balance:        req.Balance,
 		AcquisitionCcy: req.AcquisitionCcy,
-		ISIN:           isin,
+		ISIN:           req.ISIN,
 	}, nil
 }
 
