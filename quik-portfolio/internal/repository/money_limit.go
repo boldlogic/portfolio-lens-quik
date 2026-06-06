@@ -2,93 +2,99 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"time"
 
-	"github.com/boldlogic/packages/shutdown"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"go.uber.org/zap"
+	"github.com/shopspring/decimal"
 )
+
+type moneyLimitRow struct {
+	LoadDate     time.Time
+	SourceDate   time.Time
+	ClientCode   string
+	CurrencyCode string
+	PositionCode string
+	SettleCode   string
+	FirmCode     string
+	FirmName     sql.NullString
+	Balance      *decimal.Decimal
+}
+
+func scanMoneyLimitRow(row *sql.Rows) (moneyLimitRow, error) {
+	out := moneyLimitRow{}
+	err := row.Scan(
+		&out.LoadDate,
+		&out.SourceDate,
+		&out.ClientCode,
+		&out.CurrencyCode,
+		&out.PositionCode,
+		&out.SettleCode,
+		&out.FirmCode,
+		&out.FirmName,
+		&out.Balance,
+	)
+	if err != nil {
+		return moneyLimitRow{}, fmt.Errorf("%w: %w", ErrScan, err)
+	}
+	return out, nil
+}
 
 const (
-	selectMoneyLimitsByDate = `
-		WITH cte AS (
-			SELECT
-				li.load_date,
-				li.source_date,
-				li.client_code,
-				li.ccy,
-				li.position_code,
-				li.firm_code,
-				li.settle_code,
-				li.firm_name,
-				li.balance,
-				settle_max = MAX(li.settle_code) OVER (
-					PARTITION BY li.load_date, li.client_code, li.ccy, li.position_code, li.firm_code
-				)
-			FROM quik.money_limits li
-			WHERE li.load_date = cast(@p1 as date)
-		)
-		SELECT
-			c.load_date,
-			c.source_date,
-			c.client_code,
-			c.ccy,
-			c.position_code,
-			c.settle_code,
-			c.firm_code,
-			c.firm_name,
-			c.balance
-		FROM cte c
-		WHERE 1=1
-		ORDER BY c.load_date, c.client_code, c.ccy, c.position_code, c.firm_code;
+	moneyLimitSelectColumnsSQL = `
+        SELECT
+            li.load_date,
+            li.source_date,
+            li.client_code,
+            li.currency_code,
+            li.position_code,
+            li.settle_code,
+            li.firm_code,
+            li.firm_name,
+            li.balance
+        FROM quik.money_limits li
+    `
+	moneyLimitPageClauseSQL = `
+        WHERE 1 = 1
+            and li.load_date = cast(@p1 as date) 
+        ORDER BY li.load_date, 
+            li.client_code, 
+            li.currency_code,
+            li.position_code,
+            li.settle_code,
+            li.firm_code 
+        OFFSET @p2 ROWS 
+        FETCH NEXT @p3 ROWS ONLY
 `
+	selectMoneyLimitsAllClients = moneyLimitSelectColumnsSQL + moneyLimitPageClauseSQL
+	selectMoneyLimitsByClients  = moneyLimitSelectColumnsSQL + " join @codes c on c.client_code = li.client_code" + moneyLimitPageClauseSQL
+	countMoneyLimitsByClients   = `
+        SELECT COUNT(*)
+        FROM quik.money_limits li
+        join @codes c on c.client_code = li.client_code
+        WHERE li.load_date =  cast(@p1 as date) 
+        `
+	countMoneyLimitsAllClients = `
+        SELECT COUNT(*)
+        FROM quik.money_limits li
+        WHERE li.load_date = cast(@p1 as date) `
 )
 
-func (r *Repository) SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error) {
-	var result []quik.MoneyLimit
+func (r *Repository) ListMoneyLimits(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository("ListMoneyLimits", time.Since(start), err) }()
 
-	rows, err := r.Db.QueryContext(ctx, selectMoneyLimitsByDate, date)
+	limits, totalCount, err := selectLimitRows(r, ctx, "ListMoneyLimits", limitListQuery{
+		date:              date,
+		limit:             limit,
+		offset:            offset,
+		clientCodes:       clientCodes,
+		includeTotalCount: includeTotalCount,
+	}, quik.LimitTypeMoney, scanMoneyLimitRow)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
-			return nil, err
-		}
-		r.Logger.Error("ошибка выполнения запроса на получение позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-		return nil, models.ErrRetrievingData
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		row := quik.MoneyLimit{}
-		err = rows.Scan(
-			&row.LoadDate,
-			&row.SourceDate,
-			&row.ClientCode,
-			&row.Currency,
-			&row.PositionCode,
-			&row.SettleCode,
-			&row.FirmCode,
-			&row.FirmName,
-			&row.Balance,
-		)
-		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, err
-			}
-			r.Logger.Error("ошибка чтения позиций по деньгам", zap.Time("load_date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
-		}
-		result = append(result, row)
-	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка чтения позиций по деньгам", zap.Time("load_date", date), zap.Error(rows.Err()))
-		return nil, models.ErrRetrievingData
+		return nil, nil, err
 	}
 
-	r.Logger.Debug("результаты получения позиций по деньгам", zap.Time("load_date", date), zap.Int("count", len(result)))
-
-	if len(result) == 0 {
-		r.Logger.Warn("позиции по деньгам не найдены", zap.Time("load_date", date))
-	}
-	return result, nil
+	return mapRows(limits, moneyLimitRow.toQuik), totalCount, nil
 }

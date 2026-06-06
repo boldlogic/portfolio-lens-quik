@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/boldlogic/packages/shutdown"
 	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"go.uber.org/zap"
@@ -89,7 +90,7 @@ func (r *Repository) SelectCountCurrencies(ctx context.Context) (int, error) {
 	err := row.Scan(&res)
 
 	if err != nil {
-		if r.isShutdown(err) {
+		if shutdown.IsExceeded(err) {
 			return 0, err
 		}
 		r.Logger.Error("ошибка при получении количества валют в справочнике currencies", zap.Error(err))
@@ -102,7 +103,7 @@ func (r *Repository) SelectCountCurrencies(ctx context.Context) (int, error) {
 func (r *Repository) SetEmptyCurrencyNamesFromQuik(ctx context.Context) error {
 	_, err := r.Db.ExecContext(ctx, setEmptyNamesFromQuik)
 	if err != nil {
-		if r.isShutdown(err) {
+		if shutdown.IsExceeded(err) {
 			return err
 		}
 		r.Logger.Error("ошибка при обновлении currency_name в currencies", zap.Error(err))
@@ -127,7 +128,7 @@ func (r *Repository) MergeCurrencies(ctx context.Context, currencies []currencie
 			ccy.MinorUnits,
 		)
 		if err != nil {
-			if r.isShutdown(err) {
+			if shutdown.IsExceeded(err) {
 				return err
 			}
 			r.Logger.Error("ошибка сохранения валюты", zap.Int16("iso_code", ccy.ISOCode), zap.Error(err))

@@ -12,21 +12,22 @@ CREATE TABLE
     quik.security_limits_otc (
         load_date date NOT NULL DEFAULT (getdate ()),
         client_code varchar(12) NOT NULL,
-        ticker varchar(12) NOT NULL,
+        sec_code varchar(12) NOT NULL,--изменилось
         trade_account varchar(12) NOT NULL DEFAULT 'OTC',
         settle_code varchar(5) NOT NULL DEFAULT 'Tx',
         firm_code varchar(12) NOT NULL,
         firm_name varchar(128) NULL,
         balance DECIMAL(19,4) NULL,
-        acquisition_ccy varchar(3) NULL,
+        acquisition_currency_code varchar(4) NULL,--изменилось
         isin varchar(12) NULL,
+        sec_name           varchar(128) NULL,
         source_date date NOT NULL DEFAULT (getdate()),
         ts timestamp NOT NULL,
         
         CONSTRAINT PK_quik_security_limits_otc PRIMARY KEY CLUSTERED (
             load_date ASC,
             client_code ASC,
-            ticker ASC,
+            sec_code ASC,
             trade_account ASC,
             settle_code ASC,
             firm_code ASC

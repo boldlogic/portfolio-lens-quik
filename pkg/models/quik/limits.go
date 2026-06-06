@@ -14,6 +14,23 @@ const (
 	LimitTypeMoney         LimitType = "money"          // денежные средства
 )
 
+const (
+	MaxClientCodeLen = 12
+	MinClientCodeLen = 1
+)
+
+type Limit struct {
+	LoadDate     time.Time
+	SourceDate   time.Time
+	ClientCode   string
+	Currency     string
+	PositionCode string
+	SettleCode   SettleCode
+	FirmCode     string
+	FirmName     string
+	Balance      decimal.Decimal
+}
+
 type MoneyLimit struct {
 	LoadDate     time.Time
 	SourceDate   time.Time
@@ -37,43 +54,23 @@ type SecurityLimit struct {
 	FirmName       string
 	Balance        decimal.Decimal
 	AcquisitionCcy string
-	ISIN           *string
+	ISIN           string
 	ShortName      string
 }
 
-type Limit struct {
-	LimitType      LimitType
-	LoadDate       time.Time
-	SourceDate     time.Time
-	ClientCode     string
-	InstrumentCode string
-	ISIN           *string
-	SettleCode     SettleCode
-	FirmCode       string
-	FirmName       string
-	Balance        decimal.Decimal
-	AcquisitionCcy string
-}
-
-type PortfolioEntry struct {
-	LimitType      LimitType
-	LoadDate       time.Time
-	SourceDate     time.Time
-	ClientCode     string
-	FirmCode       string
-	FirmName       string
-	Instrument     string
-	TradeAccount   string
-	PositionCode   string
-	ISIN           *string
-	AcquisitionCcy string
-	ShortName      *string
-	QuoteDate      *time.Time
-	Balance        decimal.Decimal
-	MvCurrency     string
-	MvInCcy        decimal.Decimal
-	MvPrice        decimal.Decimal
-	MvAccrued      decimal.Decimal
-	MvTotal        decimal.Decimal
-	TargetCurrency string
+type Position struct {
+	LimitType                   LimitType
+	LoadDate                    time.Time       //дата исходного лимита
+	SourceDate                  time.Time       // если не равен LoadDate то означает дату, с которой перенесен лимит
+	ClientCode                  string          //код клиента
+	FirmCode                    string          //код фирмы
+	FirmName                    string          //название фирмы
+	Ticker                      string          //код инструмента
+	Name                        string          //название инструмента
+	Amount                      decimal.Decimal //текущее фактическое количество
+	UnitPrice                   decimal.Decimal //цена позиции
+	AccruedInterest             decimal.Decimal //НКД в валюте инструмента
+	MarketValueInInstrCurrency  decimal.Decimal //оценка позиции в валюте инструмента
+	MarketValueInTargetCurrency decimal.Decimal // оценка позиции в валюте запроса
+	InstrumentCurrencyCode      string          //валюта инструмента
 }

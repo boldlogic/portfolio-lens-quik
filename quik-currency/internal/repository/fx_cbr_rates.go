@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/boldlogic/packages/shutdown"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"go.uber.org/zap"
 )
@@ -108,7 +109,7 @@ func (r *Repository) MergeFxCBRRatesQuik(ctx context.Context) error {
 
 	_, err := r.Db.ExecContext(ctx, mergeFxCBRRatesQuik)
 	if err != nil {
-		if r.isShutdown(err) {
+		if shutdown.IsExceeded(err) {
 			return err
 		}
 		r.Logger.Error("ошибка сохранения кросс-курсов валют из QUIK", zap.Error(err))
@@ -121,7 +122,7 @@ func (r *Repository) MergeFxCBRRatesQuik(ctx context.Context) error {
 func (r *Repository) logUnknownFxCBRRateQuikCurrencies(ctx context.Context) error {
 	rows, err := r.Db.QueryContext(ctx, selectUnknownFxCBRRatesQuikCurrencies)
 	if err != nil {
-		if r.isShutdown(err) {
+		if shutdown.IsExceeded(err) {
 			return err
 		}
 		r.Logger.Error("ошибка получения несопоставленных валют кросс-курсов QUIK", zap.Error(err))
@@ -132,7 +133,7 @@ func (r *Repository) logUnknownFxCBRRateQuikCurrencies(ctx context.Context) erro
 	for rows.Next() {
 		var currency unknownFxCBRRateQuikCurrency
 		if err = rows.Scan(&currency.quoteDate, &currency.isoCharCode); err != nil {
-			if r.isShutdown(err) {
+			if shutdown.IsExceeded(err) {
 				return err
 			}
 			r.Logger.Error("ошибка чтения несопоставленной валюты кросс-курса QUIK", zap.Error(err))
@@ -144,7 +145,7 @@ func (r *Repository) logUnknownFxCBRRateQuikCurrencies(ctx context.Context) erro
 	}
 
 	if err = rows.Err(); err != nil {
-		if r.isShutdown(err) {
+		if shutdown.IsExceeded(err) {
 			return err
 		}
 		r.Logger.Error("ошибка обхода несопоставленных валют кросс-курсов QUIK", zap.Error(err))

@@ -7,30 +7,18 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
-func (s *Service) GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
-	maxDate, err := s.repo.SelectSecurityLimitsMaxDate(ctx)
+func (s *Service) GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error) {
+	dedublicated, err := validateLimitsContract(date, clientCodes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if maxDate == nil {
-		return []quik.SecurityLimit{}, nil
-	}
-	if err := checkLimitDate(date, *maxDate); err != nil {
-		return nil, err
-	}
-	return s.repo.SelectSecurityLimits(ctx, date)
+	return s.repo.ListSecurityLimits(ctx, quik.LimitTypeSecurities, date, limit, offset, dedublicated, includeTotalCount)
 }
 
-func (s *Service) GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
-	maxDate, err := s.repo.SelectSecurityLimitsOtcMaxDate(ctx)
+func (s *Service) GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error) {
+	dedublicated, err := validateLimitsContract(date, clientCodes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if maxDate == nil {
-		return []quik.SecurityLimit{}, nil
-	}
-	if err := checkLimitDate(date, *maxDate); err != nil {
-		return nil, err
-	}
-	return s.repo.SelectSecurityLimitsOtc(ctx, date)
+	return s.repo.ListSecurityLimits(ctx, quik.LimitTypeSecuritiesOtc, date, limit, offset, dedublicated, includeTotalCount)
 }

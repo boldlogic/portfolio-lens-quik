@@ -7,6 +7,6 @@ var (
 	ErrRetrievingData     = errors.New("ошибка при получении данных")
 	ErrSavingData         = errors.New("ошибка при изменении данных")
 	ErrValidation         = errors.New("некорректные входные данные")
-	ErrBusinessValidation = errors.New("некорректные данные в запросе")
+	ErrBusinessValidation = errors.New("некорректные данные") //некорректные данные
 	ErrConflict           = errors.New("запись с таким ключом уже существует")
 )

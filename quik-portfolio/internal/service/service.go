@@ -5,42 +5,26 @@ import (
 	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/models"
 	"go.uber.org/zap"
 )
 
 type MoneyLimitsRepo interface {
-	SelectMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	SelectMoneyLimitsMaxDate(ctx context.Context) (*time.Time, error)
+	ListMoneyLimits(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error)
 }
 
 type SecurityLimitsRepo interface {
-	SelectSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	SelectSecurityLimitsMaxDate(ctx context.Context) (*time.Time, error)
-}
-
-type SecurityLimitsOtcRepo interface {
-	SelectSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	SelectSecurityLimitsOtcMaxDate(ctx context.Context) (*time.Time, error)
+	ListSecurityLimits(ctx context.Context, limitType quik.LimitType, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
 }
 
 type PortfolioRepo interface {
-	SelectSecuritiesPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
-	SelectSecuritiesOtcPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
-	SelectMoneyLimitsPortfolio(ctx context.Context, date time.Time, targetCcy string) ([]quik.PortfolioEntry, error)
-}
-
-type CurrentQuotesRepo interface {
-	SelectCurrentQuotes(ctx context.Context) ([]models.CurrentQuote, error)
-	SelectCurrentQuotesForKeys(ctx context.Context, keys []string) ([]models.CurrentQuote, error)
+	ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error)
+	ListSecurityPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error)
 }
 
 type Repository interface {
 	MoneyLimitsRepo
 	SecurityLimitsRepo
-	SecurityLimitsOtcRepo
 	PortfolioRepo
-	CurrentQuotesRepo
 }
 
 type Service struct {

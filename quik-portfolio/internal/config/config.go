@@ -5,30 +5,34 @@ import (
 	"fmt"
 
 	"github.com/boldlogic/packages/commonconfig"
-	"github.com/boldlogic/packages/dbzap"
+	"github.com/boldlogic/packages/dbconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
+	"github.com/boldlogic/packages/transport/httpserver"
 )
 
 type Config struct {
 	Log    logger.Config           `yaml:"log" json:"log"`
 	Server httpserver.ServerConfig `yaml:"server" json:"server"`
 	Grpc   GrpcConfig              `yaml:"grpc" json:"grpc"`
-	Db     dbzap.DBConfig          `yaml:"db" json:"db"`
+	Db     dbconfig.DBConfig       `yaml:"db" json:"db"`
 }
 
 type GrpcConfig struct {
-	Port int `yaml:"port" json:"port"`
+	ListenPort      uint16 `yaml:"listen_port" json:"listen_port"`
+	ShutdownTimeout int    `yaml:"shutdown_timeout" json:"shutdown_timeout"`
 }
 
 func (g *GrpcConfig) ApplyDefaults() {
-	if g.Port == 0 {
-		g.Port = 5051
+	if g.ListenPort == 0 {
+		g.ListenPort = 5051
+	}
+	if g.ShutdownTimeout == 0 {
+		g.ShutdownTimeout = 20
 	}
 }
 
 func (g *GrpcConfig) Addr() string {
-	return fmt.Sprintf(":%d", g.Port)
+	return fmt.Sprintf(":%d", g.ListenPort)
 }
 
 func Load(configPath string) (*Config, error) {

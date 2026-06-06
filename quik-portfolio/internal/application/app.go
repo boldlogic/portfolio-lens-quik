@@ -11,9 +11,10 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/metrics"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver"
+	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/config"
+	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/observability"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/repository"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/service"
 	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/grpc"
@@ -21,25 +22,27 @@ import (
 	portfolioserver "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http"
 	v1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http/v1"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
 	defaultConfigPath = "quik-portfolio/internal/configs/config.yaml"
-	errChanBufSize    = 1
 )
 
 type Application struct {
 	cfg    *config.Config //+
-	logger *zap.Logger
-
-	svc *service.Service
-
-	errChan chan error
-	wg      sync.WaitGroup
-	repo    *repository.Repository
+	Logger *zap.Logger
 
 	server  *httpserver.Server
 	grpcSrv *grpc.Server
+	repo    *repository.Repository
+	svc     *service.Service
+
+	runGroup *errgroup.Group
+	runCtx   context.Context
+
+	shutdownOnce sync.Once
+	shutdownErr  error
 }
 
 func New() (*Application, error) {
@@ -51,84 +54,109 @@ func New() (*Application, error) {
 	}
 	log := logger.New(cfg.Log)
 	return &Application{
-		cfg:     cfg,
-		logger:  log,
-		errChan: make(chan error, errChanBufSize),
+		cfg:    cfg,
+		Logger: log,
 	}, nil
 }
 
 func (a *Application) Start(ctx context.Context) error {
+	reg := metrics.New()
+	recorder := observability.New(reg)
 
-	dsn := a.cfg.Db.GetDSN()
-	repo, err := repository.NewRepository(ctx, dsn, a.logger)
+	repo, err := repository.NewRepository(ctx, a.cfg.Db, a.Logger, recorder)
 	if err != nil {
 		return err
 	}
 	a.repo = repo
+	if err := observability.RegisterDBStats(reg, a.repo.Db); err != nil {
+		return err
+	}
 
-	a.svc = service.NewService(a.repo, a.logger)
+	a.svc = service.NewService(a.repo, a.Logger)
 
-	reg := metrics.New()
 	commonHandler := handler.NewHandler()
-	handler := v1.NewHandler(commonHandler, a.svc, a.logger)
-	r := portfolioserver.NewRouter(handler, a.logger, reg)
+	handler := v1.NewHandler(commonHandler, a.svc, a.Logger)
+	r := portfolioserver.NewRouter(handler, a.Logger, reg)
 	a.server = httpserver.NewServer(r, a.cfg.Server)
 
-	grpcHandler := grpcv1.NewHandler(a.svc, a.logger)
-	grpcSrv, err := grpc.NewServer(a.cfg.Grpc.Addr(), grpcHandler, a.logger)
+	grpcHandler := grpcv1.NewHandler(a.svc, a.Logger)
+	grpcSrv, err := grpc.NewServer(a.cfg.Grpc.Addr(), grpcHandler, a.Logger, reg)
 	if err != nil {
 		return fmt.Errorf("ошибка создания gRPC server: %w", err)
 	}
 	a.grpcSrv = grpcSrv
 
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			a.errChan <- fmt.Errorf("http server остановлен с ошибкой: %w", err)
-		}
-	}()
+	a.runGroup, a.runCtx = errgroup.WithContext(ctx)
 
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-		if err := a.grpcSrv.Start(); err != nil {
-			a.errChan <- fmt.Errorf("gRPC server остановлен с ошибкой: %w", err)
+	a.runGroup.Go(func() error {
+		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("http server остановлен с ошибкой: %w", err)
 		}
-	}()
+		return nil
+	})
+
+	a.runGroup.Go(func() error {
+		if err := a.grpcSrv.Start(); err != nil {
+			return fmt.Errorf("gRPC server остановлен с ошибкой: %w", err)
+		}
+		return nil
+	})
 
 	return nil
 }
 
-func (a *Application) Wait(ctx context.Context, cancel context.CancelFunc) error {
-	var appErr error
+func (a *Application) Wait() error {
 
-	errWg := sync.WaitGroup{}
-	errWg.Add(1)
+	if a.runGroup == nil {
+		return errors.New("приложение не запущено")
+	}
+	a.Logger.Debug("ждем")
 
-	go func() {
-		defer errWg.Done()
-		for err := range a.errChan {
-			cancel()
-			appErr = err
+	<-a.runCtx.Done()
+
+	a.Logger.Debug("получили сигнал")
+
+	a.shutdownOnce.Do(func() {
+		a.shutdownErr = a.shutdown(context.Background()) ///
+	})
+	a.Logger.Debug("вызвали shutdownOnce")
+
+	runErr := a.runGroup.Wait()
+	a.Logger.Debug("дождались wait")
+
+	var closeErr error
+	if a.repo != nil {
+		if cerr := a.repo.Close(); cerr != nil {
+			closeErr = fmt.Errorf("ошибка закрытия БД: %w", cerr)
 		}
-	}()
+	}
+	a.Logger.Debug("завершили БД")
 
-	<-ctx.Done()
+	return errors.Join(runErr, a.shutdownErr, closeErr)
+}
+
+func (a *Application) shutdown(ctx context.Context) error {
+
+	var errs []error
 
 	if a.server != nil {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer shutdownCancel()
-		_ = a.server.Shutdown(shutdownCtx)
+		httpShutdownCtx, cancel := context.WithTimeout(ctx, time.Duration(a.cfg.Server.Opts.ShutdownTimeout)*time.Second)
+		if err := a.server.Shutdown(httpShutdownCtx); err != nil {
+			errs = append(errs, fmt.Errorf("ошибка остановки http: %w", err))
+		}
+		cancel()
 	}
+	a.Logger.Debug("завершили http")
 
 	if a.grpcSrv != nil {
-		a.grpcSrv.Stop()
+		grpcShutdownCtx, cancel := context.WithTimeout(ctx, time.Duration(a.cfg.Grpc.ShutdownTimeout)*time.Second)
+		if err := a.grpcSrv.StopWithTimeout(grpcShutdownCtx); err != nil {
+			errs = append(errs, fmt.Errorf("ошибка остановки grpc: %w", err))
+		}
+		cancel()
 	}
 
-	a.wg.Wait()
-	close(a.errChan)
-	errWg.Wait()
+	a.Logger.Debug("завершили grpc")
 
-	return appErr
+	return errors.Join(errs...)
 }

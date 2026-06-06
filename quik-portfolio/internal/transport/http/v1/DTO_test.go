@@ -12,8 +12,6 @@ import (
 func Test_securityLimitToDTO(t *testing.T) {
 	t.Parallel()
 
-	isin := "RU000A0JX0J2"
-
 	tests := []struct {
 		name string
 		in   quik.SecurityLimit
@@ -32,7 +30,7 @@ func Test_securityLimitToDTO(t *testing.T) {
 				FirmName:       "Фирма брокера",
 				Balance:        decimal.RequireFromString("15.25"),
 				AcquisitionCcy: "RUB",
-				ISIN:           &isin,
+				ISIN:           "RU000A0JX0J2",
 			},
 			want: securityLimitDTO{
 				LoadDate:       "2025-01-01",
@@ -73,10 +71,8 @@ func Test_securityLimitToDTO(t *testing.T) {
 	}
 }
 
-func Test_securityLimitsToResp(t *testing.T) {
+func Test_securityLimitsToDTO(t *testing.T) {
 	t.Parallel()
-
-	isin := "RU000A0JX0J2"
 
 	tests := []struct {
 		name string
@@ -91,7 +87,7 @@ func Test_securityLimitsToResp(t *testing.T) {
 					SourceDate: time.Date(2026, 12, 31, 0, 0, 0, 0, time.Local),
 					Ticker:     "SBER",
 					Balance:    decimal.NewFromInt(10),
-					ISIN:       &isin,
+					ISIN:       "RU000A0JX0J2",
 				},
 				{
 					LoadDate:   time.Date(2026, 12, 30, 0, 0, 0, 0, time.Local),
@@ -127,7 +123,7 @@ func Test_securityLimitsToResp(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := securityLimitsToResp(tt.in)
+			got := securityLimitsToDTO(tt.in)
 			assert.Equal(t, tt.want, got)
 		})
 	}

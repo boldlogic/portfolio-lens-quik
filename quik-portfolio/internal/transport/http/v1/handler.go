@@ -7,6 +7,7 @@ import (
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -29,9 +30,10 @@ func (h *Handler) Adapt(fn handler.HandlerFunc) http.HandlerFunc {
 }
 
 type Service interface {
-	GetMoneyLimits(ctx context.Context, date time.Time) ([]quik.MoneyLimit, error)
-	GetSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetSecurityLimitsOtc(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error)
-	GetLimits(ctx context.Context, date time.Time) ([]quik.Limit, error)
-	GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
+	GetMoneyLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error)
+	GetSecurityLimitsWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
+	GetSecurityLimitsOtcWithFilters(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error)
+	// GetPortfolio(ctx context.Context, targetCcy string) ([]quik.PortfolioEntry, error)
+	GetMoneyPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error)
+	GetSecurityPositions(ctx context.Context, currency *string) ([]quik.Position, decimal.Decimal, string, error)
 }

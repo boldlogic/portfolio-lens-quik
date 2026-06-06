@@ -3,15 +3,12 @@ package v1
 import (
 	"context"
 	"errors"
-	"time"
 
 	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik/v1"
-	"go.uber.org/zap"
+	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func moneyLimitToProto(l quik.MoneyLimit) *quikv1.MoneyLimit {
@@ -23,55 +20,46 @@ func moneyLimitToProto(l quik.MoneyLimit) *quikv1.MoneyLimit {
 		FirmName:     l.FirmName,
 		PositionCode: l.PositionCode,
 		SettleCode:   string(l.SettleCode),
-		SourceDate:   timestamppb.New(l.SourceDate),
-		LoadDate:     timestamppb.New(l.LoadDate),
+		SourceDate:   timeToProtoDate(l.SourceDate),
+		LoadDate:     timeToProtoDate(l.LoadDate),
 	}
 }
 
-func (h *Handler) GetMoneyLimits(ctx context.Context, req *quikv1.GetMoneyLimitsRequest) (*quikv1.GetMoneyLimitsResponse, error) {
-	date := time.Now()
-	if req.GetDate() != nil {
-		date = req.GetDate().AsTime()
+func moneyLimitsToProto(l []quik.MoneyLimit) []*quikv1.MoneyLimit {
+	out := make([]*quikv1.MoneyLimit, 0, len(l))
+	for _, o := range l {
+		out = append(out, moneyLimitToProto(o))
+	}
+	return out
+}
+
+func (h *Handler) GetMoneyLimits(ctx context.Context, req *quikv1.LimitsRequest) (*quikv1.GetMoneyLimitsResponse, error) {
+
+	r, err := parseLimitsRequestParams(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+
 	}
 
-	limits, err := h.service.GetMoneyLimits(ctx, date)
+	limits, total, err := h.service.GetMoneyLimitsWithFilters(ctx, r.LoadDate, r.Limit, r.Offset, r.ClientCodes, r.IncludeTotalCount)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 		}
-		h.logger.Error("лимиты ДС: чтение", zap.Error(err), zap.Time("date", date))
-		return nil, status.Errorf(codes.Internal, "не удалось отправить money limits")
+		return nil, status.Errorf(codes.Internal, "что-то не так")
 	}
 
-	pbLimits := make([]*quikv1.MoneyLimit, len(limits))
-	for i, l := range limits {
-		pbLimits[i] = moneyLimitToProto(l)
+	pbLimits := moneyLimitsToProto(limits)
+	if r.IncludeTotalCount && total == nil {
+		var z uint64 = 0
+		total = new(z)
 	}
 
-	return &quikv1.GetMoneyLimitsResponse{Limits: pbLimits}, nil
-}
-
-func (h *Handler) StreamMoneyLimits(req *quikv1.GetMoneyLimitsRequest, stream quikv1.LimitsService_StreamMoneyLimitsServer) error {
-	date := time.Now()
-	if req.GetDate() != nil {
-		date = req.GetDate().AsTime()
-	}
-
-	limits, err := h.service.GetMoneyLimits(stream.Context(), date)
-	if err != nil {
-		if errors.Is(err, md.ErrBusinessValidation) {
-			return status.Errorf(codes.InvalidArgument, "%v", err)
-		}
-		h.logger.Error("лимиты ДС: чтение", zap.Error(err), zap.Time("date", date))
-		return status.Errorf(codes.Internal, "не удалось отправить money limits")
-	}
-
-	for _, l := range limits {
-		if err := stream.Send(moneyLimitToProto(l)); err != nil {
-			h.logger.Error("лимиты ДС: стрим, отправка", zap.Error(err))
-			return status.Errorf(codes.Internal, "не удалось отправить money limit: %v", err)
-		}
-	}
-
-	return nil
+	return &quikv1.GetMoneyLimitsResponse{
+		Limits: pbLimits,
+		Pagination: &quikv1.Pagination{
+			Limit:  r.Limit,
+			Offset: r.Offset,
+			Total:  total,
+		}}, nil
 }

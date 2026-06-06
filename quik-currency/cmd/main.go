@@ -24,8 +24,5 @@ func main() {
 	if err = app.Start(ctx); err != nil {
 		log.Fatalf("Не удалось запустить приложение: %v", err)
 	}
-	err = app.Wait(ctx, cancel)
-	if err != nil {
-		log.Fatalf("Приложение завершилось с ошибкой: %v", err)
-	}
+	app.Wait(ctx)
 }

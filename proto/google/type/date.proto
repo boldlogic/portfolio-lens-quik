@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package google.type;
+
+option go_package = "google.golang.org/genproto/googleapis/type/date;date";
+option java_multiple_files = true;
+option java_outer_classname = "DateProto";
+option java_package = "com.google.type";
+option objc_class_prefix = "GTP";
+
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}

@@ -32,9 +32,7 @@ func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
 	out.FirmName = sl.FirmName
 	out.Balance = sl.Balance
 	out.AcquisitionCcy = sl.AcquisitionCcy
+	out.ISIN = sl.ISIN
 
-	if sl.ISIN != nil {
-		out.ISIN = *sl.ISIN
-	}
 	return out
 }

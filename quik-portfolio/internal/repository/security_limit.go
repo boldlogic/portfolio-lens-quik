@@ -3,113 +3,126 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
-	"github.com/boldlogic/packages/shutdown"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"go.uber.org/zap"
+	"github.com/shopspring/decimal"
 )
+
+type securityLimitRow struct {
+	LoadDate                time.Time
+	SourceDate              time.Time
+	ClientCode              string
+	SecCode                 string
+	TradeAccount            string
+	SettleCode              string
+	FirmCode                string
+	FirmName                sql.NullString
+	Balance                 *decimal.Decimal
+	AcquisitionCurrencyCode string
+	ISIN                    sql.NullString
+	ShortName               sql.NullString
+}
+
+func scanSecurityLimitRow(row *sql.Rows) (securityLimitRow, error) {
+	out := securityLimitRow{}
+	err := row.Scan(
+		&out.LoadDate,
+		&out.SourceDate,
+		&out.ClientCode,
+		&out.SecCode,
+		&out.SettleCode,
+		&out.TradeAccount,
+		&out.FirmCode,
+		&out.FirmName,
+		&out.Balance,
+		&out.AcquisitionCurrencyCode,
+		&out.ISIN,
+		&out.ShortName,
+	)
+	if err != nil {
+		return securityLimitRow{}, fmt.Errorf("%w: %w", ErrScan, err)
+	}
+
+	return out, nil
+}
 
 const (
-	selectSecurityLimitsByDate = `
-			WITH cte AS (
-			SELECT
-				li.load_date,
-				li.source_date,
-				li.client_code,
-				li.ticker,
-				li.trade_account,
-				li.firm_code,
-				li.settle_code,
-				li.firm_name,
-				li.balance,
-				li.acquisition_ccy,
-				li.isin,
-				settle_max = MAX(li.settle_code) OVER (
-					PARTITION BY li.load_date, li.client_code, li.ticker, li.trade_account, li.firm_code
-				)
-			FROM quik.security_limits li
-			WHERE li.load_date = cast(@p1 as date)
-		)
-		SELECT
-			cte.load_date,
-			cte.source_date,
-			cte.client_code,
-			cte.ticker,
-			cte.settle_code,
-			cte.trade_account,
-			cte.firm_code,
-			cte.firm_name,
-			cte.balance,
-			cte.acquisition_ccy,
-			cte.isin,
-			short_disp.short_name
-		FROM cte
-		OUTER APPLY (
-			SELECT TOP 1 ltrim(rtrim(q.short_name)) AS short_name
-			FROM quik.current_quotes q
-			WHERE q.ticker = cte.ticker
-			ORDER BY CASE
-				WHEN cte.acquisition_ccy = q.base_currency AND cte.acquisition_ccy = q.counter_currency THEN 0
-				WHEN cte.acquisition_ccy = q.base_currency THEN 1
-				WHEN cte.acquisition_ccy = q.counter_currency THEN 2
-				ELSE 3 END
-		) short_disp
-		WHERE 1=1
-		ORDER BY cte.load_date, cte.client_code, cte.ticker, cte.trade_account, cte.firm_code
+	securityLimitSelectColumnsSQL = `
+        SELECT
+            li.load_date,
+            li.source_date,
+            li.client_code,
+            li.sec_code,
+            li.settle_code,
+            li.trade_account,
+            li.firm_code,
+            li.firm_name,
+            li.balance,
+            li.acquisition_currency_code,
+            li.isin,
+            li.sec_name
+        
+    `
+	securityLimitExchangeTableSQL = `FROM quik.security_limits li`
+	securityLimitOtcTableSQL      = `FROM quik.security_limits_otc li`
+	securityLimitPageClauseSQL    = `
+        WHERE 
+            li.load_date = cast(@p1 as date)
+        ORDER BY li.load_date, 
+            li.client_code, 
+            li.sec_code, 
+            li.trade_account, 
+            li.settle_code,
+            li.firm_code
+        OFFSET @p2 ROWS 
+        FETCH NEXT @p3 ROWS ONLY
 `
+	selectSecurityLimitsByClients     = securityLimitSelectColumnsSQL + securityLimitExchangeTableSQL + " join @codes c on c.client_code = li.client_code" + securityLimitPageClauseSQL
+	selectSecurityLimitsOtcByClients  = securityLimitSelectColumnsSQL + securityLimitOtcTableSQL + " join @codes c on c.client_code = li.client_code" + securityLimitPageClauseSQL
+	selectSecurityLimitsAllClients    = securityLimitSelectColumnsSQL + securityLimitExchangeTableSQL + securityLimitPageClauseSQL
+	selectSecurityLimitsOtcAllClients = securityLimitSelectColumnsSQL + securityLimitOtcTableSQL + securityLimitPageClauseSQL
+
+	countSecurityLimitsByClients = `
+        SELECT COUNT(*)
+        FROM quik.security_limits li
+        join @codes c on c.client_code = li.client_code
+        WHERE li.load_date = cast(@p1 as date)`
+
+	countSecurityLimitsAllClients = `
+        SELECT COUNT(*)
+        FROM quik.security_limits li
+        WHERE li.load_date = cast(@p1 as date)`
+	
+	countSecurityLimitsOtcByClients = `SELECT COUNT(*)
+FROM quik.security_limits_otc li
+join @codes c on c.client_code = li.client_code
+WHERE li.load_date = cast(@p1 as date)`
+
+	countSecurityLimitsOtcAllClients = `SELECT COUNT(*)
+FROM quik.security_limits_otc li
+WHERE li.load_date = cast(@p1 as date)`
 )
 
-func (r *Repository) SelectSecurityLimits(ctx context.Context, date time.Time) ([]quik.SecurityLimit, error) {
-	var result []quik.SecurityLimit
+func (r *Repository) ListSecurityLimits(ctx context.Context, limitType quik.LimitType, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error) {
+	start := time.Now()
+	defer func() { r.metrics.ObserveRepository("ListSecurityLimits", time.Since(start), err) }()
 
-	rows, err := r.Db.QueryContext(ctx, selectSecurityLimitsByDate, date)
+	if limitType != quik.LimitTypeSecurities && limitType != quik.LimitTypeSecuritiesOtc {
+		return nil, nil, fmt.Errorf("неподдерживаемый тип лимита ценных бумаг: %s", limitType)
+	}
+
+	limits, totalCount, err := selectLimitRows(r, ctx, "ListSecurityLimits", limitListQuery{
+		date:              date,
+		limit:             limit,
+		offset:            offset,
+		clientCodes:       clientCodes,
+		includeTotalCount: includeTotalCount,
+	}, limitType, scanSecurityLimitRow)
 	if err != nil {
-		if shutdown.IsExceeded(err) {
-			return nil, err
-		}
-		r.Logger.Error("ошибка выполнения запроса на получение позиций по бумагам", zap.Time("load_date", date), zap.Error(err))
-		return nil, models.ErrRetrievingData
+		return nil, nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		row := quik.SecurityLimit{}
-		var shortName sql.NullString
-		err = rows.Scan(
-			&row.LoadDate,
-			&row.SourceDate,
-			&row.ClientCode,
-			&row.Ticker,
-			&row.SettleCode,
-			&row.TradeAccount,
-			&row.FirmCode,
-			&row.FirmName,
-			&row.Balance,
-			&row.AcquisitionCcy,
-			&row.ISIN,
-			&shortName,
-		)
-		if shortName.Valid {
-			row.ShortName = shortName.String
-		}
-		if err != nil {
-			if shutdown.IsExceeded(err) {
-				return nil, err
-			}
-			r.Logger.Error("ошибка чтения позиций по бумагам", zap.Time("load_date", date), zap.Error(err))
-			return nil, models.ErrRetrievingData
-		}
-		result = append(result, row)
-	}
-	if rows.Err() != nil {
-		r.Logger.Error("ошибка чтения позиций по бумагам", zap.Time("load_date", date), zap.Error(rows.Err()))
-		return nil, models.ErrRetrievingData
-	}
-	r.Logger.Debug("результаты получения позиций по бумагам", zap.Time("load_date", date), zap.Int("count", len(result)))
-	if len(result) == 0 {
-		r.Logger.Warn("позиции по бумагам не найдены", zap.Time("load_date", date))
-	}
-	return result, nil
+	return mapRows(limits, securityLimitRow.toQuik), totalCount, nil
 }
