@@ -12,29 +12,16 @@ import (
 )
 
 const (
-	getSecurityLimitsOtcMaxDate = `
-	select max(load_date) FROM quik.security_limits_otc 
-	`
+	selectSecurityLimitsOtcMaxDate    = `SELECT max(load_date) FROM ` + securityLimitOtcTableSQL
 	deleteSecurityLimitsOtcBeforeDate = `
-		DELETE FROM
-			quik.security_limits_otc
-		WHERE
-			load_date<CAST(@p1 AS date)	
+		DELETE FROM ` + securityLimitOtcTableSQL + ` WHERE load_date < CAST(@p1 AS date)
 	`
-	rollSecurityLimitsOtcFromDateToDate = `
-		INSERT INTO
-			quik.security_limits_otc (
-				load_date, client_code, ticker, trade_account, settle_code,
-				firm_code, firm_name, balance, acquisition_ccy, isin, source_date
-			)
-		SELECT
-			CAST(@p1 AS date), client_code, ticker, trade_account, settle_code,
-			firm_code, firm_name, balance, acquisition_ccy, isin, source_date
-		FROM
-			quik.security_limits_otc
-		WHERE
-			load_date = CAST(@p2 AS date) AND balance <> 0
-		ORDER BY load_date, client_code, ticker, trade_account, firm_code
+	insertSecurityLimitsOtcCopy = `
+		INSERT INTO ` + securityLimitOtcTableSQL + ` (load_date, client_code, sec_code, trade_account, settle_code, firm_code, firm_name, balance, acquisition_currency_code, isin, source_date)
+		SELECT CAST(@p1 AS date), client_code, sec_code, trade_account, settle_code, firm_code, firm_name, balance, acquisition_currency_code, isin, source_date
+		FROM ` + securityLimitOtcTableSQL + `
+		WHERE load_date = CAST(@p2 AS date) AND balance <> 0
+		ORDER BY load_date, client_code, sec_code, trade_account, firm_code
 	`
 )
 
@@ -52,7 +39,7 @@ func (r *Repository) DeleteSecurityLimitsOtc(ctx context.Context, date time.Time
 }
 
 func (r *Repository) InsertSecurityLimitsOtcCopy(ctx context.Context, dateFrom time.Time, dateTo time.Time) error {
-	_, err := r.Db.ExecContext(ctx, rollSecurityLimitsOtcFromDateToDate, dateTo, dateFrom)
+	_, err := r.Db.ExecContext(ctx, insertSecurityLimitsOtcCopy, dateTo, dateFrom)
 	if err != nil {
 		if shutdown.IsExceeded(err) {
 			return err
@@ -71,7 +58,7 @@ func (r *Repository) InsertSecurityLimitsOtcCopy(ctx context.Context, dateFrom t
 
 func (r *Repository) SelectSecurityLimitsOtcMaxDate(ctx context.Context) (*time.Time, error) {
 	var date *time.Time
-	row := r.Db.QueryRowContext(ctx, getSecurityLimitsOtcMaxDate)
+	row := r.Db.QueryRowContext(ctx, selectSecurityLimitsOtcMaxDate)
 	err := row.Scan(&date)
 	if err != nil {
 		if shutdown.IsExceeded(err) {

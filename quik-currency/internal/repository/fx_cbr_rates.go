@@ -16,7 +16,7 @@ WITH qc AS (
 		q.quote_date,
 		iso_char_code = UPPER(COALESCE(
 			NULLIF(LTRIM(RTRIM(q.currency)), ''),
-			NULLIF(LTRIM(RTRIM(q.ticker)), '')
+			NULLIF(LTRIM(RTRIM(q.sec_code)), '')
 		))
 	FROM quik.current_quotes q
 	WHERE q.class_code = 'CROSSRATE'
@@ -36,14 +36,14 @@ mergeFxCBRRatesQuik = `
 	WITH qc AS (
 		SELECT
 			q.quote_date,
-			iso_char_code = RTRIM(COALESCE(q.currency, q.ticker)),
+			iso_char_code = RTRIM(COALESCE(q.currency, q.sec_code)),
 			rate_quote_per_base = COALESCE(q.close_price, q.last_price),
 			rate_base_per_quote = 1 / NULLIF(COALESCE(q.close_price, q.last_price), 0)
 
 		FROM quik.current_quotes q
 		WHERE q.class_code = 'CROSSRATE'
 		AND COALESCE(q.close_price, q.last_price) IS NOT NULL
-		AND RTRIM(COALESCE(q.currency, q.ticker)) NOT IN ('RUR','SUR','RUB')
+		AND RTRIM(COALESCE(q.currency, q.sec_code)) NOT IN ('RUR','SUR','RUB')
 	), src as (
 
 	SELECT

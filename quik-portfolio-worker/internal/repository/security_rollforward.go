@@ -12,16 +12,19 @@ import (
 )
 
 const (
-	selectSecurityLimitsMaxDate    = `SELECT max(load_date) FROM quik.security_limits`
+	securityLimitExchangeTableSQL = "quik.security_limits"
+	securityLimitOtcTableSQL      = "quik.security_limits_otc"
+
+	selectSecurityLimitsMaxDate    = `SELECT max(load_date) FROM ` + securityLimitExchangeTableSQL
 	deleteSecurityLimitsBeforeDate = `
-		DELETE FROM quik.security_limits WHERE load_date < CAST(@p1 AS date)
+		DELETE FROM ` + securityLimitExchangeTableSQL + ` WHERE load_date < CAST(@p1 AS date)
 	`
 	insertSecurityLimitsCopy = `
-		INSERT INTO quik.security_limits (load_date, client_code, ticker, trade_account, settle_code, firm_code, firm_name, balance, acquisition_ccy, isin, source_date)
-		SELECT CAST(@p1 AS date), client_code, ticker, trade_account, settle_code, firm_code, firm_name, balance, acquisition_ccy, isin, source_date
-		FROM quik.security_limits
+		INSERT INTO ` + securityLimitExchangeTableSQL + ` (load_date, client_code, sec_code, trade_account, settle_code, firm_code, firm_name, balance, acquisition_currency_code, isin, source_date)
+		SELECT CAST(@p1 AS date), client_code, sec_code, trade_account, settle_code, firm_code, firm_name, balance, acquisition_currency_code, isin, source_date
+		FROM ` + securityLimitExchangeTableSQL + `
 		WHERE load_date = CAST(@p2 AS date) AND balance <> 0
-		ORDER BY load_date, client_code, ticker, trade_account, firm_code
+		ORDER BY load_date, client_code, sec_code, trade_account, firm_code
 	`
 )
 

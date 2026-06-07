@@ -12,35 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	insertSecurityLimitOtc = `
-		WITH src AS
-		(
-			SELECT  client_code = @p1
-				,ticker = @p2
-				,trade_account = @p3
-				,settle_code = @p4
-				,firm_code = @p5
-				,balance = @p6
-				,acquisition_ccy = @p7
-				,isin = @p8
-		)
-		INSERT INTO quik.security_limits_otc (client_code, ticker, trade_account, settle_code, firm_code, firm_name, balance, acquisition_ccy, isin)
-		OUTPUT inserted.load_date, inserted.source_date, inserted.client_code, inserted.ticker, inserted.trade_account, inserted.settle_code, inserted.firm_code, inserted.firm_name, inserted.balance, inserted.acquisition_ccy, inserted.isin
-		SELECT src.client_code
-			,src.ticker
-			,src.trade_account
-			,src.settle_code
-			,f.code
-			,f.name
-			,src.balance
-			,src.acquisition_ccy
-			,src.isin
-		FROM src
-		join dbo.firms f on code = src.firm_code
-	`
-)
-
 func (r *Repository) InsertSecurityLimitOtc(ctx context.Context, s quik.SecurityLimit) (quik.SecurityLimit, error) {
 	var out quik.SecurityLimit
 	row := r.Db.QueryRowContext(ctx, insertSecurityLimitOtc,

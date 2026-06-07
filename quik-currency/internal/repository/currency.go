@@ -55,23 +55,23 @@ VALUES (
 	setEmptyNamesFromQuik = `
 		WITH NAMES AS (
 			SELECT
-				iso_char_code = RTRIM(COALESCE(c.iso_char_code, norm.ticker)),
+				iso_char_code = RTRIM(COALESCE(c.iso_char_code, norm.sec_code)),
 				currency_name = MAX(RTRIM(COALESCE(q.full_name, q.short_name))),
 				ext_system_id=max(es.ext_system_id)
 			FROM (
 				SELECT DISTINCT
-					ticker = CASE WHEN q.ticker IN ('SUR', 'RUR', 'RUB') THEN 'RUB' ELSE q.ticker END,
+					sec_code = CASE WHEN q.sec_code IN ('SUR', 'RUR', 'RUB') THEN 'RUB' ELSE q.sec_code END,
 					full_name = q.full_name,
 					short_name = q.short_name
 				FROM quik.current_quotes q
 				WHERE q.class_code = 'CROSSRATE'
-					AND LEN(q.ticker) = 3
+					AND LEN(q.sec_code) = 3
 			) q
-			CROSS APPLY (SELECT ticker = q.ticker) norm
+			CROSS APPLY (SELECT sec_code = q.sec_code) norm
 			LEFT JOIN dbo.external_systems es on es.ext_system='QUIK'
-			LEFT JOIN dbo.external_codes ec ON ec.ext_code = norm.ticker AND ec.ext_system_id = es.ext_system_id AND ec.ext_code_type_id = 1 
+			LEFT JOIN dbo.external_codes ec ON ec.ext_code = norm.sec_code AND ec.ext_system_id = es.ext_system_id AND ec.ext_code_type_id = 1 
 			LEFT JOIN dbo.currencies c ON c.iso_code = ec.internal_id
-			GROUP BY COALESCE(c.iso_char_code, norm.ticker)
+			GROUP BY COALESCE(c.iso_char_code, norm.sec_code)
 		)
 		UPDATE c
 		SET

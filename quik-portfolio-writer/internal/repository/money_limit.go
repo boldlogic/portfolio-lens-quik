@@ -17,16 +17,16 @@ const (
 		WITH src AS
 		(
 			SELECT  client_code = @p1
-				,ccy = @p2
+				,currency_code = @p2
 				,position_code = @p3
 				,settle_code = @p4
 				,firm_code = @p5
 				,balance = @p6
 		)
-		INSERT INTO quik.money_limits (client_code, ccy, position_code, settle_code, firm_code, firm_name, balance)
-		OUTPUT inserted.load_date, inserted.source_date, inserted.client_code, inserted.ccy, inserted.position_code, inserted.settle_code, inserted.firm_code, inserted.firm_name, inserted.balance
+		INSERT INTO quik.money_limits (client_code, currency_code, position_code, settle_code, firm_code, firm_name, balance)
+		OUTPUT inserted.load_date, inserted.source_date, inserted.client_code, inserted.currency_code, inserted.position_code, inserted.settle_code, inserted.firm_code, inserted.firm_name, inserted.balance
 		SELECT  src.client_code
-			,src.ccy
+			,src.currency_code
 			,src.position_code
 			,src.settle_code
 			,f.code

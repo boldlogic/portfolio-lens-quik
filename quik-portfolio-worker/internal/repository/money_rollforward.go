@@ -15,11 +15,11 @@ const (
 	getMoneyLimitsMaxDate       = `SELECT max(load_date) FROM quik.money_limits`
 	deleteMoneyLimitsBeforeDate = `DELETE FROM quik.money_limits WHERE load_date < CAST(@p1 AS date)`
 	insertMoneyLimitsCopy       = `
-		INSERT INTO quik.money_limits (load_date, client_code, ccy, position_code, settle_code, firm_code, firm_name, balance, source_date)
-		SELECT CAST(@p1 AS date), client_code, ccy, position_code, settle_code, firm_code, firm_name, balance, source_date
+		INSERT INTO quik.money_limits (load_date, client_code, currency_code, position_code, settle_code, firm_code, firm_name, balance, source_date)
+		SELECT CAST(@p1 AS date), client_code, currency_code, position_code, settle_code, firm_code, firm_name, balance, source_date
 		FROM quik.money_limits
 		WHERE load_date = CAST(@p2 AS date) AND balance <> 0
-		ORDER BY load_date, client_code, ccy, position_code, firm_code
+		ORDER BY load_date, client_code, currency_code, position_code, firm_code
 		`
 )
 

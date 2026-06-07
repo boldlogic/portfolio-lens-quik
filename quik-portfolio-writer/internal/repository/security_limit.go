@@ -13,32 +13,41 @@ import (
 )
 
 const (
-	insertSecurityLimit = `
+	securityLimitExchangeTableSQL = "quik.security_limits"
+	securityLimitOtcTableSQL      = "quik.security_limits_otc"
+
+	insertSecurityLimitSrcSQL = `
 		WITH src AS
 		(
 			SELECT  client_code = @p1
-				,ticker = @p2
+				,sec_code = @p2
 				,trade_account = @p3
 				,settle_code = @p4
 				,firm_code = @p5
 				,balance = @p6
-				,acquisition_ccy = @p7
+				,acquisition_currency_code = @p7
 				,isin = @p8
 		)
-		INSERT INTO quik.security_limits (client_code, ticker, trade_account, settle_code, firm_code, firm_name, balance, acquisition_ccy, isin)
-		OUTPUT inserted.load_date, inserted.source_date, inserted.client_code, inserted.ticker, inserted.trade_account, inserted.settle_code, inserted.firm_code, inserted.firm_name, inserted.balance, inserted.acquisition_ccy, inserted.isin
+		INSERT INTO `
+
+	insertSecurityLimitTailSQL = `
+		(client_code, sec_code, trade_account, settle_code, firm_code, firm_name, balance, acquisition_currency_code, isin)
+		OUTPUT inserted.load_date, inserted.source_date, inserted.client_code, inserted.sec_code, inserted.trade_account, inserted.settle_code, inserted.firm_code, inserted.firm_name, inserted.balance, inserted.acquisition_currency_code, inserted.isin
 		SELECT src.client_code
-			,src.ticker
+			,src.sec_code
 			,src.trade_account
 			,src.settle_code
 			,f.code
 			,f.name
 			,src.balance
-			,src.acquisition_ccy
+			,src.acquisition_currency_code
 			,src.isin
 		FROM src
 		join dbo.firms f on code = src.firm_code
 	`
+
+	insertSecurityLimit    = insertSecurityLimitSrcSQL + securityLimitExchangeTableSQL + insertSecurityLimitTailSQL
+	insertSecurityLimitOtc = insertSecurityLimitSrcSQL + securityLimitOtcTableSQL + insertSecurityLimitTailSQL
 )
 
 func (r *Repository) InsertSecurityLimit(ctx context.Context, s quik.SecurityLimit) (quik.SecurityLimit, error) {
