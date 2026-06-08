@@ -24,7 +24,7 @@ func (r *Repository) makeClientCodeList(clientCodes []string) (mssql.TVP, bool) 
 		clients = append(clients, clientRows{ClientCode: code})
 	}
 	return mssql.TVP{
-		TypeName: "api.client_code_list",
+		TypeName: "app.client_code_list",
 		Value:    clients,
 	}, true
 }

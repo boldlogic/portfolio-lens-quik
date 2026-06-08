@@ -102,21 +102,21 @@ const (
 	securityPortfolioDateFilterSQL = `WHERE li.load_date = cast(@p1 as date))`
 
 	securityPortfolioQuoteAndFxJoinSQL = `
-		outer apply dbo.fnGetQuoteByAcquisitionCurrency(c.sec_code,c.acquisition_currency_code) q
+		outer apply market.fnSecurityQuoteByAcquisitionCurrency(c.sec_code,c.acquisition_currency_code) q
 		outer apply (select ccy=coalesce(q.currency,c.acquisition_currency_code)) cur
 		outer apply (select currency=case when isnull(cur.ccy,'')  IN ('SUR','RUR') THEN 'RUB' ELSE cur.ccy END) norm_ccy
-		LEFT JOIN dbo.external_codes ec_mv
+		LEFT JOIN ref.external_codes ec_mv
 			ON ec_mv.ext_system_id = (select
 				ext_system_id
 			from
-				dbo.external_systems
+				ref.external_systems
 			where
 				ext_system = 'QUIK')
 			AND ec_mv.ext_code_type_id = 1
 			AND ec_mv.ext_code = norm_ccy.currency
-		LEFT JOIN currencies c_mv_ec  ON c_mv_ec.iso_code  = ec_mv.internal_id
-		LEFT JOIN currencies c_mv_iso ON c_mv_iso.iso_char_code = norm_ccy.currency
-		cross apply dbo.fnFxRateCross(ISNULL(COALESCE(c_mv_ec.iso_char_code,c_mv_iso.iso_char_code), ''),@p2,@p1) cr
+		LEFT JOIN ref.currencies c_mv_ec  ON c_mv_ec.iso_code  = ec_mv.internal_id
+		LEFT JOIN ref.currencies c_mv_iso ON c_mv_iso.iso_char_code = norm_ccy.currency
+		cross apply market.fnFxRateCross(ISNULL(COALESCE(c_mv_ec.iso_char_code,c_mv_iso.iso_char_code), ''),@p2,@p1) cr
 		where c.settle_code=c.settle_max`
 
 	selectSecurityPortfolioRowsSQL = securityPortfolioLatestSettleCTESQL + securityPortfolioSourceTableSQL + securityPortfolioDateFilterSQL + securityPortfolioSelectColumnsSQL + securityPortfolioQuoteAndFxJoinSQL

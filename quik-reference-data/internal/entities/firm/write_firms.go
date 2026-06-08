@@ -13,16 +13,16 @@ import (
 
 const (
 	insertFirms = `
-		INSERT INTO dbo.firms (code, name)
+		INSERT INTO ref.firms (code, name)
 		OUTPUT inserted.firm_id, inserted.code, inserted.name
 		SELECT @p1, @p2
 		WHERE NOT EXISTS (
-			SELECT 1 FROM dbo.firms WITH (UPDLOCK, HOLDLOCK) WHERE code = @p1
+			SELECT 1 FROM ref.firms WITH (UPDLOCK, HOLDLOCK) WHERE code = @p1
 		)
 	`
 
 	updateFirmName = `
-		UPDATE dbo.firms
+		UPDATE ref.firms
 		SET name = @p2
 		OUTPUT inserted.firm_id, inserted.code, inserted.name
 		WHERE firm_id = @p1

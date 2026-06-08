@@ -43,7 +43,7 @@ const (
 			,src.acquisition_currency_code
 			,src.isin
 		FROM src
-		join dbo.firms f on code = src.firm_code
+		join ref.firms f on code = src.firm_code
 	`
 
 	insertSecurityLimit    = insertSecurityLimitSrcSQL + securityLimitExchangeTableSQL + insertSecurityLimitTailSQL

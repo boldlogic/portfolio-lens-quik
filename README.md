@@ -17,7 +17,7 @@
 1. Подготовить БД MSSQL:
   - выполнить `scripts/sql/bootstrap/create_database.sql`;
   - выполнить DDL из `scripts/sql/DDL/`;
-  - при необходимости создать app-user через `scripts/sql/bootstrap/create_app_user.sql`.
+  - создать пользователей через `scripts/sql/bootstrap/create_*_user.sql` (reader, writer, worker, currency_worker) до миграции grants;
 2. Проверить конфиг сервиса в `quik-portfolio/internal/configs/`.
 3. Запустить сервис из корня репозитория:
 
@@ -33,11 +33,13 @@ go run ./quik-portfolio/cmd -config quik-portfolio/internal/configs/config.yaml
 
 ## ODBC / QUIK
 
-Для экспорта из QUIK требуется подготовленная БД и созданный ODBC-источник.
+Для экспорта из QUIK: БД с миграциями, login `quik_odbc_writer` (только запись в `quik.*`, без `ref`/`market`), System DSN.
 
-Пример создания DSN:
+1. `scripts/sql/bootstrap/create_quik_odbc_user.sql` (до миграции `008`)
+2. `go run ./migrator -command up` (если `008` ещё не применена)
+3. DSN (cmd или PowerShell **от Administrator**; пароль и сервер из `.env`):
 
-```powershell
-.\scripts\create-odbc-dsn.ps1 -Force -DbName portfolio_lens_quik -Dsn64 QuikPortfolioLocal_64 -PromptPassword
+```cmd
+.\scripts\create-odbc-dsn.cmd -Force
 ```
 

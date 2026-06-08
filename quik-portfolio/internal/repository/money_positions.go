@@ -86,18 +86,18 @@ const (
 `
 
 	moneyPortfolioFxJoinSQL = `
-		LEFT JOIN dbo.external_codes ec_ccy 
+		LEFT JOIN ref.external_codes ec_ccy 
 			ON ec_ccy.ext_system_id = (select
 				ext_system_id
 			from
-				dbo.external_systems
+				ref.external_systems
 			where
 				ext_system = 'QUIK')
 			AND ec_ccy.ext_code_type_id = 1
 			AND ec_ccy.ext_code = c.currency_code
-		LEFT JOIN currencies cv_ec  ON cv_ec.iso_code  = ec_ccy.internal_id
-		LEFT JOIN currencies cv_iso ON cv_iso.iso_char_code = c.currency_code
-		cross apply dbo.fnFxRateCross(ISNULL(COALESCE(cv_ec.iso_char_code,cv_iso.iso_char_code), ''),@p2,@p1) cr
+		LEFT JOIN ref.currencies cv_ec  ON cv_ec.iso_code  = ec_ccy.internal_id
+		LEFT JOIN ref.currencies cv_iso ON cv_iso.iso_char_code = c.currency_code
+		cross apply market.fnFxRateCross(ISNULL(COALESCE(cv_ec.iso_char_code,cv_iso.iso_char_code), ''),@p2,@p1) cr
 		WHERE c.settle_code = c.settle_max	
 	`
 	selectMoneyPortfolioRowsSQL = moneyPortfolioLatestSettleCTESQL + moneyPortfolioSelectColumnsSQL + moneyPortfolioFxJoinSQL

@@ -26,7 +26,7 @@ SELECT
 	qc.quote_date,
 	qc.iso_char_code
 FROM qc
-LEFT JOIN dbo.currencies c ON RTRIM(c.iso_char_code) = qc.iso_char_code
+LEFT JOIN ref.currencies c ON RTRIM(c.iso_char_code) = qc.iso_char_code
 WHERE qc.iso_char_code IS NOT NULL
 	AND qc.iso_char_code NOT IN ('RUR', 'SUR', 'RUB')
 	AND c.iso_code IS NULL
@@ -54,28 +54,28 @@ mergeFxCBRRatesQuik = `
 			es.ext_system_id
 	FROM qc
 
-	LEFT JOIN dbo.external_systems es 
+	LEFT JOIN ref.external_systems es 
 		ON es.ext_system='QUIK'
 
-	LEFT JOIN dbo.external_codes ec
+	LEFT JOIN ref.external_codes ec
 		ON ec.ext_code_type_id = 1
 		AND ec.ext_code = qc.iso_char_code
 		AND es.ext_system_id=ec.ext_system_id
 
-	LEFT JOIN dbo.currencies c1
+	LEFT JOIN ref.currencies c1
 		ON c1.iso_code = ec.internal_id
 
-	LEFT JOIN dbo.currencies c2
+	LEFT JOIN ref.currencies c2
 		ON c2.iso_char_code = qc.iso_char_code
 
 	CROSS APPLY (
 		SELECT iso_code = COALESCE(c1.iso_code, c2.iso_code)
 	) x
 
-	JOIN dbo.currencies c
+	JOIN ref.currencies c
 		ON c.iso_code = x.iso_code)
 
-	MERGE INTO dbo.fx_cbr_rates AS tgt
+	MERGE INTO market.fx_cbr_rates AS tgt
 		USING src ON tgt.date = src.date
 			AND tgt.quote_iso_code = 643
 			AND tgt.base_iso_code  = src.base_iso_code

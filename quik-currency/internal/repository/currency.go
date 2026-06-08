@@ -20,7 +20,7 @@ WITH src AS (
 		minor_units = @p5
 
 )
-MERGE INTO dbo.currencies AS tgt
+MERGE INTO ref.currencies AS tgt
 USING src ON tgt.iso_code = src.iso_code
 WHEN MATCHED
 	AND (
@@ -51,7 +51,7 @@ VALUES (
 	SYSDATETIMEOFFSET()
 );`
 	countCurrencies = `
-		SELECT COUNT(1) FROM dbo.currencies`
+		SELECT COUNT(1) FROM ref.currencies`
 	setEmptyNamesFromQuik = `
 		WITH NAMES AS (
 			SELECT
@@ -68,9 +68,9 @@ VALUES (
 					AND LEN(q.sec_code) = 3
 			) q
 			CROSS APPLY (SELECT sec_code = q.sec_code) norm
-			LEFT JOIN dbo.external_systems es on es.ext_system='QUIK'
-			LEFT JOIN dbo.external_codes ec ON ec.ext_code = norm.sec_code AND ec.ext_system_id = es.ext_system_id AND ec.ext_code_type_id = 1 
-			LEFT JOIN dbo.currencies c ON c.iso_code = ec.internal_id
+			LEFT JOIN ref.external_systems es on es.ext_system='QUIK'
+			LEFT JOIN ref.external_codes ec ON ec.ext_code = norm.sec_code AND ec.ext_system_id = es.ext_system_id AND ec.ext_code_type_id = 1 
+			LEFT JOIN ref.currencies c ON c.iso_code = ec.internal_id
 			GROUP BY COALESCE(c.iso_char_code, norm.sec_code)
 		)
 		UPDATE c
@@ -78,7 +78,7 @@ VALUES (
 			c.currency_name = n.currency_name,
 			updated_at = GETDATE(),
 			ext_system_id = n.ext_system_id
-		FROM dbo.currencies c
+		FROM ref.currencies c
 		INNER JOIN NAMES n ON c.iso_char_code = n.iso_char_code
 		WHERE c.currency_name IS NULL;`
 )

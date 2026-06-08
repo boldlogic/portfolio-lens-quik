@@ -1,18 +1,22 @@
 param(
   [string]$DriverName = "",
-  [string]$Server = "localhost,1433",
-  [string]$DbName = "portfolio_lens_quik",
-  [string]$Dsn64 = "QuikPortfolioLocal_64",
-  [string]$SqlUser = "quik_portfolio_app",
+  [string]$Server = "",
+  [string]$DbName = "",
+  [string]$Dsn64 = "",
+  [string]$SqlUser = "",
   [string]$SqlPassword = "",
   [string]$EnvFile = "",
   [switch]$Force,
-  [switch]$UseCredentialsFromEnv,
   [switch]$PromptPassword,
   [switch]$UseTrustedConnection
 )
 
 $ErrorActionPreference = "Stop"
+
+$RepoRoot = Split-Path $PSScriptRoot -Parent
+if ([string]::IsNullOrEmpty($EnvFile)) {
+  $EnvFile = Join-Path $RepoRoot ".env"
+}
 
 function Test-IsAdmin {
   $id = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -20,27 +24,42 @@ function Test-IsAdmin {
   return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Get-MssqlPasswordFromEnvFile {
-  param([string]$Path)
-  if (-not (Test-Path -LiteralPath $Path)) {
-    throw "Env file not found: $Path"
+function Normalize-EnvValue {
+  param([string]$Value)
+  $v = $Value.Trim().Trim("`r")
+  if (($v.Length -ge 2) -and (($v.StartsWith('"') -and $v.EndsWith('"')) -or ($v.StartsWith("'") -and $v.EndsWith("'")))) {
+    return $v.Substring(1, $v.Length - 2)
   }
-  foreach ($line in Get-Content -LiteralPath $Path) {
-    $t = $line.Trim()
-    if ($t -match '^\s*#' -or $t -eq "") { continue }
-    if ($t -match '^\s*MSSQL_SA_PASSWORD\s*=\s*(.*)$') {
-      return $Matches[1].Trim()
-    }
-  }
-  throw "MSSQL_SA_PASSWORD not found in $Path"
+  return $v
 }
 
-function Get-SqlPassword {
-  if ($env:MSSQL_SA_PASSWORD) {
-    return $env:MSSQL_SA_PASSWORD
+function Read-DotEnv {
+  param([string]$Path)
+
+  $result = @{}
+  if (-not (Test-Path -LiteralPath $Path)) {
+    return $result
   }
-  if ($EnvFile) {
-    return (Get-MssqlPasswordFromEnvFile -Path $EnvFile)
+
+  foreach ($line in Get-Content -LiteralPath $Path -Encoding UTF8) {
+    $t = $line.Trim()
+    if ($t -match '^\s*#' -or $t -eq "") { continue }
+    if ($t -notmatch '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$') { continue }
+    $result[$Matches[1]] = (Normalize-EnvValue -Value $Matches[2])
+  }
+
+  return $result
+}
+
+function Get-DotEnvValue {
+  param(
+    [hashtable]$DotEnv,
+    [string[]]$Keys
+  )
+  foreach ($key in $Keys) {
+    if ($DotEnv.ContainsKey($key) -and -not [string]::IsNullOrEmpty($DotEnv[$key])) {
+      return $DotEnv[$key]
+    }
   }
   return $null
 }
@@ -140,16 +159,55 @@ if (-not (Test-IsAdmin)) {
   throw "Run this script as Administrator (System DSN writes to HKLM)."
 }
 
+$dotEnv = Read-DotEnv -Path $EnvFile
+$envLoaded = $dotEnv.Count -gt 0
+
+if (-not $PSBoundParameters.ContainsKey('Server')) {
+  $fromEnv = Get-DotEnvValue -DotEnv $dotEnv -Keys @('QUIK_ODBC_SERVER', 'MSSQL_SERVER', 'DB_SERVER')
+  if ($fromEnv) { $Server = $fromEnv }
+}
+if ([string]::IsNullOrEmpty($Server)) {
+  $Server = "localhost,1433"
+}
+
+if (-not $PSBoundParameters.ContainsKey('DbName')) {
+  $fromEnv = Get-DotEnvValue -DotEnv $dotEnv -Keys @('QUIK_ODBC_DB', 'QUIK_ODBC_DATABASE', 'MSSQL_DB', 'DB_NAME')
+  if ($fromEnv) { $DbName = $fromEnv }
+}
+if ([string]::IsNullOrEmpty($DbName)) {
+  $DbName = "portfolio_lens_quik"
+}
+
+if (-not $PSBoundParameters.ContainsKey('Dsn64')) {
+  $fromEnv = Get-DotEnvValue -DotEnv $dotEnv -Keys @('QUIK_ODBC_DSN')
+  if ($fromEnv) { $Dsn64 = $fromEnv }
+}
+if ([string]::IsNullOrEmpty($Dsn64)) {
+  $Dsn64 = "QuikPortfolioLocal_64"
+}
+
+if (-not $PSBoundParameters.ContainsKey('SqlUser')) {
+  $fromEnv = Get-DotEnvValue -DotEnv $dotEnv -Keys @('QUIK_ODBC_USER', 'MSSQL_USER')
+  if ($fromEnv) { $SqlUser = $fromEnv }
+}
+if ([string]::IsNullOrEmpty($SqlUser)) {
+  $SqlUser = "quik_odbc_writer"
+}
+
 $resolvedDriverName = Resolve-DriverName
 $DriverName = $resolvedDriverName
 
-if ($UseTrustedConnection -and ($UseCredentialsFromEnv -or $PromptPassword -or -not [string]::IsNullOrEmpty($SqlPassword))) {
+if ($UseTrustedConnection -and ($PromptPassword -or -not [string]::IsNullOrEmpty($SqlPassword))) {
   throw "UseTrustedConnection cannot be combined with SQL login/password options."
 }
 
 $sqlPwd = $SqlPassword
-if ($UseCredentialsFromEnv -and [string]::IsNullOrEmpty($sqlPwd)) {
-  $sqlPwd = Get-SqlPassword
+if ([string]::IsNullOrEmpty($sqlPwd)) {
+  $fromEnv = Get-DotEnvValue -DotEnv $dotEnv -Keys @('QUIK_ODBC_PASSWORD', 'MSSQL_PASSWORD')
+  if ($fromEnv) { $sqlPwd = $fromEnv }
+}
+if ([string]::IsNullOrEmpty($sqlPwd) -and $env:QUIK_ODBC_PASSWORD) {
+  $sqlPwd = (Normalize-EnvValue -Value $env:QUIK_ODBC_PASSWORD)
 }
 if ($PromptPassword -and [string]::IsNullOrEmpty($sqlPwd)) {
   $secure = Read-Host "Enter SQL password for user $SqlUser" -AsSecureString
@@ -162,10 +220,15 @@ if ($PromptPassword -and [string]::IsNullOrEmpty($sqlPwd)) {
 }
 
 if (-not $UseTrustedConnection -and [string]::IsNullOrEmpty($sqlPwd)) {
-  throw "For SQL auth provide -SqlPassword, or -PromptPassword, or -UseCredentialsFromEnv."
+  throw "Укажите QUIK_ODBC_PASSWORD в $EnvFile или -SqlPassword."
 }
 
 Write-Host "Creating 64-bit System DSN for QUIK ODBC export..."
+if ($envLoaded) {
+  Write-Host "  Env:     $EnvFile"
+} else {
+  Write-Host "  Env:     not found ($EnvFile), defaults and -Server/-SqlPassword"
+}
 Write-Host "  Driver:  $DriverName"
 Write-Host "  Server:  $Server"
 Write-Host "  DB:      $DbName"
@@ -174,7 +237,7 @@ Write-Host "  Encrypt: No (local server)"
 if ($UseTrustedConnection) {
   Write-Host "  Auth:    Trusted_Connection=Yes"
 } else {
-  Write-Host "  Auth:    SQL login ($SqlUser)"
+  Write-Host "  Auth:    SQL login ($SqlUser), write only to schema quik"
 }
 
 $res64 = New-SystemDsn `
@@ -188,5 +251,6 @@ Write-Host ""
 Write-Host "Done."
 Write-Host ("  DSN: {0} -> {1} / {2} (Driver DLL: {3})" -f $res64.DsnName, $res64.Server, $res64.Database, $res64.DriverDll)
 Write-Host ""
+Write-Host "Prerequisite: scripts/sql/bootstrap/create_quik_odbc_user.sql and migration 008 (grants on quik.*)."
 Write-Host "Check: C:\Windows\System32\odbcad32.exe -> System DSN -> $Dsn64 -> Test"
 Write-Host "Requires 64-bit QUIK (or other 64-bit ODBC client). 32-bit DSN is not created by this script."

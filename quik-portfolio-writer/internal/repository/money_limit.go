@@ -33,7 +33,7 @@ const (
 			,f.name
 			,src.balance
 		FROM src
-		join dbo.firms f on code = src.firm_code	
+		join ref.firms f on code = src.firm_code	
 		`
 )
 
