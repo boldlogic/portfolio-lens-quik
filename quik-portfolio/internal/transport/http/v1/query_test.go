@@ -53,6 +53,86 @@ func Test_parseClientCodesQueryParam(t *testing.T) {
 	}
 }
 
+func Test_parseTargetCurrencyQueryParam(t *testing.T) {
+	tests := []struct {
+		name string
+		r    *http.Request
+		want *string
+	}{
+		{
+			name: "не_передан",
+			r:    httptest.NewRequest(http.MethodGet, "/", nil),
+			want: nil,
+		},
+		{
+			name: "пустой",
+			r:    httptest.NewRequest(http.MethodGet, "/?targetCurrency=", nil),
+			want: nil,
+		},
+		{
+			name: "usd_нормализуется_в_upper",
+			r:    httptest.NewRequest(http.MethodGet, "/?targetCurrency=usd", nil),
+			want: strPtr("USD"),
+		},
+	}
+	for _, tt := range tests {
+		testCase := tt
+		t.Run(testCase.name, func(t *testing.T) {
+			got := parseTargetCurrencyQueryParam(testCase.r)
+			if testCase.want == nil {
+				assert.Nil(t, got)
+				return
+			}
+			assert.NotNil(t, got)
+			assert.Equal(t, *testCase.want, *got)
+		})
+	}
+}
+
+func Test_parsePortfolioQueryParams(t *testing.T) {
+	tests := []struct {
+		name string
+		r    *http.Request
+		want portfolioQueryParams
+	}{
+		{
+			name: "без_параметров",
+			r:    httptest.NewRequest(http.MethodGet, "/", nil),
+			want: portfolioQueryParams{},
+		},
+		{
+			name: "targetCurrency_и_clientCodes",
+			r:    httptest.NewRequest(http.MethodGet, "/?targetCurrency=EUR&clientCodes=AA,BB", nil),
+			want: portfolioQueryParams{
+				TargetCurrency: strPtr("EUR"),
+				ClientCodes:    []string{"AA", "BB"},
+			},
+		},
+		{
+			name: "currency_не_маппится_на_targetCurrency",
+			r:    httptest.NewRequest(http.MethodGet, "/?currency=USD", nil),
+			want: portfolioQueryParams{},
+		},
+	}
+	for _, tt := range tests {
+		testCase := tt
+		t.Run(testCase.name, func(t *testing.T) {
+			got := parsePortfolioQueryParams(testCase.r)
+			if testCase.want.TargetCurrency == nil {
+				assert.Nil(t, got.TargetCurrency)
+			} else {
+				assert.NotNil(t, got.TargetCurrency)
+				assert.Equal(t, *testCase.want.TargetCurrency, *got.TargetCurrency)
+			}
+			assert.Equal(t, testCase.want.ClientCodes, got.ClientCodes)
+		})
+	}
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
 func Test_parseLimitsQueryParams(t *testing.T) {
 	wantDate := time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local)
 	tests := []struct {

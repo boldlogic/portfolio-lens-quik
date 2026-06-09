@@ -14,7 +14,7 @@ const (
 	queryParamClientCodes       = "clientCodes"
 	queryParamIncludeTotalCount = "includeTotalCount"
 	queryParamLoadDate          = "loadDate"
-	queryParamCurrency          = "currency"
+	queryParamTargetCurrency      = "targetCurrency"
 )
 
 func parseClientCodesQueryParam(r *http.Request) []string {
@@ -50,12 +50,24 @@ func parseIncludeTotalCountQueryParam(r *http.Request) (bool, error) {
 
 }
 
-func parseCurrencyQueryParam(r *http.Request) *string {
-	targetCurrency := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get(queryParamCurrency)))
+func parseTargetCurrencyQueryParam(r *http.Request) *string {
+	targetCurrency := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get(queryParamTargetCurrency)))
 	if targetCurrency == "" {
 		return nil
 	}
 	return &targetCurrency
+}
+
+type portfolioQueryParams struct {
+	TargetCurrency *string
+	ClientCodes    []string
+}
+
+func parsePortfolioQueryParams(r *http.Request) portfolioQueryParams {
+	return portfolioQueryParams{
+		TargetCurrency: parseTargetCurrencyQueryParam(r),
+		ClientCodes:    parseClientCodesQueryParam(r),
+	}
 }
 
 type limitsQueryParams struct {

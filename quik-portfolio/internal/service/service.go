@@ -17,8 +17,9 @@ type SecurityLimitsRepo interface {
 }
 
 type PortfolioRepo interface {
-	ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error)
-	ListSecurityPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error)
+	ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error)
+	ListSecurityPortfolio(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error)
+	ListSecurityPortfolioOtc(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error)
 }
 
 type Repository interface {

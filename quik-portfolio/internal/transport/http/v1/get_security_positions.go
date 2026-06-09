@@ -45,9 +45,9 @@ func positionToDTO(p quik.Position) positionDTO {
 
 func (h *Handler) getSecurityPositions(r *http.Request) (any, string, error) {
 	ctx := r.Context()
-	targetCurrency := parseCurrencyQueryParam(r)
+	params := parsePortfolioQueryParams(r)
 
-	positions, total, portfolioCCY, err := h.service.GetSecurityPositions(ctx, targetCurrency)
+	positions, total, portfolioCCY, err := h.service.GetSecurityPositions(ctx, params.TargetCurrency, params.ClientCodes)
 	if err != nil {
 		if errors.Is(err, md.ErrBusinessValidation) {
 			return nil, err.Error(), err

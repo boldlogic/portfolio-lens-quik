@@ -37,18 +37,18 @@ type securityLimitsResponseDTO struct {
 }
 
 type securityLimitDTO struct {
-	LoadDate       string          `json:"loadDate"`
-	SourceDate     string          `json:"sourceDate"`
-	ClientCode     string          `json:"clientCode"`
-	Ticker         string          `json:"ticker"`
-	TradeAccount   string          `json:"tradeAccount"`
-	SettleCode     string          `json:"settleCode"`
-	FirmCode       string          `json:"firmCode"`
-	FirmName       string          `json:"firmName"`
-	Balance        decimal.Decimal `json:"balance"`
-	AcquisitionCcy string          `json:"acquisitionCcy"`
-	ISIN           string          `json:"isin,omitempty"`
-	ShortName      string          `json:"shortName,omitempty"`
+	LoadDate                string          `json:"loadDate"`
+	SourceDate              string          `json:"sourceDate"`
+	ClientCode              string          `json:"clientCode"`
+	SecCode                 string          `json:"secCode"`
+	TradeAccount            string          `json:"tradeAccount"`
+	SettleCode              string          `json:"settleCode"`
+	FirmCode                string          `json:"firmCode"`
+	FirmName                string          `json:"firmName"`
+	Balance                 decimal.Decimal `json:"balance"`
+	AcquisitionCurrencyCode string          `json:"acquisitionCurrencyCode"`
+	ISIN                    string          `json:"isin,omitempty"`
+	ShortName               string          `json:"shortName,omitempty"`
 }
 
 func securityLimitsToResponseDTO(sls []quik.SecurityLimit, limit uint32, offset uint64, totalCount *uint64, includeTotalCount bool) securityLimitsResponseDTO {
@@ -77,13 +77,13 @@ func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
 	out.LoadDate = sl.LoadDate.Format(dates.ISODateFormat)
 	out.SourceDate = sl.SourceDate.Format(dates.ISODateFormat)
 	out.ClientCode = sl.ClientCode
-	out.Ticker = sl.Ticker
+	out.SecCode = sl.SecCode
 	out.TradeAccount = sl.TradeAccount
 	out.SettleCode = string(sl.SettleCode)
 	out.FirmCode = sl.FirmCode
 	out.FirmName = sl.FirmName
 	out.Balance = sl.Balance
-	out.AcquisitionCcy = sl.AcquisitionCcy
+	out.AcquisitionCurrencyCode = currencyCodeForDTO(sl.AcquisitionCurrencyCode)
 
 	out.ISIN = sl.ISIN
 

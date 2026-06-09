@@ -11,7 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (h *Handler) CreateMoneyLimit(r *http.Request) (any, string, error) {
+func (h *Handler) postMoneyLimit(r *http.Request) (any, string, error) {
 	ctx := r.Context()
 	req, err := httputils.DecodeRequest[moneyLimitReqDTO](r)
 	if err != nil {
@@ -21,7 +21,7 @@ func (h *Handler) CreateMoneyLimit(r *http.Request) (any, string, error) {
 		return nil, err.Error(), models.ErrValidation
 	}
 
-	lim, err := req.convertToMoneyLimit()
+	lim, err := req.toQuik()
 	if err != nil {
 		return nil, err.Error(), models.ErrValidation
 	}
@@ -36,11 +36,11 @@ func (h *Handler) CreateMoneyLimit(r *http.Request) (any, string, error) {
 	return moneyLimitToDTO(created), "", nil
 }
 
-func (req moneyLimitReqDTO) convertToMoneyLimit() (quik.MoneyLimit, error) {
+func (req moneyLimitReqDTO) toQuik() (quik.MoneyLimit, error) {
 
 	return quik.MoneyLimit{
 		ClientCode:   req.ClientCode,
-		Currency:     req.Currency,
+		CurrencyCode: req.Currency,
 		PositionCode: req.PositionCode,
 		SettleCode:   quik.SettleCode(req.SettleCode),
 		FirmCode:     req.FirmCode,
@@ -75,7 +75,7 @@ func moneyLimitToDTO(ml quik.MoneyLimit) moneyLimitDTO {
 		LoadDate:     ml.LoadDate.Format(dates.ISODateFormat),
 		SourceDate:   ml.SourceDate.Format(dates.ISODateFormat),
 		ClientCode:   ml.ClientCode,
-		Currency:     ml.Currency,
+		Currency:     ml.CurrencyCode,
 		PositionCode: ml.PositionCode,
 		SettleCode:   string(ml.SettleCode),
 		FirmCode:     ml.FirmCode,

@@ -14,11 +14,11 @@ import (
 // CreateMoneyLimit
 func (s *Service) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error) {
 
-	normCcy, err := currencies.ParseCurrencyCode(ml.Currency)
+	normCcy, err := currencies.ParseCurrencyCode(ml.CurrencyCode)
 	if err != nil {
 		return quik.MoneyLimit{}, fmt.Errorf("%w: %s", md.ErrBusinessValidation, err.Error())
 	}
-	ml.Currency = normCcy.String()
+	ml.CurrencyCode = normCcy.String()
 
 	if strings.TrimSpace(ml.SettleCode.String()) == "" {
 		ml.SettleCode = quik.SettleCodeTx
@@ -38,7 +38,7 @@ func (s *Service) CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (qui
 			return quik.MoneyLimit{}, fmt.Errorf("%w: clientCode=%s currency=%s positionCode=%s settleCode=%s firmCode=%s",
 				md.ErrConflict,
 				ml.ClientCode,
-				ml.Currency,
+				ml.CurrencyCode,
 				ml.PositionCode,
 				ml.SettleCode,
 				ml.FirmCode)

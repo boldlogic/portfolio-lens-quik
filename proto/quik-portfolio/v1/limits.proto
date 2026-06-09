@@ -39,10 +39,10 @@ message GetMoneyLimitsResponse {
 
 message SecurityLimit {
   string client_code = 1;
-  string ticker = 2;
+  string sec_code = 2;
   optional string isin = 3;
   string balance = 4;
-  string acquisition_ccy = 5;
+  string acquisition_currency_code = 5;
   string firm_code = 6;
   string firm_name = 7;
   string trade_account = 8;

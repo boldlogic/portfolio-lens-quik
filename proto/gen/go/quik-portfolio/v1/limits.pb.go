@@ -263,21 +263,21 @@ func (x *GetMoneyLimitsResponse) GetPagination() *Pagination {
 }
 
 type SecurityLimit struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	ClientCode     string                 `protobuf:"bytes,1,opt,name=client_code,json=clientCode,proto3" json:"client_code,omitempty"`
-	Ticker         string                 `protobuf:"bytes,2,opt,name=ticker,proto3" json:"ticker,omitempty"`
-	Isin           *string                `protobuf:"bytes,3,opt,name=isin,proto3,oneof" json:"isin,omitempty"`
-	Balance        string                 `protobuf:"bytes,4,opt,name=balance,proto3" json:"balance,omitempty"`
-	AcquisitionCcy string                 `protobuf:"bytes,5,opt,name=acquisition_ccy,json=acquisitionCcy,proto3" json:"acquisition_ccy,omitempty"`
-	FirmCode       string                 `protobuf:"bytes,6,opt,name=firm_code,json=firmCode,proto3" json:"firm_code,omitempty"`
-	FirmName       string                 `protobuf:"bytes,7,opt,name=firm_name,json=firmName,proto3" json:"firm_name,omitempty"`
-	TradeAccount   string                 `protobuf:"bytes,8,opt,name=trade_account,json=tradeAccount,proto3" json:"trade_account,omitempty"`
-	SettleCode     string                 `protobuf:"bytes,9,opt,name=settle_code,json=settleCode,proto3" json:"settle_code,omitempty"`
-	SourceDate     *date.Date             `protobuf:"bytes,10,opt,name=source_date,json=sourceDate,proto3" json:"source_date,omitempty"`
-	LoadDate       *date.Date             `protobuf:"bytes,11,opt,name=load_date,json=loadDate,proto3" json:"load_date,omitempty"`
-	ShortName      *string                `protobuf:"bytes,12,opt,name=short_name,json=shortName,proto3,oneof" json:"short_name,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	ClientCode              string                 `protobuf:"bytes,1,opt,name=client_code,json=clientCode,proto3" json:"client_code,omitempty"`
+	SecCode                 string                 `protobuf:"bytes,2,opt,name=sec_code,json=secCode,proto3" json:"sec_code,omitempty"`
+	Isin                    *string                `protobuf:"bytes,3,opt,name=isin,proto3,oneof" json:"isin,omitempty"`
+	Balance                 string                 `protobuf:"bytes,4,opt,name=balance,proto3" json:"balance,omitempty"`
+	AcquisitionCurrencyCode string                 `protobuf:"bytes,5,opt,name=acquisition_currency_code,json=acquisitionCurrencyCode,proto3" json:"acquisition_currency_code,omitempty"`
+	FirmCode                string                 `protobuf:"bytes,6,opt,name=firm_code,json=firmCode,proto3" json:"firm_code,omitempty"`
+	FirmName                string                 `protobuf:"bytes,7,opt,name=firm_name,json=firmName,proto3" json:"firm_name,omitempty"`
+	TradeAccount            string                 `protobuf:"bytes,8,opt,name=trade_account,json=tradeAccount,proto3" json:"trade_account,omitempty"`
+	SettleCode              string                 `protobuf:"bytes,9,opt,name=settle_code,json=settleCode,proto3" json:"settle_code,omitempty"`
+	SourceDate              *date.Date             `protobuf:"bytes,10,opt,name=source_date,json=sourceDate,proto3" json:"source_date,omitempty"`
+	LoadDate                *date.Date             `protobuf:"bytes,11,opt,name=load_date,json=loadDate,proto3" json:"load_date,omitempty"`
+	ShortName               *string                `protobuf:"bytes,12,opt,name=short_name,json=shortName,proto3,oneof" json:"short_name,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *SecurityLimit) Reset() {
@@ -317,9 +317,9 @@ func (x *SecurityLimit) GetClientCode() string {
 	return ""
 }
 
-func (x *SecurityLimit) GetTicker() string {
+func (x *SecurityLimit) GetSecCode() string {
 	if x != nil {
-		return x.Ticker
+		return x.SecCode
 	}
 	return ""
 }
@@ -338,9 +338,9 @@ func (x *SecurityLimit) GetBalance() string {
 	return ""
 }
 
-func (x *SecurityLimit) GetAcquisitionCcy() string {
+func (x *SecurityLimit) GetAcquisitionCurrencyCode() string {
 	if x != nil {
-		return x.AcquisitionCcy
+		return x.AcquisitionCurrencyCode
 	}
 	return ""
 }
@@ -528,14 +528,14 @@ const file_quik_portfolio_v1_limits_proto_rawDesc = "" +
 	"\x06limits\x18\x01 \x03(\v2\x1c.quikportfolio.v1.MoneyLimitR\x06limits\x12<\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1c.quikportfolio.v1.PaginationR\n" +
-	"pagination\"\xc4\x03\n" +
+	"pagination\"\xda\x03\n" +
 	"\rSecurityLimit\x12\x1f\n" +
 	"\vclient_code\x18\x01 \x01(\tR\n" +
-	"clientCode\x12\x16\n" +
-	"\x06ticker\x18\x02 \x01(\tR\x06ticker\x12\x17\n" +
+	"clientCode\x12\x19\n" +
+	"\bsec_code\x18\x02 \x01(\tR\asecCode\x12\x17\n" +
 	"\x04isin\x18\x03 \x01(\tH\x00R\x04isin\x88\x01\x01\x12\x18\n" +
-	"\abalance\x18\x04 \x01(\tR\abalance\x12'\n" +
-	"\x0facquisition_ccy\x18\x05 \x01(\tR\x0eacquisitionCcy\x12\x1b\n" +
+	"\abalance\x18\x04 \x01(\tR\abalance\x12:\n" +
+	"\x19acquisition_currency_code\x18\x05 \x01(\tR\x17acquisitionCurrencyCode\x12\x1b\n" +
 	"\tfirm_code\x18\x06 \x01(\tR\bfirmCode\x12\x1b\n" +
 	"\tfirm_name\x18\a \x01(\tR\bfirmName\x12#\n" +
 	"\rtrade_account\x18\b \x01(\tR\ftradeAccount\x12\x1f\n" +

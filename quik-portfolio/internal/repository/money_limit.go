@@ -82,10 +82,11 @@ const (
 )
 
 func (r *Repository) ListMoneyLimits(ctx context.Context, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.MoneyLimit, totalCount *uint64, err error) {
+	const opName = "ListMoneyLimits"
 	start := time.Now()
-	defer func() { r.metrics.ObserveRepository("ListMoneyLimits", time.Since(start), err) }()
+	defer func() { err = r.observeSelectExit(opName, date, start, err) }()
 
-	limits, totalCount, err := selectLimitRows(r, ctx, "ListMoneyLimits", limitListQuery{
+	limits, totalCount, err := selectLimitRows(r, ctx, limitListQuery{
 		date:              date,
 		limit:             limit,
 		offset:            offset,

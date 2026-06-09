@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_dedublicateClientCodes(t *testing.T) {
+func Test_deduplicateClientCodes(t *testing.T) {
 	tests := []struct {
 		name        string
 		clientCodes []string
@@ -81,7 +81,7 @@ func Test_dedublicateClientCodes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt := tt
-			got, gotErr := dedublicateClientCodes(tt.clientCodes)
+			got, gotErr := deduplicateClientCodes(tt.clientCodes)
 			if tt.wantErr {
 				require.ErrorIs(t, gotErr, models.ErrBusinessValidation)
 				assert.Nil(t, got)

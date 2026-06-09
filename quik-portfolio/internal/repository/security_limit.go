@@ -106,14 +106,11 @@ WHERE li.load_date = cast(@p1 as date)`
 )
 
 func (r *Repository) ListSecurityLimits(ctx context.Context, limitType quik.LimitType, date time.Time, limit uint32, offset uint64, clientCodes []string, includeTotalCount bool) (result []quik.SecurityLimit, totalCount *uint64, err error) {
+	const opName = "ListSecurityLimits"
 	start := time.Now()
-	defer func() { r.metrics.ObserveRepository("ListSecurityLimits", time.Since(start), err) }()
+	defer func() { err = r.observeSelectExit(opName, date, start, err) }()
 
-	if limitType != quik.LimitTypeSecurities && limitType != quik.LimitTypeSecuritiesOtc {
-		return nil, nil, fmt.Errorf("неподдерживаемый тип лимита ценных бумаг: %s", limitType)
-	}
-
-	limits, totalCount, err := selectLimitRows(r, ctx, "ListSecurityLimits", limitListQuery{
+	limits, totalCount, err := selectLimitRows(r, ctx, limitListQuery{
 		date:              date,
 		limit:             limit,
 		offset:            offset,

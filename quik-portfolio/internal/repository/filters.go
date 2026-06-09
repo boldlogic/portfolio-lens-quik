@@ -45,8 +45,20 @@ type limitListQuery struct {
 }
 
 type portfolioQuery struct {
-	date      time.Time
-	targetCcy string
+	date         time.Time
+	targetCcy    string
+	clientCodes  []string
+}
+
+func (r *Repository) portfolioClientFilterArgs(clientCodes []string) (hasClientCodes int, tvp mssql.TVP) {
+	clients, has := r.makeClientCodeList(clientCodes)
+	if has {
+		return 1, clients
+	}
+	return 0, mssql.TVP{
+		TypeName: "app.client_code_list",
+		Value:    []clientRows{},
+	}
 }
 
 func limitFilterSQLByType(limitType quik.LimitType) (limitFilterSQL, error) {
@@ -80,13 +92,10 @@ func limitFilterSQLByType(limitType quik.LimitType) (limitFilterSQL, error) {
 func selectLimitRows[T any](
 	r *Repository,
 	ctx context.Context,
-	opName string,
 	query limitListQuery,
 	limitType quik.LimitType,
 	scanRow func(*sql.Rows) (T, error),
 ) (result []T, totalCount *uint64, err error) {
-	defer func() { err = r.finalizeSelectErr(opName, query.date, err) }()
-
 	q, err := limitFilterSQLByType(limitType)
 	if err != nil {
 		return nil, nil, err
@@ -134,13 +143,19 @@ func selectLimitRows[T any](
 func selectPortfolioRows[T any](
 	r *Repository,
 	ctx context.Context,
-	opName string,
 	sqlText string,
 	scanRow func(*sql.Rows) (T, error),
 	query portfolioQuery,
 ) (result []T, err error) {
-	start := time.Now()
-	defer func() { r.metrics.ObserveRepository(opName, time.Since(start), err) }()
-
-	return selectRows(ctx, r.Db, sqlText, scanRow, query.date, query.targetCcy)
+	hasFlag, codesTVP := r.portfolioClientFilterArgs(query.clientCodes)
+	return selectRows(
+		ctx,
+		r.Db,
+		sqlText,
+		scanRow,
+		query.date,
+		query.targetCcy,
+		hasFlag,
+		sql.Named("codes", codesTVP),
+	)
 }

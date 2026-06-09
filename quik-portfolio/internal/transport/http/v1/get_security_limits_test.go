@@ -2,17 +2,20 @@ package v1
 
 import (
 	"testing"
-	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_securityLimitsToResponseDTO(t *testing.T) {
-	totalCount := uint64(2)
+	totalCount := uint64(1)
 	zeroTotalCount := uint64(0)
+
+	shortNameInput := fixtureSecurityLimit()
+	shortNameInput.ShortName = " Сбербанк "
+	shortNameWant := fixtureSecurityLimitDTO()
+	shortNameWant.ShortName = "Сбербанк"
 
 	tests := []struct {
 		name              string
@@ -24,77 +27,39 @@ func Test_securityLimitsToResponseDTO(t *testing.T) {
 		want              securityLimitsResponseDTO
 	}{
 		{
-			name: "есть_лимиты_и_totalCount",
-			sls: []quik.SecurityLimit{
-				{
-					LoadDate:       time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
-					SourceDate:     time.Date(2026, 5, 30, 0, 0, 0, 0, time.Local),
-					ClientCode:     "AA",
-					Ticker:         "SBER",
-					TradeAccount:   "L01-00000F00",
-					SettleCode:     quik.SettleCodeT2,
-					FirmCode:       "COFE",
-					FirmName:       "Брокер",
-					Balance:        decimal.RequireFromString("10.25"),
-					AcquisitionCcy: "RUB",
-					ISIN:           "RU000A0JX0J2",
-					ShortName:      " Сбербанк ",
-				},
-				{
-					LoadDate:       time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
-					SourceDate:     time.Date(2026, 5, 30, 0, 0, 0, 0, time.Local),
-					ClientCode:     "AA",
-					Ticker:         "GAZP",
-					TradeAccount:   "L01-00000F00",
-					SettleCode:     quik.SettleCodeTx,
-					FirmCode:       "COFE",
-					FirmName:       "Брокер",
-					Balance:        decimal.RequireFromString("5.50"),
-					AcquisitionCcy: "RUB",
-				},
+			name:   "маппит_один_лимит",
+			sls:    []quik.SecurityLimit{fixtureSecurityLimit()},
+			limit:  25,
+			offset: 7,
+			want: securityLimitsResponseDTO{
+				Limits: []securityLimitDTO{fixtureSecurityLimitDTO()},
+				Limit:  25,
+				Offset: 7,
 			},
-			limit:             25,
-			offset:            7,
+		},
+		{
+			name:   "shortName_обрезает_пробелы",
+			sls:    []quik.SecurityLimit{shortNameInput},
+			limit:  10,
+			want: securityLimitsResponseDTO{
+				Limits: []securityLimitDTO{shortNameWant},
+				Limit:  10,
+			},
+		},
+		{
+			name:              "прокидывает_totalCount",
+			limit:             10,
 			totalCount:        &totalCount,
 			includeTotalCount: true,
 			want: securityLimitsResponseDTO{
-				Limits: []securityLimitDTO{
-					{
-						LoadDate:       "2026-05-31",
-						SourceDate:     "2026-05-30",
-						ClientCode:     "AA",
-						Ticker:         "SBER",
-						TradeAccount:   "L01-00000F00",
-						SettleCode:     "T2",
-						FirmCode:       "COFE",
-						FirmName:       "Брокер",
-						Balance:        decimal.RequireFromString("10.25"),
-						AcquisitionCcy: "RUB",
-						ISIN:           "RU000A0JX0J2",
-						ShortName:      "Сбербанк",
-					},
-					{
-						LoadDate:       "2026-05-31",
-						SourceDate:     "2026-05-30",
-						ClientCode:     "AA",
-						Ticker:         "GAZP",
-						TradeAccount:   "L01-00000F00",
-						SettleCode:     "Tx",
-						FirmCode:       "COFE",
-						FirmName:       "Брокер",
-						Balance:        decimal.RequireFromString("5.50"),
-						AcquisitionCcy: "RUB",
-					},
-				},
+				Limits:     []securityLimitDTO{},
 				TotalCount: &totalCount,
-				Limit:      25,
-				Offset:     7,
+				Limit:      10,
 			},
 		},
 		{
 			name:              "нет_лимитов_и_totalCount_0",
 			limit:             10,
-			offset:            0,
 			totalCount:        &zeroTotalCount,
 			includeTotalCount: true,
 			want: securityLimitsResponseDTO{
@@ -115,6 +80,7 @@ func Test_securityLimitsToResponseDTO(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			got := securityLimitsToResponseDTO(tt.sls, tt.limit, tt.offset, tt.totalCount, tt.includeTotalCount)
 			if tt.includeTotalCount {

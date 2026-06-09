@@ -82,6 +82,10 @@ const (
 				quik.money_limits li
 			WHERE
 				li.load_date = cast(@p1 as date)
+				AND (
+					@p3 = 0
+					OR EXISTS (SELECT 1 FROM @codes c WHERE c.client_code = li.client_code)
+				)
 		)
 `
 
@@ -103,14 +107,16 @@ const (
 	selectMoneyPortfolioRowsSQL = moneyPortfolioLatestSettleCTESQL + moneyPortfolioSelectColumnsSQL + moneyPortfolioFxJoinSQL
 )
 
-func (r *Repository) ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
+func (r *Repository) ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error) {
+	const opName = "ListMoneyPortfolio"
+	start := time.Now()
+	defer func() { err = r.observeSelectExit(opName, date, start, err) }()
 	pos, err := selectPortfolioRows(
 		r,
 		ctx,
-		"ListMoneyPortfolio",
 		selectMoneyPortfolioRowsSQL,
 		scanMoneyPortfolioRow,
-		portfolioQuery{date: date, targetCcy: targetCcy},
+		portfolioQuery{date: date, targetCcy: targetCcy, clientCodes: clientCodes},
 	)
 	if err != nil {
 		return nil, err

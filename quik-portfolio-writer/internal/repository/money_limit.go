@@ -33,7 +33,7 @@ const (
 			,f.name
 			,src.balance
 		FROM src
-		join ref.firms f on code = src.firm_code	
+		join ref.firms f on f.code = src.firm_code	
 		`
 )
 
@@ -41,7 +41,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 	var out quik.MoneyLimit
 	row := r.Db.QueryRowContext(ctx, insertMoneyLimit,
 		s.ClientCode,
-		s.Currency,
+		s.CurrencyCode,
 		s.PositionCode,
 		s.SettleCode,
 		s.FirmCode,
@@ -50,7 +50,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 		&out.LoadDate,
 		&out.SourceDate,
 		&out.ClientCode,
-		&out.Currency,
+		&out.CurrencyCode,
 		&out.PositionCode,
 		&out.SettleCode,
 		&out.FirmCode,
@@ -73,7 +73,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 			r.Logger.Warn("лимит по деньгам уже существует",
 				zap.Time("load_date", s.LoadDate),
 				zap.String("client_code", s.ClientCode),
-				zap.String("ccy", s.Currency),
+				zap.String("currency_code", s.CurrencyCode),
 				zap.String("position_code", s.PositionCode),
 				zap.String("settle_code", string(s.SettleCode)),
 				zap.String("firm_code", s.FirmCode))
@@ -82,7 +82,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 		r.Logger.Error("ошибка при создании лимита по деньгам",
 			zap.Time("load_date", s.LoadDate),
 			zap.String("client_code", s.ClientCode),
-			zap.String("ccy", s.Currency),
+			zap.String("currency_code", s.CurrencyCode),
 			zap.String("position_code", s.PositionCode),
 			zap.String("settle_code", string(s.SettleCode)),
 			zap.String("firm_code", s.FirmCode),
@@ -92,7 +92,7 @@ func (r *Repository) InsertMoneyLimit(ctx context.Context, s quik.MoneyLimit) (q
 	r.Logger.Debug("лимит по деньгам успешно сохранен",
 		zap.Time("load_date", s.LoadDate),
 		zap.String("client_code", s.ClientCode),
-		zap.String("ccy", s.Currency),
+		zap.String("currency_code", s.CurrencyCode),
 		zap.String("position_code", s.PositionCode),
 		zap.String("settle_code", string(s.SettleCode)),
 		zap.String("firm_code", s.FirmCode))

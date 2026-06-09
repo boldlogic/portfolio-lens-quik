@@ -14,10 +14,10 @@ import (
 
 func securityLimitToProto(l quik.SecurityLimit) *quikv1.SecurityLimit {
 	pb := &quikv1.SecurityLimit{
-		ClientCode:     l.ClientCode,
-		Ticker:         l.Ticker,
-		Balance:        l.Balance.String(),
-		AcquisitionCcy: l.AcquisitionCcy,
+		ClientCode:              l.ClientCode,
+		SecCode:                 l.SecCode,
+		Balance:                 l.Balance.String(),
+		AcquisitionCurrencyCode: l.AcquisitionCurrencyCode,
 		FirmCode:       l.FirmCode,
 		FirmName:       l.FirmName,
 		TradeAccount:   l.TradeAccount,

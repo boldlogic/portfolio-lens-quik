@@ -24,6 +24,8 @@ func NewRouter(handler *Handler, logger *zap.Logger) *Router {
 		r.Get("/otc-security-limits", handler.Adapt(handler.getSecurityLimitsOtc))
 		r.Get("/money-positions", handler.Adapt(handler.getMoneyPositions))
 		r.Get("/security-positions", handler.Adapt(handler.getSecurityPositions))
+		r.Get("/otc-security-positions", handler.Adapt(handler.getSecurityPositionsOtc))
+		r.Get("/positions", handler.Adapt(handler.getPositions))
 	})
 	return &Router{
 		mux:    r,

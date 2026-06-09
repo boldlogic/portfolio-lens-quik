@@ -97,9 +97,14 @@ const (
 						li.firm_code
 					)
 `
-	securityPortfolioSourceTableSQL = "FROM quik.security_limits li "
 
-	securityPortfolioDateFilterSQL = `WHERE li.load_date = cast(@p1 as date))`
+	securityPortfolioCteWhereSQL = `
+			WHERE li.load_date = cast(@p1 as date)
+				AND (
+					@p3 = 0
+					OR EXISTS (SELECT 1 FROM @codes c WHERE c.client_code = li.client_code)
+				)
+		)`
 
 	securityPortfolioQuoteAndFxJoinSQL = `
 		outer apply market.fnSecurityQuoteByAcquisitionCurrency(c.sec_code,c.acquisition_currency_code) q
@@ -118,21 +123,68 @@ const (
 		LEFT JOIN ref.currencies c_mv_iso ON c_mv_iso.iso_char_code = norm_ccy.currency
 		cross apply market.fnFxRateCross(ISNULL(COALESCE(c_mv_ec.iso_char_code,c_mv_iso.iso_char_code), ''),@p2,@p1) cr
 		where c.settle_code=c.settle_max`
-
-	selectSecurityPortfolioRowsSQL = securityPortfolioLatestSettleCTESQL + securityPortfolioSourceTableSQL + securityPortfolioDateFilterSQL + securityPortfolioSelectColumnsSQL + securityPortfolioQuoteAndFxJoinSQL
 )
 
-func (r *Repository) ListSecurityPortfolio(ctx context.Context, date time.Time, targetCcy string) (result []quik.Position, err error) {
+func buildSecurityPortfolioSQL(sourceTable string) string {
+	return securityPortfolioLatestSettleCTESQL +
+		sourceTable +
+		securityPortfolioCteWhereSQL +
+		securityPortfolioSelectColumnsSQL +
+		securityPortfolioQuoteAndFxJoinSQL
+}
+
+var (
+	selectSecurityPortfolioExchangeSQL = buildSecurityPortfolioSQL(securityLimitExchangeTableSQL)
+	selectSecurityPortfolioOtcSQL      = buildSecurityPortfolioSQL(securityLimitOtcTableSQL)
+)
+
+func (r *Repository) listSecurityPortfolio(
+	ctx context.Context,
+	date time.Time,
+	targetCcy string,
+	clientCodes []string,
+	limitType quik.LimitType,
+	sqlText string,
+) (result []quik.Position, err error) {
 	pos, err := selectPortfolioRows(
 		r,
 		ctx,
-		"ListSecurityPortfolio",
-		selectSecurityPortfolioRowsSQL,
+		sqlText,
 		scanSecurityPortfolioRow,
-		portfolioQuery{date: date, targetCcy: targetCcy},
+		portfolioQuery{date: date, targetCcy: targetCcy, clientCodes: clientCodes},
 	)
 	if err != nil {
 		return nil, err
 	}
-	return mapRows(pos, securityPortfolioRow.toQuikPosition), nil
+	return mapRows(pos, func(row securityPortfolioRow) quik.Position {
+		return row.toQuikPositionWithType(limitType)
+	}), nil
+}
+
+func (r *Repository) ListSecurityPortfolio(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error) {
+	const opName = "ListSecurityPortfolio"
+	start := time.Now()
+	defer func() { err = r.observeSelectExit(opName, date, start, err) }()
+	return r.listSecurityPortfolio(
+		ctx,
+		date,
+		targetCcy,
+		clientCodes,
+		quik.LimitTypeSecurities,
+		selectSecurityPortfolioExchangeSQL,
+	)
+}
+
+func (r *Repository) ListSecurityPortfolioOtc(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error) {
+	const opName = "ListSecurityPortfolioOtc"
+	start := time.Now()
+	defer func() { err = r.observeSelectExit(opName, date, start, err) }()
+	return r.listSecurityPortfolio(
+		ctx,
+		date,
+		targetCcy,
+		clientCodes,
+		quik.LimitTypeSecuritiesOtc,
+		selectSecurityPortfolioOtcSQL,
+	)
 }

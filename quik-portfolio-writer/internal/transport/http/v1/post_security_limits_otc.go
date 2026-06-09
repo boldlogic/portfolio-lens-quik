@@ -37,22 +37,22 @@ func (h *Handler) CreateSecurityLimitOtc(r *http.Request) (any, string, error) {
 
 func (req securityLimitOtcReqDTO) convertToSecurityLimit() (quik.SecurityLimit, error) {
 	return quik.SecurityLimit{
-		ClientCode:     req.ClientCode,
-		Ticker:         req.Ticker,
-		SettleCode:     quik.SettleCode(req.SettleCode),
-		FirmCode:       req.FirmCode,
-		Balance:        req.Balance,
-		AcquisitionCcy: req.AcquisitionCcy,
-		ISIN:           req.ISIN,
+		ClientCode:              req.ClientCode,
+		SecCode:                 req.SecCode,
+		SettleCode:              quik.SettleCode(req.SettleCode),
+		FirmCode:                req.FirmCode,
+		Balance:                 req.Balance,
+		AcquisitionCurrencyCode: req.AcquisitionCurrencyCode,
+		ISIN:                    req.ISIN,
 	}, nil
 }
 
 type securityLimitOtcReqDTO struct {
-	ClientCode     string          `json:"clientCode" validate:"required,min=1,max=12"`
-	Ticker         string          `json:"ticker" validate:"required,min=1,max=12"`
-	SettleCode     string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
-	FirmCode       string          `json:"firmCode" validate:"required,min=1,max=12"`
-	Balance        decimal.Decimal `json:"balance"`
-	AcquisitionCcy string          `json:"acquisitionCcy" validate:"omitempty,min=1,max=3"`
-	ISIN           string          `json:"isin" validate:"omitempty,min=1,max=12"`
+	ClientCode              string          `json:"clientCode" validate:"required,min=1,max=12"`
+	SecCode                 string          `json:"secCode" validate:"required,min=1,max=12"`
+	SettleCode              string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
+	FirmCode                string          `json:"firmCode" validate:"required,min=1,max=12"`
+	Balance                 decimal.Decimal `json:"balance"`
+	AcquisitionCurrencyCode string          `json:"acquisitionCurrencyCode" validate:"omitempty,min=1,max=3"`
+	ISIN                    string          `json:"isin" validate:"omitempty,min=1,max=12"`
 }

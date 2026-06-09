@@ -27,10 +27,10 @@ func (s *Service) CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimi
 			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректный код фирмы %s", models.ErrBusinessValidation, sec.FirmCode)
 		}
 		if errors.Is(err, models.ErrConflict) {
-			return quik.SecurityLimit{}, fmt.Errorf("%w: clientCode=%s ticker=%s tradeAccount=%s settleCode=%s firmCode=%s",
+			return quik.SecurityLimit{}, fmt.Errorf("%w: clientCode=%s secCode=%s tradeAccount=%s settleCode=%s firmCode=%s",
 				models.ErrConflict,
 				sec.ClientCode,
-				sec.Ticker,
+				sec.SecCode,
 				sec.TradeAccount,
 				sec.SettleCode,
 				sec.FirmCode)
@@ -58,10 +58,10 @@ func (s *Service) CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityL
 			return quik.SecurityLimit{}, fmt.Errorf("%w: некорректный код фирмы %s", models.ErrBusinessValidation, sec.FirmCode)
 		}
 		if errors.Is(err, models.ErrConflict) {
-			return quik.SecurityLimit{}, fmt.Errorf("%w: clientCode=%s ticker=%s tradeAccount=%s settleCode=%s firmCode=%s",
+			return quik.SecurityLimit{}, fmt.Errorf("%w: clientCode=%s secCode=%s tradeAccount=%s settleCode=%s firmCode=%s",
 				models.ErrConflict,
 				sec.ClientCode,
-				sec.Ticker,
+				sec.SecCode,
 				sec.TradeAccount,
 				sec.SettleCode,
 				sec.FirmCode)

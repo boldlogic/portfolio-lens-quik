@@ -9,8 +9,71 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_moneyLimitToDTO(t *testing.T) {
+	t.Parallel()
+
+	firmNameEmpty := fixtureMoneyLimit()
+	firmNameEmpty.FirmName = ""
+	wantFirmNameEmpty := fixtureMoneyLimitDTO()
+	wantFirmNameEmpty.FirmName = ""
+
+	currencyRUR := fixtureMoneyLimit()
+	currencyRUR.CurrencyCode = "RUR"
+	wantCurrencyRUB := fixtureMoneyLimitDTO()
+	wantCurrencyRUB.Currency = "RUB"
+
+	tests := []struct {
+		name string
+		in   quik.MoneyLimit
+		want moneyLimitDTO
+	}{
+		{
+			name: "все_поля_заполнены",
+			in:   fixtureMoneyLimit(),
+			want: fixtureMoneyLimitDTO(),
+		},
+		{
+			name: "firmName_пустой",
+			in:   firmNameEmpty,
+			want: wantFirmNameEmpty,
+		},
+		{
+			name: "currency_rur_из_БД_rub_в_dto",
+			in:   currencyRUR,
+			want: wantCurrencyRUB,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, moneyLimitToDTO(tt.in))
+		})
+	}
+}
+
 func Test_securityLimitToDTO(t *testing.T) {
 	t.Parallel()
+
+	isinEmpty := fixtureSecurityLimit()
+	isinEmpty.ISIN = ""
+	wantIsinEmpty := fixtureSecurityLimitDTO()
+	wantIsinEmpty.ISIN = ""
+
+	firmNameEmpty := fixtureSecurityLimit()
+	firmNameEmpty.FirmName = ""
+	wantFirmNameEmpty := fixtureSecurityLimitDTO()
+	wantFirmNameEmpty.FirmName = ""
+
+	shortNameTrim := fixtureSecurityLimit()
+	shortNameTrim.ShortName = " Сбербанк "
+	wantShortNameTrim := fixtureSecurityLimitDTO()
+	wantShortNameTrim.ShortName = "Сбербанк"
+
+	acqRUR := fixtureSecurityLimit()
+	acqRUR.AcquisitionCurrencyCode = "RUR"
+	wantAcqRUB := fixtureSecurityLimitDTO()
+	wantAcqRUB.AcquisitionCurrencyCode = "RUB"
 
 	tests := []struct {
 		name string
@@ -18,55 +81,36 @@ func Test_securityLimitToDTO(t *testing.T) {
 		want securityLimitDTO
 	}{
 		{
-			name: "все_поля_с_isin",
-			in: quik.SecurityLimit{
-				LoadDate:       time.Date(2025, 1, 1, 0, 0, 0, 0, time.Local),
-				SourceDate:     time.Date(2025, 1, 2, 0, 0, 0, 0, time.Local),
-				ClientCode:     "AB12CD",
-				Ticker:         "SBER",
-				TradeAccount:   "L01-00000F00",
-				SettleCode:     quik.SettleCodeT2,
-				FirmCode:       "COFE",
-				FirmName:       "Фирма брокера",
-				Balance:        decimal.RequireFromString("15.25"),
-				AcquisitionCcy: "RUB",
-				ISIN:           "RU000A0JX0J2",
-			},
-			want: securityLimitDTO{
-				LoadDate:       "2025-01-01",
-				SourceDate:     "2025-01-02",
-				ClientCode:     "AB12CD",
-				Ticker:         "SBER",
-				TradeAccount:   "L01-00000F00",
-				SettleCode:     "T2",
-				FirmCode:       "COFE",
-				FirmName:       "Фирма брокера",
-				Balance:        decimal.RequireFromString("15.25"),
-				AcquisitionCcy: "RUB",
-				ISIN:           "RU000A0JX0J2",
-			},
+			name: "все_поля_заполнены",
+			in:   fixtureSecurityLimit(),
+			want: fixtureSecurityLimitDTO(),
 		},
 		{
-			name: "nil_isin_оставляет_пустую_строку",
-			in: quik.SecurityLimit{
-				LoadDate:   time.Date(2026, 12, 31, 0, 0, 0, 0, time.Local),
-				SourceDate: time.Date(2026, 12, 31, 0, 0, 0, 0, time.Local),
-				Balance:    decimal.RequireFromString("-10.50"),
-			},
-			want: securityLimitDTO{
-				LoadDate:   "2026-12-31",
-				SourceDate: "2026-12-31",
-				Balance:    decimal.RequireFromString("-10.50"),
-			},
+			name: "isin_пустой",
+			in:   isinEmpty,
+			want: wantIsinEmpty,
+		},
+		{
+			name: "firmName_пустой",
+			in:   firmNameEmpty,
+			want: wantFirmNameEmpty,
+		},
+		{
+			name: "shortName_trim",
+			in:   shortNameTrim,
+			want: wantShortNameTrim,
+		},
+		{
+			name: "acquisitionCurrency_rur_из_БД_rub_в_dto",
+			in:   acqRUR,
+			want: wantAcqRUB,
 		},
 	}
-
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := securityLimitToDTO(tt.in)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, securityLimitToDTO(tt.in))
 		})
 	}
 }
@@ -74,57 +118,48 @@ func Test_securityLimitToDTO(t *testing.T) {
 func Test_securityLimitsToDTO(t *testing.T) {
 	t.Parallel()
 
+	second := fixtureSecurityLimit()
+	second.LoadDate = time.Date(2026, 5, 30, 0, 0, 0, 0, time.Local)
+	second.SourceDate = time.Date(2026, 5, 29, 0, 0, 0, 0, time.Local)
+	second.SecCode = fixtureSecCodeGAZP
+	second.Balance = decimal.RequireFromString("5.50")
+	second.ISIN = ""
+	second.ShortName = ""
+
+	wantSecond := fixtureSecurityLimitDTO()
+	wantSecond.LoadDate = "2026-05-30"
+	wantSecond.SourceDate = "2026-05-29"
+	wantSecond.SecCode = fixtureSecCodeGAZP
+	wantSecond.Balance = decimal.RequireFromString("5.50")
+	wantSecond.ISIN = ""
+	wantSecond.ShortName = ""
+
 	tests := []struct {
 		name string
 		in   []quik.SecurityLimit
 		want []securityLimitDTO
 	}{
 		{
-			name: "есть_лимиты",
-			in: []quik.SecurityLimit{
-				{
-					LoadDate:   time.Date(2026, 12, 31, 0, 0, 0, 0, time.Local),
-					SourceDate: time.Date(2026, 12, 31, 0, 0, 0, 0, time.Local),
-					Ticker:     "SBER",
-					Balance:    decimal.NewFromInt(10),
-					ISIN:       "RU000A0JX0J2",
-				},
-				{
-					LoadDate:   time.Date(2026, 12, 30, 0, 0, 0, 0, time.Local),
-					SourceDate: time.Date(2026, 12, 30, 0, 0, 0, 0, time.Local),
-					Ticker:     "GAZP",
-					Balance:    decimal.RequireFromString("-1.50"),
-				},
-			},
-			want: []securityLimitDTO{
-				{
-					LoadDate:   "2026-12-31",
-					SourceDate: "2026-12-31",
-					Ticker:     "SBER",
-					Balance:    decimal.NewFromInt(10),
-					ISIN:       "RU000A0JX0J2",
-				},
-				{
-					LoadDate:   "2026-12-30",
-					SourceDate: "2026-12-30",
-					Ticker:     "GAZP",
-					Balance:    decimal.RequireFromString("-1.50"),
-				},
-			},
+			name: "один_элемент",
+			in:   []quik.SecurityLimit{fixtureSecurityLimit()},
+			want: []securityLimitDTO{fixtureSecurityLimitDTO()},
 		},
 		{
-			name: "nil_слайс_возвращает_пустой_ответ",
+			name: "два_элемента_сохраняют_порядок",
+			in:   []quik.SecurityLimit{fixtureSecurityLimit(), second},
+			want: []securityLimitDTO{fixtureSecurityLimitDTO(), wantSecond},
+		},
+		{
+			name: "nil_слайс_возвращает_пустой_слайс",
 			in:   nil,
 			want: []securityLimitDTO{},
 		},
 	}
-
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := securityLimitsToDTO(tt.in)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, securityLimitsToDTO(tt.in))
 		})
 	}
 }

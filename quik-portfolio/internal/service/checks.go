@@ -15,7 +15,7 @@ func validateLimitsContract(date time.Time, clientCodes []string) ([]string, err
 	if err := checkLimitDate(date); err != nil {
 		return nil, err
 	}
-	dedublicated, err := dedublicateClientCodes(clientCodes)
+	dedublicated, err := deduplicateClientCodes(clientCodes)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +37,12 @@ func checkLimitDate(date time.Time) error {
 
 const maxClientCodesCount = 10
 
-func dedublicateClientCodes(clientCodes []string) ([]string, error) {
+func deduplicateClientCodes(clientCodes []string) ([]string, error) {
 	if len(clientCodes) == 0 {
 		return nil, nil
 	}
 
-	dedup := make(map[string]uint8, maxClientCodesCount)
+	dedup := make(map[string]struct{}, maxClientCodesCount)
 	out := make([]string, 0, maxClientCodesCount)
 
 	unique := 0
@@ -51,16 +51,16 @@ func dedublicateClientCodes(clientCodes []string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%w: код клиента %s", models.ErrBusinessValidation, code)
 		}
-		dedup[trimmed]++
-		if dedup[trimmed] <= 1 {
-			unique++
-			out = append(out, trimmed)
+		if _, ok := dedup[trimmed]; ok {
+			continue
 		}
-		if unique > maxClientCodesCount {
+
+		if unique++; unique > maxClientCodesCount {
 			return nil, fmt.Errorf("%w: слишком много клиентских кодов, ограничение %d уникальных", models.ErrBusinessValidation, maxClientCodesCount)
 
 		}
-
+		out = append(out, trimmed)
+		dedup[trimmed] = struct{}{}
 	}
 
 	return out, nil

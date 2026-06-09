@@ -2,10 +2,8 @@ package v1
 
 import (
 	"testing"
-	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,17 +24,7 @@ func Test_moneyLimitsToResponseDTO(t *testing.T) {
 		{
 			name: "есть_лимиты_и_totalCount",
 			mls: []quik.MoneyLimit{
-				{
-					LoadDate:     time.Date(2026, 5, 31, 0, 0, 0, 0, time.Local),
-					SourceDate:   time.Date(2026, 5, 30, 0, 0, 0, 0, time.Local),
-					ClientCode:   "AA",
-					Currency:     "RUB",
-					PositionCode: "EQTV",
-					SettleCode:   quik.SettleCodeT2,
-					FirmCode:     "COFE",
-					FirmName:     "Брокер",
-					Balance:      decimal.RequireFromString("10.25"),
-				},
+				fixtureMoneyLimit(),
 			},
 			limit:             25,
 			offset:            7,
@@ -44,17 +32,7 @@ func Test_moneyLimitsToResponseDTO(t *testing.T) {
 			includeTotalCount: true,
 			want: moneyLimitsResponseDTO{
 				Limits: []moneyLimitDTO{
-					{
-						LoadDate:     "2026-05-31",
-						SourceDate:   "2026-05-30",
-						ClientCode:   "AA",
-						Currency:     "RUB",
-						PositionCode: "EQTV",
-						SettleCode:   "T2",
-						FirmCode:     "COFE",
-						FirmName:     "Брокер",
-						Balance:      decimal.RequireFromString("10.25"),
-					},
+					fixtureMoneyLimitDTO(),
 				},
 				TotalCount: &totalCount,
 				Limit:      25,

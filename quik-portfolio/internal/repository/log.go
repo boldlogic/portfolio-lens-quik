@@ -29,3 +29,8 @@ func (r *Repository) finalizeSelectErr(funcName string, date time.Time, err erro
 	}
 	return err
 }
+
+func (r *Repository) observeSelectExit(opName string, date time.Time, start time.Time, err error) error {
+	r.metrics.ObserveRepository(opName, time.Since(start), err)
+	return r.finalizeSelectErr(opName, date, err)
+}

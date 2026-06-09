@@ -76,7 +76,7 @@ func moneyLimitToDTO(ml quik.MoneyLimit) moneyLimitDTO {
 		LoadDate:     ml.LoadDate.Format(dates.ISODateFormat),
 		SourceDate:   ml.SourceDate.Format(dates.ISODateFormat),
 		ClientCode:   ml.ClientCode,
-		Currency:     ml.Currency,
+		Currency:     currencyCodeForDTO(ml.CurrencyCode),
 		PositionCode: ml.PositionCode,
 		SettleCode:   string(ml.SettleCode),
 		FirmCode:     ml.FirmCode,

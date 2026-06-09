@@ -18,13 +18,10 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func NewRouter(handler *Handler, logger *zap.Logger) *Router {
 	r := chi.NewRouter()
-	r.Route("/quik", func(r chi.Router) {
-		r.Route("/limits", func(r chi.Router) {
-			r.Post("/money", handler.Adapt(handler.CreateMoneyLimit))
-			r.Post("/securities", handler.Adapt(handler.CreateSecurityLimit))
-			r.Post("/securities/otc", handler.Adapt(handler.CreateSecurityLimitOtc))
-		})
-	})
+	r.Post("/money-limits", handler.Adapt(handler.postMoneyLimit))
+	r.Post("/security-limits", handler.Adapt(handler.CreateSecurityLimit))
+	r.Post("/otc-security-limits", handler.Adapt(handler.CreateSecurityLimitOtc))
+
 	return &Router{
 		mux:    r,
 		logger: logger,

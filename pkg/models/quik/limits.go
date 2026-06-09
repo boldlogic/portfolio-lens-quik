@@ -35,7 +35,7 @@ type MoneyLimit struct {
 	LoadDate     time.Time
 	SourceDate   time.Time
 	ClientCode   string
-	Currency     string
+	CurrencyCode string
 	PositionCode string
 	SettleCode   SettleCode
 	FirmCode     string
@@ -44,18 +44,18 @@ type MoneyLimit struct {
 }
 
 type SecurityLimit struct {
-	LoadDate       time.Time
-	SourceDate     time.Time
-	ClientCode     string
-	Ticker         string
-	TradeAccount   string
-	SettleCode     SettleCode
-	FirmCode       string
-	FirmName       string
-	Balance        decimal.Decimal
-	AcquisitionCcy string
-	ISIN           string
-	ShortName      string
+	LoadDate                time.Time
+	SourceDate              time.Time
+	ClientCode              string
+	SecCode                 string
+	TradeAccount            string
+	SettleCode              SettleCode
+	FirmCode                string
+	FirmName                string
+	Balance                 decimal.Decimal
+	AcquisitionCurrencyCode string
+	ISIN                    string
+	ShortName               string
 }
 
 type Position struct {

@@ -34,7 +34,7 @@ func (m moneyLimitRow) toQuik() quik.MoneyLimit {
 		LoadDate:     m.LoadDate,
 		SourceDate:   m.SourceDate,
 		ClientCode:   m.ClientCode,
-		Currency:     m.CurrencyCode,
+		CurrencyCode: m.CurrencyCode,
 		PositionCode: m.PositionCode,
 		FirmCode:     m.FirmCode,
 		FirmName:     stringFromNull(m.FirmName),
@@ -46,18 +46,18 @@ func (m moneyLimitRow) toQuik() quik.MoneyLimit {
 
 func (s securityLimitRow) toQuik() quik.SecurityLimit {
 	return quik.SecurityLimit{
-		LoadDate:       s.LoadDate,
-		SourceDate:     s.SourceDate,
-		ClientCode:     s.ClientCode,
-		Ticker:         s.SecCode,
-		TradeAccount:   s.TradeAccount,
-		FirmCode:       s.FirmCode,
-		FirmName:       stringFromNull(s.FirmName),
-		Balance:        decimalFromPtr(s.Balance),
-		AcquisitionCcy: s.AcquisitionCurrencyCode,
-		ISIN:           stringFromNull(s.ISIN),
-		ShortName:      stringFromNull(s.ShortName),
-		SettleCode:     quik.SettleCode(s.SettleCode),
+		LoadDate:                s.LoadDate,
+		SourceDate:              s.SourceDate,
+		ClientCode:              s.ClientCode,
+		SecCode:                 s.SecCode,
+		TradeAccount:            s.TradeAccount,
+		FirmCode:                s.FirmCode,
+		FirmName:                stringFromNull(s.FirmName),
+		Balance:                 decimalFromPtr(s.Balance),
+		AcquisitionCurrencyCode: s.AcquisitionCurrencyCode,
+		ISIN:                    stringFromNull(s.ISIN),
+		ShortName:               stringFromNull(s.ShortName),
+		SettleCode:              quik.SettleCode(s.SettleCode),
 	}
 }
 
@@ -76,13 +76,14 @@ func (p moneyPortfolioRow) toQuikPosition() quik.Position {
 	}
 }
 
-func (p securityPortfolioRow) toQuikPosition() quik.Position {
+func (p securityPortfolioRow) toQuikPositionWithType(limitType quik.LimitType) quik.Position {
 	return quik.Position{
-		LimitType:                   quik.LimitTypeSecurities,
+		LimitType:                   limitType,
 		LoadDate:                    p.LoadDate,
 		SourceDate:                  p.SourceDate,
 		ClientCode:                  p.ClientCode,
 		FirmCode:                    p.FirmCode,
+		FirmName:                    stringFromNull(p.FirmName),
 		Ticker:                      p.SecCode,
 		Name:                        stringFromNull(p.SecName),
 		Amount:                      p.Balance,

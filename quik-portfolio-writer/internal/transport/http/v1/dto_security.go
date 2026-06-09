@@ -7,17 +7,17 @@ import (
 )
 
 type securityLimitDTO struct {
-	LoadDate       string          `json:"loadDate"`
-	SourceDate     string          `json:"sourceDate"`
-	ClientCode     string          `json:"clientCode"`
-	Ticker         string          `json:"ticker"`
-	TradeAccount   string          `json:"tradeAccount"`
-	SettleCode     string          `json:"settleCode"`
-	FirmCode       string          `json:"firmCode"`
-	FirmName       string          `json:"firmName"`
-	Balance        decimal.Decimal `json:"balance"`
-	AcquisitionCcy string          `json:"acquisitionCcy"`
-	ISIN           string          `json:"isin,omitempty"`
+	LoadDate                string          `json:"loadDate"`
+	SourceDate              string          `json:"sourceDate"`
+	ClientCode              string          `json:"clientCode"`
+	SecCode                 string          `json:"secCode"`
+	TradeAccount            string          `json:"tradeAccount"`
+	SettleCode              string          `json:"settleCode"`
+	FirmCode                string          `json:"firmCode"`
+	FirmName                string          `json:"firmName"`
+	Balance                 decimal.Decimal `json:"balance"`
+	AcquisitionCurrencyCode string          `json:"acquisitionCurrencyCode"`
+	ISIN                    string          `json:"isin,omitempty"`
 }
 
 func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
@@ -25,13 +25,13 @@ func securityLimitToDTO(sl quik.SecurityLimit) securityLimitDTO {
 	out.LoadDate = sl.LoadDate.Format(dates.ISODateFormat)
 	out.SourceDate = sl.SourceDate.Format(dates.ISODateFormat)
 	out.ClientCode = sl.ClientCode
-	out.Ticker = sl.Ticker
+	out.SecCode = sl.SecCode
 	out.TradeAccount = sl.TradeAccount
 	out.SettleCode = string(sl.SettleCode)
 	out.FirmCode = sl.FirmCode
 	out.FirmName = sl.FirmName
 	out.Balance = sl.Balance
-	out.AcquisitionCcy = sl.AcquisitionCcy
+	out.AcquisitionCurrencyCode = sl.AcquisitionCurrencyCode
 	out.ISIN = sl.ISIN
 
 	return out

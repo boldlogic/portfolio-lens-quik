@@ -14,7 +14,7 @@ import (
 func moneyLimitToProto(l quik.MoneyLimit) *quikv1.MoneyLimit {
 	return &quikv1.MoneyLimit{
 		ClientCode:   l.ClientCode,
-		Currency:     l.Currency,
+		Currency:     l.CurrencyCode,
 		Balance:      l.Balance.String(),
 		FirmCode:     l.FirmCode,
 		FirmName:     l.FirmName,

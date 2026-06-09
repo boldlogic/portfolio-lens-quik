@@ -187,7 +187,7 @@ func TestCreateMoneyLimit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			h := newTestHandler(tt.svc)
-			body, detail, err := h.CreateMoneyLimit(tt.req)
+			body, detail, err := h.postMoneyLimit(tt.req)
 			assert.Equal(t, tt.wantBody, body)
 			assert.Contains(t, detail, tt.wantDetail)
 			assert.ErrorIs(t, err, tt.wantErr)
