@@ -56,24 +56,24 @@ func scanSecurityPortfolioRow(row *sql.Rows) (securityPortfolioRow, error) {
 
 const (
 	securityPortfolioSelectColumnsSQL = `
-		select c.load_date,
-			c.source_date,
-			q.quote_date,
-			fx_rate_date=cr.rate_date,
-			c.client_code,
-			c.firm_code,
-			c.firm_name,
-			c.sec_code,	
-			sec_name=coalesce(c.sec_name,q.short_name),
-			c.balance,
-			unit_price=q.price,
-			accrued_interest=q.ai,
-			market_value_in_instr_currency=cast(q.market_value*c.balance as decimal(18,2)),
-			instrument_currency_code=norm_ccy.currency,
-			market_value_in_target_currency=cast (q.market_value*c.balance*cr.rate as decimal(18,2))
-		from cte c
+		select p.load_date,
+			p.source_date,
+			p.quote_date,
+			fx_rate_date=fx.rate_date,
+			p.client_code,
+			p.firm_code,
+			p.firm_name,
+			p.sec_code,
+			p.sec_name,
+			p.balance,
+			p.unit_price,
+			p.accrued_interest,
+			p.market_value_in_instr_currency,
+			p.instrument_currency_code,
+			market_value_in_target_currency=cast(p.market_value*p.balance*fx.rate as decimal(18,2))
+		from positions p
 `
-	securityPortfolioLatestSettleCTESQL = `
+	securityPortfolioLatestSettleCTEBaseSQL = `
 		WITH cte AS (
 			SELECT
 				li.load_date,
@@ -98,18 +98,48 @@ const (
 					)
 `
 
-	securityPortfolioCteWhereSQL = `
+	securityPortfolioCteWhereAllSQL = `
 			WHERE li.load_date = cast(@p1 as date)
-				AND (
-					@p3 = 0
-					OR EXISTS (SELECT 1 FROM @codes c WHERE c.client_code = li.client_code)
-				)
+		)`
+	securityPortfolioCteWhereByClientsSQL = `
+			WHERE li.load_date = cast(@p1 as date)
+				AND EXISTS (SELECT 1 FROM @codes c WHERE c.client_code = li.client_code)
 		)`
 
-	securityPortfolioQuoteAndFxJoinSQL = `
+	securityPortfolioPositionsAndFxCTESQL = `
+		, positions AS (
+			SELECT
+				c.load_date,
+				c.source_date,
+				q.quote_date,
+				c.client_code,
+				c.firm_code,
+				c.firm_name,
+				c.sec_code,
+				sec_name = COALESCE(c.sec_name, q.short_name),
+				c.balance,
+				unit_price = q.price,
+				accrued_interest = q.ai,
+				market_value = q.market_value,
+				market_value_in_instr_currency = CAST(q.market_value * c.balance AS DECIMAL(18, 2)),
+				instrument_currency_code = norm_ccy.currency
+			FROM cte c
 		outer apply market.fnSecurityQuoteByAcquisitionCurrency(c.sec_code,c.acquisition_currency_code) q
 		outer apply (select ccy=coalesce(q.currency,c.acquisition_currency_code)) cur
 		outer apply (select currency=case when isnull(cur.ccy,'')  IN ('SUR','RUR') THEN 'RUB' ELSE cur.ccy END) norm_ccy
+			WHERE c.settle_code = c.settle_max
+		)
+		, fx_keys AS (
+			SELECT DISTINCT
+				p.instrument_currency_code
+			FROM positions p
+		)
+		, fx AS (
+			SELECT
+				k.instrument_currency_code,
+				cr.rate,
+				cr.rate_date
+			FROM fx_keys k
 		LEFT JOIN ref.external_codes ec_mv
 			ON ec_mv.ext_system_id = (select
 				ext_system_id
@@ -118,24 +148,30 @@ const (
 			where
 				ext_system = 'QUIK')
 			AND ec_mv.ext_code_type_id = 1
-			AND ec_mv.ext_code = norm_ccy.currency
+				AND ec_mv.ext_code = k.instrument_currency_code
 		LEFT JOIN ref.currencies c_mv_ec  ON c_mv_ec.iso_code  = ec_mv.internal_id
-		LEFT JOIN ref.currencies c_mv_iso ON c_mv_iso.iso_char_code = norm_ccy.currency
+			LEFT JOIN ref.currencies c_mv_iso ON c_mv_iso.iso_char_code = k.instrument_currency_code
 		cross apply market.fnFxRateCross(ISNULL(COALESCE(c_mv_ec.iso_char_code,c_mv_iso.iso_char_code), ''),@p2,@p1) cr
-		where c.settle_code=c.settle_max`
+		)
+`
+	securityPortfolioFxJoinSQL = `
+		JOIN fx ON fx.instrument_currency_code = p.instrument_currency_code`
 )
 
-func buildSecurityPortfolioSQL(sourceTable string) string {
-	return securityPortfolioLatestSettleCTESQL +
+func buildSecurityPortfolioSQL(sourceTable string, cteWhereSQL string) string {
+	return securityPortfolioLatestSettleCTEBaseSQL +
 		sourceTable +
-		securityPortfolioCteWhereSQL +
+		cteWhereSQL +
+		securityPortfolioPositionsAndFxCTESQL +
 		securityPortfolioSelectColumnsSQL +
-		securityPortfolioQuoteAndFxJoinSQL
+		securityPortfolioFxJoinSQL
 }
 
 var (
-	selectSecurityPortfolioExchangeSQL = buildSecurityPortfolioSQL(securityLimitExchangeTableSQL)
-	selectSecurityPortfolioOtcSQL      = buildSecurityPortfolioSQL(securityLimitOtcTableSQL)
+	selectSecurityPortfolioExchangeAllSQL       = buildSecurityPortfolioSQL(securityLimitExchangeTableSQL, securityPortfolioCteWhereAllSQL)
+	selectSecurityPortfolioExchangeByClientsSQL = buildSecurityPortfolioSQL(securityLimitExchangeTableSQL, securityPortfolioCteWhereByClientsSQL)
+	selectSecurityPortfolioOtcAllSQL            = buildSecurityPortfolioSQL(securityLimitOtcTableSQL, securityPortfolioCteWhereAllSQL)
+	selectSecurityPortfolioOtcByClientsSQL      = buildSecurityPortfolioSQL(securityLimitOtcTableSQL, securityPortfolioCteWhereByClientsSQL)
 )
 
 func (r *Repository) listSecurityPortfolio(
@@ -144,12 +180,14 @@ func (r *Repository) listSecurityPortfolio(
 	targetCcy string,
 	clientCodes []string,
 	limitType quik.LimitType,
-	sqlText string,
+	selectAllSQL string,
+	selectByClientsSQL string,
 ) (result []quik.Position, err error) {
 	pos, err := selectPortfolioRows(
 		r,
 		ctx,
-		sqlText,
+		selectAllSQL,
+		selectByClientsSQL,
 		scanSecurityPortfolioRow,
 		portfolioQuery{date: date, targetCcy: targetCcy, clientCodes: clientCodes},
 	)
@@ -171,7 +209,8 @@ func (r *Repository) ListSecurityPortfolio(ctx context.Context, date time.Time, 
 		targetCcy,
 		clientCodes,
 		quik.LimitTypeSecurities,
-		selectSecurityPortfolioExchangeSQL,
+		selectSecurityPortfolioExchangeAllSQL,
+		selectSecurityPortfolioExchangeByClientsSQL,
 	)
 }
 
@@ -185,6 +224,7 @@ func (r *Repository) ListSecurityPortfolioOtc(ctx context.Context, date time.Tim
 		targetCcy,
 		clientCodes,
 		quik.LimitTypeSecuritiesOtc,
-		selectSecurityPortfolioOtcSQL,
+		selectSecurityPortfolioOtcAllSQL,
+		selectSecurityPortfolioOtcByClientsSQL,
 	)
 }

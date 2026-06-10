@@ -49,18 +49,18 @@ const (
 	SELECT
 		c.load_date,
 		c.source_date,
-		fx_rate_date=cr.rate_date,
+		fx_rate_date=fx.rate_date,
 		c.client_code,
 		c.firm_code,
 		c.firm_name,
 		c.currency_code,
-		currency_name=COALESCE(cv_ec.currency_name,   cv_iso.currency_name),
+		fx.currency_name,
 		balance=cast(isnull(c.balance,0) as decimal(18,2)),
-		market_value_in_target_currency=cast(c.balance *cr.rate as decimal(18,2))
+		market_value_in_target_currency=cast(c.balance *fx.rate as decimal(18,2))
 		FROM cte c
 `
 
-	moneyPortfolioLatestSettleCTESQL = `
+	moneyPortfolioLatestSettleCTEBaseSQL = `
 		WITH cte AS (
 			SELECT
 				li.load_date,
@@ -82,14 +82,29 @@ const (
 				quik.money_limits li
 			WHERE
 				li.load_date = cast(@p1 as date)
-				AND (
-					@p3 = 0
-					OR EXISTS (SELECT 1 FROM @codes c WHERE c.client_code = li.client_code)
-				)
+`
+	moneyPortfolioLatestSettleCTEAllSQL = moneyPortfolioLatestSettleCTEBaseSQL + `
+		)
+`
+	moneyPortfolioLatestSettleCTEByClientsSQL = moneyPortfolioLatestSettleCTEBaseSQL + `
+				AND EXISTS (SELECT 1 FROM @codes c WHERE c.client_code = li.client_code)
 		)
 `
 
-	moneyPortfolioFxJoinSQL = `
+	moneyPortfolioFxRatesCTESQL = `
+		, fx_keys AS (
+			SELECT DISTINCT
+				c.currency_code
+			FROM cte c
+			WHERE c.settle_code = c.settle_max
+		)
+		, fx AS (
+			SELECT
+				k.currency_code,
+				currency_name = COALESCE(cv_ec.currency_name, cv_iso.currency_name),
+				cr.rate,
+				cr.rate_date
+			FROM fx_keys k
 		LEFT JOIN ref.external_codes ec_ccy 
 			ON ec_ccy.ext_system_id = (select
 				ext_system_id
@@ -98,13 +113,18 @@ const (
 			where
 				ext_system = 'QUIK')
 			AND ec_ccy.ext_code_type_id = 1
-			AND ec_ccy.ext_code = c.currency_code
+				AND ec_ccy.ext_code = k.currency_code
 		LEFT JOIN ref.currencies cv_ec  ON cv_ec.iso_code  = ec_ccy.internal_id
-		LEFT JOIN ref.currencies cv_iso ON cv_iso.iso_char_code = c.currency_code
+			LEFT JOIN ref.currencies cv_iso ON cv_iso.iso_char_code = k.currency_code
 		cross apply market.fnFxRateCross(ISNULL(COALESCE(cv_ec.iso_char_code,cv_iso.iso_char_code), ''),@p2,@p1) cr
+		)
+`
+	moneyPortfolioFxJoinSQL = `
+		JOIN fx ON fx.currency_code = c.currency_code
 		WHERE c.settle_code = c.settle_max	
 	`
-	selectMoneyPortfolioRowsSQL = moneyPortfolioLatestSettleCTESQL + moneyPortfolioSelectColumnsSQL + moneyPortfolioFxJoinSQL
+	selectMoneyPortfolioRowsAllSQL       = moneyPortfolioLatestSettleCTEAllSQL + moneyPortfolioFxRatesCTESQL + moneyPortfolioSelectColumnsSQL + moneyPortfolioFxJoinSQL
+	selectMoneyPortfolioRowsByClientsSQL = moneyPortfolioLatestSettleCTEByClientsSQL + moneyPortfolioFxRatesCTESQL + moneyPortfolioSelectColumnsSQL + moneyPortfolioFxJoinSQL
 )
 
 func (r *Repository) ListMoneyPortfolio(ctx context.Context, date time.Time, targetCcy string, clientCodes []string) (result []quik.Position, err error) {
@@ -114,7 +134,8 @@ func (r *Repository) ListMoneyPortfolio(ctx context.Context, date time.Time, tar
 	pos, err := selectPortfolioRows(
 		r,
 		ctx,
-		selectMoneyPortfolioRowsSQL,
+		selectMoneyPortfolioRowsAllSQL,
+		selectMoneyPortfolioRowsByClientsSQL,
 		scanMoneyPortfolioRow,
 		portfolioQuery{date: date, targetCcy: targetCcy, clientCodes: clientCodes},
 	)

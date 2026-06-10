@@ -1,19 +1,8 @@
 # quik-reference-data
 
-`quik-reference-data` отвечает за ручные справочники QUIK. В текущей реализации сервис публикует HTTP API для фирм брокеров и периодически дополняет справочник фирм по данным лимитов из MSSQL
+`quik-reference-data` отвечает за ручные справочники QUIK. Сервис публикует HTTP API для фирм брокеров и периодически дополняет справочник фирм по данным лимитов из MSSQL.
 
 ## HTTP API
-
-Базовый путь API:
-
-```text
-/api/v1/quik
-```
-
-Служебные endpoint'ы:
-
-- `GET /health` - возвращает JSON-строку `"ok"`;
-- `GET /metrics` - отдаёт Prometheus metrics.
 
 Фирмы:
 
@@ -86,29 +75,14 @@
 - `415 UNSUPPORTED_MEDIA_TYPE` - `Content-Type` не `application/json`;
 - `500 SERVER_ERROR` - внутренняя ошибка, клиент получает `detail: "что-то пошло не так"`.
 
-## Таблицы
-
-Сервис работает со схемой `quik` в MSSQL.
-
-Основной справочник:
-
-- `quik.firms`.
-
-Источники для фоновой синхронизации:
-
-- `quik.money_limits`;
-- `quik.security_limits`.
-
-`quik.firms.code` уникален. `firm_id` хранится как `tinyint IDENTITY`, поэтому публичный `id` ограничен диапазоном `uint8`.
-
 ## Фоновая синхронизация фирм
 
-Воркер `actualize_firms` раз в 60 секунд добавляет в `quik.firms` отсутствующие фирмы из лимитов:
+Воркер `actualize_firms` раз в 60 секунд добавляет в `ref.firms` отсутствующие фирмы из лимитов:
 
 - берет `firm_code` и очищенный от пробелов `firm_name`;
 - читает данные из `quik.money_limits` и `quik.security_limits`;
 - пропускает строки без `firm_code` и строки с пустым `firm_name`;
-- не обновляет уже существующие фирмы, если `code` уже есть в `quik.firms`.
+- не обновляет уже существующие фирмы, если `code` уже есть в `ref.firms`.
 
 ## Запуск
 
@@ -124,8 +98,6 @@ go run ./quik-reference-data/cmd
 quik-reference-data/config.yaml
 ```
 
-Путь к конфигу можно переопределить тем же механизмом `commonconfig`, который используется в остальных сервисах репозитория.
-
 ## Конфигурация
 
 В конфиге нужны блоки:
@@ -133,5 +105,3 @@ quik-reference-data/config.yaml
 - `log` - настройки логирования;
 - `server` - настройки HTTP server;
 - `db` - подключение к MSSQL.
-
-Секреты подключения к БД подставляются из окружения через общий `db` config.
