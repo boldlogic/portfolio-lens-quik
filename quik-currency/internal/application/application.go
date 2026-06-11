@@ -9,51 +9,70 @@ import (
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/periodic"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/repository"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/service"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/workers"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/dictionary"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/fxcbr"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/storage"
+	storagemssql "github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/storage/mssql"
 	"go.uber.org/zap"
 )
 
 type Application struct {
 	cfg    *config.Config
-	logger *zap.Logger
-	svc    *service.Service
-	repo   *repository.Repository
+	Logger *zap.Logger
+	store  *storage.Storage
 	wg     sync.WaitGroup
 }
 
-const defaultConfigPath = "quik-currency/internal/configs/config.yaml"
+const defaultConfigPath = "quik-currency/config.yaml"
 
 func New() (*Application, error) {
 	configPath := commonconfig.GetConfigPath(defaultConfigPath)
 	cfg, err := config.Load(configPath)
 	if err != nil {
-		return &Application{}, err
+		return nil, err
 	}
 	log := logger.New(cfg.Log)
 	return &Application{
 		cfg:    cfg,
-		logger: log,
+		Logger: log,
 	}, nil
 }
 
 func (a *Application) Start(ctx context.Context) error {
-	repo, err := repository.NewRepository(ctx, a.cfg.Db, a.logger)
+	store, err := storage.NewStorage(ctx, a.cfg.Db, a.Logger)
 	if err != nil {
 		return err
 	}
-	a.repo = repo
+	a.store = store
+	currencyRepo := storagemssql.NewCurrencyRepo(a.store.Db)
+	curSvc := dictionary.NewService(a.Logger, currencyRepo)
+	fxSvc := fxcbr.NewService(a.Logger, currencyRepo)
 
-	a.svc = service.NewService(a.repo, a.logger)
+	workers := make([]periodic.Worker, 0, 2)
 
-	if err = a.svc.InitCurrencyDictionary(ctx); err != nil {
-		return err
+	if a.cfg.CurrencyWorkerConfig.Enabled {
+		workers = append(workers, dictionary.NewUpdateCurrencyDictionaryWorker(
+			curSvc,
+			a.Logger,
+			a.cfg.CurrencyWorkerConfig.Name,
+			time.Duration(a.cfg.CurrencyWorkerConfig.Interval)*time.Second,
+		))
 	}
 
-	runner := periodic.NewRunner(
-		workers.NewMergeFxCBRRatesQuikWorker(a.svc, a.logger, 60*time.Second),
-	)
+	if a.cfg.FxCBRWorkerConfig.Enabled {
+		workers = append(workers, fxcbr.NewMergeFxCBRRatesQuikWorker(
+			fxSvc,
+			a.Logger,
+			a.cfg.FxCBRWorkerConfig.Name,
+			time.Duration(a.cfg.FxCBRWorkerConfig.Interval)*time.Second,
+		))
+	}
+
+	if len(workers) == 0 {
+		return nil
+	}
+
+	runner := periodic.NewRunner(workers...)
 	a.wg.Add(1)
 	go func() {
 		defer a.wg.Done()

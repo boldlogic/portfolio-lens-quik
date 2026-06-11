@@ -10,8 +10,10 @@ import (
 )
 
 type Config struct {
-	Log logger.Config     `yaml:"log" json:"log"`
-	Db  dbconfig.DBConfig `yaml:"db" json:"db"`
+	Log                  logger.Config     `yaml:"log" json:"log"`
+	Db                   dbconfig.DBConfig `yaml:"db" json:"db"`
+	FxCBRWorkerConfig    Worker            `yaml:"worker" json:"worker"`
+	CurrencyWorkerConfig Worker            `yaml:"currency_worker" json:"currency_worker"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -42,4 +44,6 @@ func (c *Config) validate() []error {
 func (c *Config) applyDefaults() {
 	c.Db.ApplyDefaults()
 	c.Db.ApplySecretsFromEnv()
+	c.FxCBRWorkerConfig.applyDefaults("quik.currency.cbr.merge.rates")
+	c.CurrencyWorkerConfig.applyDefaults("quik.currency.dictionary.sync")
 }
