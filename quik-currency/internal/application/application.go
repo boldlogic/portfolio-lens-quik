@@ -3,16 +3,15 @@ package application
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
-	"github.com/boldlogic/packages/periodic"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/dictionary"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/fxcbr"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/marketdata"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/reference"
 	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/storage"
 	storagemssql "github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/storage/mssql"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/worker"
 	"go.uber.org/zap"
 )
 
@@ -44,35 +43,18 @@ func (a *Application) Start(ctx context.Context) error {
 		return err
 	}
 	a.store = store
-	currencyRepo := storagemssql.NewCurrencyRepo(a.store.Db)
-	curSvc := dictionary.NewService(a.Logger, currencyRepo)
-	fxSvc := fxcbr.NewService(a.Logger, currencyRepo)
 
-	workers := make([]periodic.Worker, 0, 2)
+	repo := storagemssql.NewCurrencyRepo(a.store.Db)
 
-	if a.cfg.CurrencyWorkerConfig.Enabled {
-		workers = append(workers, dictionary.NewUpdateCurrencyDictionaryWorker(
-			curSvc,
-			a.Logger,
-			a.cfg.CurrencyWorkerConfig.Name,
-			time.Duration(a.cfg.CurrencyWorkerConfig.Interval)*time.Second,
-		))
-	}
+	currencyCatalog := reference.NewCurrencyCatalog(a.Logger, repo)
+	rateImporter := marketdata.NewRateImporter(a.Logger, repo)
 
-	if a.cfg.FxCBRWorkerConfig.Enabled {
-		workers = append(workers, fxcbr.NewMergeFxCBRRatesQuikWorker(
-			fxSvc,
-			a.Logger,
-			a.cfg.FxCBRWorkerConfig.Name,
-			time.Duration(a.cfg.FxCBRWorkerConfig.Interval)*time.Second,
-		))
-	}
+	workers := make([]worker.Worker, 0, 2)
+	currencyJob := worker.NewJob(a.cfg.CurrencyJobConfig, a.Logger, currencyCatalog.RefreshQuikCurrencies)
+	fxJob := worker.NewJob(a.cfg.FxCBRJobConfig, a.Logger, rateImporter.ImportQuikCrossRates)
+	workers = append(workers, currencyJob, fxJob)
 
-	if len(workers) == 0 {
-		return nil
-	}
-
-	runner := periodic.NewRunner(workers...)
+	runner := worker.NewRunner(workers...)
 	a.wg.Add(1)
 	go func() {
 		defer a.wg.Done()

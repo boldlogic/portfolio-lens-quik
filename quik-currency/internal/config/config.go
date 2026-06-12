@@ -7,13 +7,14 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	"github.com/boldlogic/packages/dbconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
+	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/worker"
 )
 
 type Config struct {
-	Log                  logger.Config     `yaml:"log" json:"log"`
-	Db                   dbconfig.DBConfig `yaml:"db" json:"db"`
-	FxCBRWorkerConfig    Worker            `yaml:"worker" json:"worker"`
-	CurrencyWorkerConfig Worker            `yaml:"currency_worker" json:"currency_worker"`
+	Log               logger.Config     `yaml:"log" json:"log"`
+	Db                dbconfig.DBConfig `yaml:"db" json:"db"`
+	FxCBRJobConfig    worker.JobConfig  `yaml:"fx_cbr_worker" json:"fx_cbr_worker"`
+	CurrencyJobConfig worker.JobConfig  `yaml:"currency_worker" json:"currency_worker"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -44,6 +45,6 @@ func (c *Config) validate() []error {
 func (c *Config) applyDefaults() {
 	c.Db.ApplyDefaults()
 	c.Db.ApplySecretsFromEnv()
-	c.FxCBRWorkerConfig.applyDefaults("quik.currency.cbr.merge.rates")
-	c.CurrencyWorkerConfig.applyDefaults("quik.currency.dictionary.sync")
+	c.FxCBRJobConfig.ApplyDefaults("quik.currency.crossrates.import")
+	c.CurrencyJobConfig.ApplyDefaults("quik.currency.dictionary.refresh")
 }

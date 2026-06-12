@@ -1,4 +1,4 @@
-package dictionary
+package reference
 
 import (
 	"context"
@@ -9,38 +9,41 @@ import (
 	"go.uber.org/zap"
 )
 
-type service struct {
+type CurrencyCatalog struct {
 	logger *zap.Logger
-	repo   currencyDictionaryRepo
+	store  CurrencyCatalogStore
 }
-type currencyDictionaryRepo interface {
+
+type CurrencyCatalogStore interface {
 	SelectNewCurrenciesFromCrossrates(ctx context.Context) ([]currencies.Currency, error)
 	MergeCurrencies(ctx context.Context, currencies []currencies.Currency) error
 }
 
-func NewService(logger *zap.Logger, repo currencyDictionaryRepo) *service {
+func NewCurrencyCatalog(logger *zap.Logger, store CurrencyCatalogStore) *CurrencyCatalog {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
-	return &service{
+	return &CurrencyCatalog{
 		logger: logger,
-		repo:   repo,
+		store:  store,
 	}
 }
-func (s service) logError(msg string, err error) {
+
+func (c *CurrencyCatalog) logError(msg string, err error) {
 	if shutdown.IsExceeded(err) {
 		return
 	}
 	if err != nil {
-		s.logger.Error(msg, zap.Error(err))
+		c.logger.Error(msg, zap.Error(err))
 	}
 }
 
-func (s service) UpdateCurrencyDictionary(ctx context.Context) (err error) {
-	var msg string
-	defer func() { s.logError(msg, err) }()
+func (c *CurrencyCatalog) RefreshQuikCurrencies(ctx context.Context) (err error) {
 
-	raw, err := s.repo.SelectNewCurrenciesFromCrossrates(ctx)
+	var msg string
+	defer func() { c.logError(msg, err) }()
+
+	raw, err := c.store.SelectNewCurrenciesFromCrossrates(ctx)
 	if err != nil {
 		msg = "ошибка при получении кросс-курсов"
 		return err
@@ -53,7 +56,6 @@ func (s service) UpdateCurrencyDictionary(ctx context.Context) (err error) {
 
 	dedup := make(map[currencies.CurrencyCode]struct{})
 	for _, ccy := range raw {
-
 		if _, ok := dedup[ccy.ISOCharCode]; ok {
 			continue
 		}
@@ -61,8 +63,7 @@ func (s service) UpdateCurrencyDictionary(ctx context.Context) (err error) {
 		dedup[ccy.ISOCharCode] = struct{}{}
 		libCcy, ok := iso4217.LookupByAlpha3(ccy.ISOCharCode.String())
 		if !ok {
-			s.logger.Warn("не нашли в либе", zap.String("ISOCharCode", ccy.ISOCharCode.String()))
-
+			c.logger.Warn("не нашли в либе", zap.String("ISOCharCode", ccy.ISOCharCode.String()))
 			continue
 		}
 
@@ -70,24 +71,23 @@ func (s service) UpdateCurrencyDictionary(ctx context.Context) (err error) {
 		if miu < 0 {
 			miu = 0
 		}
-		c := currencies.Currency{
+		curr := currencies.Currency{
 			ISOCode:     int16(libCcy.Numeric),
 			ISOCharCode: ccy.ISOCharCode,
 			Name:        ccy.Name,
 			LatName:     libCcy.Name,
 			MinorUnits:  miu,
 		}
-		out = append(out, c)
+		out = append(out, curr)
 	}
 
 	if len(out) == 0 {
 		return nil
 	}
 
-	err = s.repo.MergeCurrencies(ctx, out)
+	err = c.store.MergeCurrencies(ctx, out)
 	if err != nil {
 		msg = "ошибка при сохранении справочника валют"
-
 		return err
 	}
 	return nil

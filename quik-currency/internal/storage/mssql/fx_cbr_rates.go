@@ -113,3 +113,5 @@ func (repo CurrencyRepo) MergeFxCBRRates(ctx context.Context) error {
 	}
 	return nil
 }
+
+// func (repo CurrencyRepo) SelectFXCBRRates(ctx context.Context)

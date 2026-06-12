@@ -32,6 +32,7 @@ func makeCurrencyList(curr []currencies.Currency) (sqlserver.TVP, bool) {
 	for _, c := range curr {
 		currencies = append(currencies, currencyToTVP(c))
 	}
+
 	return sqlserver.TVP{
 		TypeName: "app.currency_list",
 		Value:    currencies,
