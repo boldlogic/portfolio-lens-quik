@@ -7,7 +7,7 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	"github.com/boldlogic/packages/dbconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/worker"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/worker"
 )
 
 type Config struct {

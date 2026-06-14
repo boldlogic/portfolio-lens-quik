@@ -6,12 +6,13 @@ import (
 
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/marketdata"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/features/reference"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/storage"
-	storagemssql "github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/storage/mssql"
-	"github.com/boldlogic/portfolio-lens-quik/quik-currency/internal/worker"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/config"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/features/marketdata"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/features/reference"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/storage"
+	storagemssql "github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/storage/mssql"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/worker"
+
 	"go.uber.org/zap"
 )
 
@@ -22,7 +23,7 @@ type Application struct {
 	wg     sync.WaitGroup
 }
 
-const defaultConfigPath = "quik-currency/config.yaml"
+const defaultConfigPath = "configs/quik-currency-config.yaml"
 
 func New() (*Application, error) {
 	configPath := commonconfig.GetConfigPath(defaultConfigPath)

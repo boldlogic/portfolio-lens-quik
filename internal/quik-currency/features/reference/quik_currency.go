@@ -3,9 +3,9 @@ package reference
 import (
 	"context"
 
-	"github.com/JohannesJHN/iso4217"
 	"github.com/boldlogic/packages/shutdown"
-	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"go.uber.org/zap"
 )
 
@@ -15,8 +15,8 @@ type CurrencyCatalog struct {
 }
 
 type CurrencyCatalogStore interface {
-	SelectNewCurrenciesFromCrossrates(ctx context.Context) ([]currencies.Currency, error)
-	MergeCurrencies(ctx context.Context, currencies []currencies.Currency) error
+	SelectNewCurrenciesFromCrossrates(ctx context.Context) ([]models.CurrencyFromCrossrates, error)
+	MergeCurrencies(ctx context.Context, currencies []quik.Currency) error
 }
 
 func NewCurrencyCatalog(logger *zap.Logger, store CurrencyCatalogStore) *CurrencyCatalog {
@@ -52,33 +52,25 @@ func (c *CurrencyCatalog) RefreshQuikCurrencies(ctx context.Context) (err error)
 		return nil
 	}
 
-	out := make([]currencies.Currency, 0, len(raw))
+	out := make([]quik.Currency, 0, len(raw))
 
-	dedup := make(map[currencies.CurrencyCode]struct{})
+	dedup := make(map[quik.CurrencyCode]struct{})
+
 	for _, ccy := range raw {
-		if _, ok := dedup[ccy.ISOCharCode]; ok {
+
+		currency, err := quik.CurrencyFromQuik(ccy.IsoCharCode, &ccy.Name)
+		if err != nil {
+			c.logger.Warn("не нашли в либе", zap.String("ISOCharCode", ccy.IsoCharCode))
 			continue
 		}
 
-		dedup[ccy.ISOCharCode] = struct{}{}
-		libCcy, ok := iso4217.LookupByAlpha3(ccy.ISOCharCode.String())
-		if !ok {
-			c.logger.Warn("не нашли в либе", zap.String("ISOCharCode", ccy.ISOCharCode.String()))
+		if _, ok := dedup[currency.Alpha()]; ok {
 			continue
 		}
 
-		var miu int32 = int32(libCcy.MinorUnits)
-		if miu < 0 {
-			miu = 0
-		}
-		curr := currencies.Currency{
-			ISOCode:     int16(libCcy.Numeric),
-			ISOCharCode: ccy.ISOCharCode,
-			Name:        ccy.Name,
-			LatName:     libCcy.Name,
-			MinorUnits:  miu,
-		}
-		out = append(out, curr)
+		dedup[currency.Alpha()] = struct{}{}
+
+		out = append(out, currency)
 	}
 
 	if len(out) == 0 {

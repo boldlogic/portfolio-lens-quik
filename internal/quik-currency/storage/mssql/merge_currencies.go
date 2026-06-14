@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
 
 const (
@@ -51,7 +51,7 @@ const (
 		);`
 )
 
-func (repo CurrencyRepo) MergeCurrencies(ctx context.Context, currencies []currencies.Currency) error {
+func (repo CurrencyRepo) MergeCurrencies(ctx context.Context, currencies []quik.Currency) error {
 	crrs, ok := makeCurrencyList(currencies)
 	if !ok {
 		return nil

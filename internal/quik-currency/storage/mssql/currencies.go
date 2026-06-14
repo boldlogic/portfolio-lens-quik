@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/models"
 )
 
 const (
@@ -65,41 +65,29 @@ const (
 			)`
 )
 
-type rawCurrencyFromCrossrates struct {
-	IsoCharCode string
-	Name        string
-}
-
-func toCurrency(r rawCurrencyFromCrossrates) currencies.Currency {
-	return currencies.Currency{
-		ISOCharCode: currencies.CurrencyCode(r.IsoCharCode),
-		Name:        &r.Name,
-	}
-}
-
-func scanRawCurrencyFromCrossrates(row *sql.Rows) (rawCurrencyFromCrossrates, error) {
-	var res rawCurrencyFromCrossrates
+func scanCurrencyFromCrossrates(row *sql.Rows) (models.CurrencyFromCrossrates, error) {
+	var res models.CurrencyFromCrossrates
 	err := row.Scan(&res.IsoCharCode, &res.Name)
 	if err != nil {
-		return rawCurrencyFromCrossrates{}, fmt.Errorf("ошибка чтения: %w", err)
+		return models.CurrencyFromCrossrates{}, fmt.Errorf("ошибка чтения: %w", err)
 	}
 	return res, nil
 }
 
-func (repo CurrencyRepo) SelectNewCurrenciesFromCrossrates(ctx context.Context) ([]currencies.Currency, error) {
+func (repo CurrencyRepo) SelectNewCurrenciesFromCrossrates(ctx context.Context) ([]models.CurrencyFromCrossrates, error) {
 	rows, err := repo.runner.QueryContext(ctx, selectNewCurrenciesFromCrossrates)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	res := make([]currencies.Currency, 0, 50)
+	res := make([]models.CurrencyFromCrossrates, 0, 50)
 	for rows.Next() {
-		row, err := scanRawCurrencyFromCrossrates(rows)
+		row, err := scanCurrencyFromCrossrates(rows)
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, toCurrency(row))
+		res = append(res, row)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err

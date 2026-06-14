@@ -1,7 +1,7 @@
 package mssql
 
 import (
-	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	sqlserver "github.com/microsoft/go-mssqldb"
 )
 
@@ -13,17 +13,17 @@ type currencyTVP struct {
 	MinorUnits  int32
 }
 
-func currencyToTVP(c currencies.Currency) currencyTVP {
+func currencyToTVP(c quik.Currency) currencyTVP {
 	return currencyTVP{
-		ISOCode:     c.ISOCode,
-		ISOCharCode: c.ISOCharCode.String(),
-		Name:        c.Name,
-		LatName:     c.LatName,
-		MinorUnits:  c.MinorUnits,
+		ISOCode:     c.Numeric(),
+		ISOCharCode: c.Alpha().String(),
+		Name:        c.Name(),
+		LatName:     c.LatName(),
+		MinorUnits:  c.MinorUnits(),
 	}
 }
 
-func makeCurrencyList(curr []currencies.Currency) (sqlserver.TVP, bool) {
+func makeCurrencyList(curr []quik.Currency) (sqlserver.TVP, bool) {
 	if len(curr) == 0 {
 		return sqlserver.TVP{}, false
 	}
