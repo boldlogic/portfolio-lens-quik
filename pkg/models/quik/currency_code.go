@@ -2,7 +2,6 @@ package quik
 
 import (
 	"errors"
-	"strings"
 	"unicode/utf8"
 
 	"github.com/JohannesJHN/iso4217"
@@ -29,21 +28,27 @@ var (
 )
 
 func ParseCurrencyCode(rawCode string) (CurrencyCode, error) {
-	upper := strings.ToUpper(strings.TrimSpace(rawCode))
-	code, ok := alphaByQuikCode[upper]
-	if ok {
-		return code, nil
-	}
-
-	code = CurrencyCode(upper)
-	if err := code.Validate(); err != nil {
+	iso, err := resolveCurrencyIso(rawCode)
+	if err != nil {
 		return "", err
 	}
 
-	return code, nil
+	return iso.alpha, nil
 }
 
 func (c CurrencyCode) Validate() error {
+	if err := c.validateFormat(); err != nil {
+		return err
+	}
+
+	_, ok := iso4217.LookupByAlpha3(c.String())
+	if !ok {
+		return ErrNotExistingCurrency
+	}
+	return nil
+}
+
+func (c CurrencyCode) validateFormat() error {
 	if utf8.RuneCountInString(c.String()) != 3 {
 		return ErrWrongCurrencyCode
 	}
@@ -52,11 +57,5 @@ func (c CurrencyCode) Validate() error {
 			return ErrWrongCurrencyCode
 		}
 	}
-	_, ok := iso4217.LookupByAlpha3(c.String())
-	if !ok {
-		return ErrNotExistingCurrency
-	}
 	return nil
 }
-
-///

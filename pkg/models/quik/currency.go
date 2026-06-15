@@ -2,15 +2,11 @@ package quik
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/JohannesJHN/iso4217"
 )
-
-type currencyAlphaCode string
-
-func (c currencyAlphaCode) String() string {
-	return string(c)
-}
 
 var (
 	ErrNotExistingCurrency = errors.New("валюта не существует в ISO 4217")
@@ -23,10 +19,24 @@ type currencyIso struct {
 	minorUnits int32
 }
 
+func (c currencyIso) LatName() string {
+	return c.latName
+}
+func (c currencyIso) MinorUnits() int32 {
+	return c.minorUnits
+}
+func (c currencyIso) Numeric() int16 {
+	return c.numeric
+}
+
+func (c currencyIso) Alpha() CurrencyCode {
+	return c.alpha
+}
+
 type Currency struct {
 	charCode string
 	name     *string
-	*currencyIso
+	currencyIso
 }
 
 func (c Currency) CharCode() string {
@@ -37,72 +47,44 @@ func (c Currency) Name() *string {
 	return c.name
 }
 
-func (c Currency) LatName() string {
-	return c.latName
-}
-func (c Currency) MinorUnits() int32 {
-	return c.minorUnits
-}
-func (c Currency) Numeric() int16 {
-	return c.numeric
-}
-
-func (c Currency) Alpha() CurrencyCode {
-	return c.alpha
-}
-
 func CurrencyFromQuik(charCode string, name *string) (Currency, error) {
-	alpha, err := ParseCurrencyCode(charCode)
+
+	iso, err := resolveCurrencyIso(charCode)
 	if err != nil {
 		return Currency{}, err
 	}
-	iso, _ := iso4217.LookupByAlpha3(alpha.String())
-
-	var miu int32 = int32(iso.MinorUnits)
-	if miu < 0 {
-		miu = 0
-	}
-
-	ccyIso := currencyIso{
-		alpha:      alpha,
-		numeric:    int16(iso.Numeric),
-		latName:    iso.Name,
-		minorUnits: int32(iso.MinorUnits),
-	}
 	ccy := Currency{
-		currencyIso: &ccyIso,
+		currencyIso: iso,
 		name:        name,
 		charCode:    charCode,
 	}
 	return ccy, nil
 }
 
-// func NewCurrency(charCode string, name *string) (*Currency, error) {
+func resolveCurrencyIso(rawCode string) (currencyIso, error) {
+	upper := strings.ToUpper(strings.TrimSpace(rawCode))
 
-// 	alpha, err := newCurrencyAlphaCode(charCode)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	ccy, ok := iso4217.LookupByAlpha3(alpha.String())
-// 	if !ok {
-// 		return nil, fmt.Errorf("%w: код=%s", ErrNotExistingCurrency, alpha)
-// 	}
-// 	var miu int32 = int32(ccy.MinorUnits)
-// 	if miu < 0 {
-// 		miu = 0
-// 	}
+	alpha, ok := alphaByQuikCode[upper]
+	if !ok {
+		alpha = CurrencyCode(upper)
+		if err := alpha.validateFormat(); err != nil {
+			return currencyIso{}, err
+		}
 
-// 	cur := Currency{
-// 		Alpha:      alpha,
-// 		Numeric:    int16(ccy.Numeric),
-// 		CharCode:   charCode,
-// 		LatName:    ccy.Name,
-// 		MinorUnits: miu,
-// 	}
+	}
+	iso, ok := iso4217.LookupByAlpha3(alpha.String())
+	if !ok {
+		return currencyIso{}, fmt.Errorf("%w: код=%s", ErrNotExistingCurrency, alpha)
+	}
+	var miu int32 = int32(iso.MinorUnits)
+	if miu < 0 {
+		miu = 0
+	}
 
-// 	if name != nil {
-// 		cur.Name = name
-// 	}
-
-// 	return &cur, nil
-// }
+	return currencyIso{
+		alpha:      alpha,
+		numeric:    int16(iso.Numeric),
+		latName:    iso.Name,
+		minorUnits: miu,
+	}, nil
+}

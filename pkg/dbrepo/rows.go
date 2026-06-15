@@ -17,7 +17,7 @@ type ExecRunner interface {
 }
 
 var ErrScan = errors.New("ошибка чтения строки")
-var ErrRows = errors.New("ошибка обхода строк")
+var ErrRows = errors.New("ошибка обхода строк") //ошибка обхода строк
 
 func ScanError(err error) error {
 	if err == nil {

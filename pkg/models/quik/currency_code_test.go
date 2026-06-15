@@ -1,45 +1,96 @@
-package quik_test
+package quik
 
 import (
 	"testing"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestParseCurrencyCode(t *testing.T) {
+func Test_ParseCurrencyCode(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
-		// Named input parameters for target function.
+		name    string
 		rawCode string
-		want    quik.CurrencyCode
-		wantErr bool
+		want    CurrencyCode
+		wantErr error
 	}{
-		// TODO: Add test cases.
 		{
-			name:    "обычная валюта",
+			name:    "обычная_валюта",
 			rawCode: "CNY",
 			want:    "CNY",
 		},
 		{
-			name:    "GLD",
+			name:    "RUB",
+			rawCode: "RUB",
+			want:    "RUB",
+		},
+		{
+			name:    "USD",
+			rawCode: "USD",
+			want:    "USD",
+		},
+		{
+			name:    "GLD-XAU",
 			rawCode: "GLD",
 			want:    "XAU",
+		},
+		{
+			name:    "SUR-RUB",
+			rawCode: "SUR",
+			want:    "RUB",
+		},
+		{
+			name:    "RUR-RUB",
+			rawCode: "RUR",
+			want:    "RUB",
+		},
+		{
+			name:    "USDX-USD",
+			rawCode: "USDX",
+			want:    "USD",
+		},
+		{
+			name:    "SLV-XAG",
+			rawCode: "SLV",
+			want:    "XAG",
+		},
+		{
+			name:    "PLT-XPT",
+			rawCode: "PLT",
+			want:    "XPT",
+		},
+		{
+			name:    "PLD-XPD",
+			rawCode: "PLD",
+			want:    "XPD",
+		},
+		{
+			name:    "2_симв",
+			rawCode: "PL",
+			want:    "",
+			wantErr: ErrWrongCurrencyCode,
+		},
+		{
+			name:    "несуществующий",
+			rawCode: "AAA",
+			want:    "",
+			wantErr: ErrNotExistingCurrency,
+		},
+		{
+			name:    "DEM",
+			rawCode: "DEM",
+			want:    "DEM",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := quik.ParseCurrencyCode(tt.rawCode)
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("ParseCurrencyCode() failed: %v", gotErr)
-				}
+			got, gotErr := ParseCurrencyCode(tt.rawCode)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, tt.wantErr, gotErr)
+				assert.Empty(t, got)
 				return
 			}
-			if tt.wantErr {
-				t.Fatal("ParseCurrencyCode() succeeded unexpectedly")
-			}
-			// TODO: update the condition below to compare got with tt.want.
+			require.NoError(t, gotErr)
 			assert.Equal(t, tt.want, got)
 		})
 	}

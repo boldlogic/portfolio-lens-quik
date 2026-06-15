@@ -9,13 +9,14 @@ import (
 )
 
 type Job struct {
-	name       string
-	enabled    bool
-	runOnStart bool
-	interval   time.Duration
-	timeout    time.Duration
-	logger     *zap.Logger
-	jobFunc    JobFunc
+	name          string
+	enabled       bool
+	runOnStart    bool
+	interval      time.Duration
+	timeout       time.Duration
+	logger        *zap.Logger
+	jobFunc       JobFunc
+	maxErrorCount uint16
 }
 
 func NewJob(conf JobConfig, logger *zap.Logger, jobFunc JobFunc) *Job {
@@ -25,10 +26,11 @@ func NewJob(conf JobConfig, logger *zap.Logger, jobFunc JobFunc) *Job {
 	}
 
 	out := Job{
-		jobFunc: jobFunc,
-		logger:  logger,
-		name:    conf.Name,
-		enabled: conf.Enabled,
+		jobFunc:       jobFunc,
+		logger:        logger,
+		name:          conf.Name,
+		enabled:       conf.Enabled,
+		maxErrorCount: conf.MaxErrorCount,
 	}
 
 	if out.enabled == false {
