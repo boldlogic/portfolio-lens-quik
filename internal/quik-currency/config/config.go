@@ -8,6 +8,7 @@ import (
 	"github.com/boldlogic/packages/dbconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/transport/httpserver"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/producer"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/worker"
 )
 
@@ -17,6 +18,7 @@ type Config struct {
 	Server            httpserver.ServerConfig `yaml:"server" json:"server"`
 	FxCBRJobConfig    worker.JobConfig        `yaml:"fx_cbr_worker" json:"fx_cbr_worker"`
 	CurrencyJobConfig worker.JobConfig        `yaml:"currency_worker" json:"currency_worker"`
+	Kafka             producer.Config         `yaml:"kafka_producer" json:"kafka_producer"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -44,6 +46,10 @@ func (c *Config) validate() []error {
 	srvErrs := c.Server.Validate()
 	if len(srvErrs) > 0 {
 		errs = append(errs, srvErrs...)
+	}
+	kErrs := c.Kafka.Validate()
+	if len(kErrs) > 0 {
+		errs = append(errs, kErrs...)
 	}
 	return errs
 }

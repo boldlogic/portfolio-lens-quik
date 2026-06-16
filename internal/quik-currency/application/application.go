@@ -14,6 +14,7 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/config"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/features/marketdata"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/features/reference"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/producer"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/storage"
 	storagemssql "github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/storage/mssql"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/transport/workerserver"
@@ -28,8 +29,9 @@ type Application struct {
 	Logger *zap.Logger
 	store  *storage.Storage
 
-	repo   *storagemssql.CurrencyRepo
-	server *httpserver.Server
+	repo     *storagemssql.CurrencyRepo
+	server   *httpserver.Server
+	producer *producer.Producer
 
 	runGroup     *errgroup.Group
 	runCtx       context.Context
@@ -63,6 +65,11 @@ func (a *Application) Start(ctx context.Context) error {
 	handler := workerserver.NewHandler(a.store.Db)
 	router := workerserver.NewRouter(handler)
 	a.server = httpserver.NewServer(router, a.cfg.Server)
+	pr, err := producer.NewProducer(ctx, a.cfg.Kafka, a.Logger)
+	if err != nil {
+		return err
+	}
+	a.producer = pr
 
 	runner := worker.NewRunner(a.prepareWorkers()...)
 
@@ -75,7 +82,7 @@ func (a *Application) Start(ctx context.Context) error {
 		return nil
 	})
 	a.runGroup.Go(func() error {
-		runner.Run(ctx)
+		runner.Run(a.runCtx)
 		return nil
 	})
 
@@ -94,7 +101,7 @@ func (a *Application) Wait(ctx context.Context) error {
 }
 
 func (a *Application) prepareWorkers() []worker.Worker {
-	currencyCatalog := reference.NewCurrencyCatalog(a.Logger, a.repo)
+	currencyCatalog := reference.NewCurrencyCatalog(a.Logger, a.repo, a.producer)
 	rateImporter := marketdata.NewRateImporter(a.Logger, a.repo)
 
 	workers := make([]worker.Worker, 0, 2)
@@ -114,11 +121,18 @@ func (a *Application) shutdown(ctx context.Context) error {
 		}
 		cancel()
 	}
+	if a.producer != nil {
+		a.producer.Close()
+	}
 	if a.store != nil {
 		err := a.store.Db.Close()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("ошибка закрытия БД: %w", err))
 		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil

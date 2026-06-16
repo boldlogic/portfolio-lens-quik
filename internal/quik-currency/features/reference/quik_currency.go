@@ -10,8 +10,9 @@ import (
 )
 
 type CurrencyCatalog struct {
-	logger *zap.Logger
-	store  CurrencyCatalogStore
+	logger   *zap.Logger
+	store    CurrencyCatalogStore
+	producer Producer
 }
 
 type CurrencyCatalogStore interface {
@@ -19,13 +20,18 @@ type CurrencyCatalogStore interface {
 	MergeCurrencies(ctx context.Context, currencies []quik.Currency) error
 }
 
-func NewCurrencyCatalog(logger *zap.Logger, store CurrencyCatalogStore) *CurrencyCatalog {
+type Producer interface {
+	PublishCurrencies(ctx context.Context, currencies []quik.Currency) error
+}
+
+func NewCurrencyCatalog(logger *zap.Logger, store CurrencyCatalogStore, producer Producer) *CurrencyCatalog {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 	return &CurrencyCatalog{
-		logger: logger,
-		store:  store,
+		logger:   logger,
+		store:    store,
+		producer: producer,
 	}
 }
 
@@ -75,6 +81,12 @@ func (c *CurrencyCatalog) RefreshQuikCurrencies(ctx context.Context) (err error)
 
 	if len(out) == 0 {
 		return nil
+	}
+
+	err = c.producer.PublishCurrencies(ctx, out)
+	if err != nil {
+		msg = "ошибка при публикации справочника валют"
+		return err
 	}
 
 	err = c.store.MergeCurrencies(ctx, out)

@@ -86,7 +86,7 @@ func Test_ParseCurrencyCode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotErr := ParseCurrencyCode(tt.rawCode)
 			if tt.wantErr != nil {
-				require.ErrorIs(t, tt.wantErr, gotErr)
+				require.ErrorIs(t, gotErr, tt.wantErr)
 				assert.Empty(t, got)
 				return
 			}
