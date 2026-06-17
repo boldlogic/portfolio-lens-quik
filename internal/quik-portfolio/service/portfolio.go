@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/boldlogic/packages/utils/dates"
-	"github.com/boldlogic/portfolio-lens-currency/pkg/currencies"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
@@ -14,10 +13,9 @@ import (
 )
 
 func normalizePortfolioRequest(targetCurrency *string, clientCodes []string) (ccy string, clients []string, err error) {
-	if targetCurrency == nil {
-		ccy = "RUB"
-	} else {
-		normCcy, parseErr := currencies.ParseCurrencyCode(*targetCurrency)
+	ccy = "RUB"
+	if targetCurrency != nil {
+		normCcy, parseErr := quik.ParseCurrencyCode(*targetCurrency)
 		if parseErr != nil {
 			return "", nil, fmt.Errorf("%w: %w", models.ErrBusinessValidation, parseErr)
 		}
