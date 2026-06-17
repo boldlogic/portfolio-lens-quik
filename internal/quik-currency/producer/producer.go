@@ -29,6 +29,7 @@ func NewProducer(ctx context.Context, cfg Config, logger *zap.Logger) (*Producer
 		enabled: cfg.Enabled,
 		brokers: cfg.Brokers,
 		topic:   cfg.Topic,
+		logger:  logger,
 	}
 
 	if !producer.enabled {
