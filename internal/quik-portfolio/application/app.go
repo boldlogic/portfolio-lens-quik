@@ -13,20 +13,20 @@ import (
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/observability"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/repository"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/service"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/grpc"
-	grpcv1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/grpc/v1"
-	portfolioserver "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http"
-	v1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http/v1"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/config"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/observability"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/repository"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/service"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/transport/grpc"
+	grpcv1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/transport/grpc/v1"
+	portfolioserver "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/transport/http"
+	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/transport/http/v1"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	defaultConfigPath = "quik-portfolio/internal/configs/config.yaml"
+	defaultConfigPath = "configs/quik-portfolio-config.yaml"
 )
 
 type Application struct {

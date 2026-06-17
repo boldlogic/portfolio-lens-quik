@@ -56,7 +56,7 @@ const (
 		c.currency_code,
 		fx.currency_name,
 		balance=cast(isnull(c.balance,0) as decimal(18,2)),
-		market_value_in_target_currency=cast(c.balance *fx.rate as decimal(18,2))
+		market_value_in_target_currency=cast(c.balance /fx.rate as decimal(18,2))
 		FROM cte c
 `
 

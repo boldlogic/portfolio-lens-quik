@@ -31,6 +31,17 @@ func normalizePortfolioRequest(targetCurrency *string, clientCodes []string) (cc
 	return ccy, clients, nil
 }
 
+func sumTotalMarketValue(positions []quik.Position) decimal.Decimal {
+
+	var total decimal.Decimal
+	for _, pos := range positions {
+		total = decimal.Sum(total, pos.MarketValueInTargetCurrency)
+
+	}
+
+	return total
+}
+
 func (s *Service) GetPositions(ctx context.Context, targetCurrency *string, clientCodes []string) ([]quik.Position, decimal.Decimal, string, error) {
 	ccy, clients, err := normalizePortfolioRequest(targetCurrency, clientCodes)
 	if err != nil {
@@ -38,7 +49,7 @@ func (s *Service) GetPositions(ctx context.Context, targetCurrency *string, clie
 	}
 
 	date := dates.Today()
-	//
+
 	g, gCTX := errgroup.WithContext(ctx)
 
 	var money []quik.Position

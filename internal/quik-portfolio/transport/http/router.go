@@ -2,7 +2,7 @@ package portfolioserver
 
 import (
 	"github.com/boldlogic/packages/metrics"
-	v1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/http/v1"
+	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/transport/http/v1"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/router"
 	"go.uber.org/zap"
 )

@@ -29,20 +29,6 @@ func positionsToPortfolioDTO(positions []quik.Position, total decimal.Decimal, p
 	return out
 }
 
-func (h *Handler) getMoneyPositions(r *http.Request) (any, string, error) {
-	ctx := r.Context()
-	params := parsePortfolioQueryParams(r)
-
-	positions, total, portfolioCCY, err := h.service.GetMoneyPositions(ctx, params.TargetCurrency, params.ClientCodes)
-	if err != nil {
-		if errors.Is(err, md.ErrBusinessValidation) {
-			return nil, err.Error(), err
-		}
-		return nil, "", err
-	}
-	return positionsToPortfolioDTO(positions, total, portfolioCCY), "", nil
-}
-
 func (h *Handler) getPositions(r *http.Request) (any, string, error) {
 	ctx := r.Context()
 	params := parsePortfolioQueryParams(r)

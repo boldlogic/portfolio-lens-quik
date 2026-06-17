@@ -1,10 +1,6 @@
 package v1
 
 import (
-	"errors"
-	"net/http"
-
-	md "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
 )
@@ -17,8 +13,8 @@ type positionDTO struct {
 	Name                            string          `json:"name,omitempty"`
 	Amount                          decimal.Decimal `json:"amount"`
 	MarketValueInInstrumentCurrency decimal.Decimal `json:"marketValueInInstrumentCurrency"`
-	MarketValueInTargetCurrency     decimal.Decimal `json:"marketValueInTargetCurrency"`
 	InstrumentCurrencyCode          string          `json:"instrumentCurrencyCode,omitempty"`
+	MarketValueInTargetCurrency     decimal.Decimal `json:"marketValueInTargetCurrency"`
 }
 
 func positionToDTO(p quik.Position) positionDTO {
@@ -33,26 +29,6 @@ func positionToDTO(p quik.Position) positionDTO {
 		MarketValueInInstrumentCurrency: p.MarketValueInInstrCurrency,
 		InstrumentCurrencyCode:          p.InstrumentCurrencyCode,
 	}
-	// switch p.LimitType {
-	// case quik.LimitTypeMoney:
-	// 	return out
-	// default:
-	// 	out.InstrumentCurrencyCode = p.InstrumentCurrencyCode
 
-	// }
 	return out
-}
-
-func (h *Handler) getSecurityPositions(r *http.Request) (any, string, error) {
-	ctx := r.Context()
-	params := parsePortfolioQueryParams(r)
-
-	positions, total, portfolioCCY, err := h.service.GetSecurityPositions(ctx, params.TargetCurrency, params.ClientCodes)
-	if err != nil {
-		if errors.Is(err, md.ErrBusinessValidation) {
-			return nil, err.Error(), err
-		}
-		return nil, "", err
-	}
-	return positionsToPortfolioDTO(positions, total, portfolioCCY), "", nil
 }
