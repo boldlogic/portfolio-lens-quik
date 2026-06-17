@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/shopspring/decimal"
 )
 
 type QueryRunner interface {
@@ -24,6 +26,17 @@ func ScanError(err error) error {
 		return nil
 	}
 	return fmt.Errorf("%w: %w", ErrScan, err)
+}
+
+func ExecAndSelectRow[T any](
+	ctx context.Context,
+	query QueryRunner,
+	sqlText string,
+	scanRow func(*sql.Row) (T, error),
+	args ...any) (result T, err error) {
+	row := query.QueryRowContext(ctx, sqlText, args...)
+	return scanRow(row)
+
 }
 
 func SelectRows[T any](
@@ -50,4 +63,18 @@ func SelectRows[T any](
 		return nil, fmt.Errorf("%w: %w", ErrRows, err)
 	}
 	return result, nil
+}
+
+func StringFromNull(s sql.NullString) string {
+	if s.Valid {
+		return s.String
+	}
+	return ""
+}
+
+func DecimalFromPtr(p *decimal.Decimal) decimal.Decimal {
+	if p != nil {
+		return *p
+	}
+	return decimal.Decimal{}
 }

@@ -20,15 +20,21 @@ const (
 )
 
 type Limit struct {
-	LoadDate     time.Time
-	SourceDate   time.Time
-	ClientCode   string
-	Currency     string
-	PositionCode string
-	SettleCode   SettleCode
-	FirmCode     string
-	FirmName     string
-	Balance      decimal.Decimal
+	Type                    LimitType
+	LoadDate                time.Time // Дата лимита
+	SourceDate              time.Time // Дата загрузки
+	ClientCode              string    // код клиента
+	CurrencyCode            *string   // валюта для ML
+	SecCode                 *string
+	PositionCode            *string    // Код позиции для ML
+	SettleCode              SettleCode // Срок расчетов
+	TradeAccount            *string
+	FirmCode                string //
+	FirmName                string
+	Balance                 decimal.Decimal
+	AcquisitionCurrencyCode *string
+	ISIN                    *string
+	ShortName               *string
 }
 
 type MoneyLimit struct {

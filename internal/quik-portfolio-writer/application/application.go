@@ -13,11 +13,11 @@ import (
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-writer/internal/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-writer/internal/repository"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-writer/internal/service"
-	writeserver "github.com/boldlogic/portfolio-lens-quik/quik-portfolio-writer/internal/transport/http"
-	v1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio-writer/internal/transport/http/v1"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/config"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/repository"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/service"
+	writeserver "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http"
+	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http/v1"
 	"go.uber.org/zap"
 )
 
