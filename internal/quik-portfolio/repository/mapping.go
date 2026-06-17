@@ -73,6 +73,7 @@ func (p moneyPortfolioRow) toQuikPosition() quik.Position {
 		Amount:                      p.Balance,
 		MarketValueInInstrCurrency:  p.Balance,
 		MarketValueInTargetCurrency: p.MarketValueInTargetCurrency,
+		InstrumentCurrencyCode:      p.CurrencyCode,
 	}
 }
 

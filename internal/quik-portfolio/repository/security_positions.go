@@ -70,7 +70,7 @@ const (
 			p.accrued_interest,
 			p.market_value_in_instr_currency,
 			p.instrument_currency_code,
-			market_value_in_target_currency=cast(p.market_value*p.balance*fx.rate as decimal(18,2))
+			market_value_in_target_currency=cast(p.market_value_in_instr_currency/fx.rate as decimal(18,2))
 		from positions p
 `
 	securityPortfolioLatestSettleCTEBaseSQL = `

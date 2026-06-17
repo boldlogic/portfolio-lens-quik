@@ -6,7 +6,7 @@ import (
 	"github.com/boldlogic/packages/dbconfig"
 	"github.com/boldlogic/packages/dbpool"
 	"github.com/boldlogic/packages/dbzap"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/observability"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/observability"
 	"go.uber.org/zap"
 )
 

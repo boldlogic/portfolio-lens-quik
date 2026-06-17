@@ -6,8 +6,8 @@ import (
 
 	"github.com/boldlogic/packages/metrics"
 	quikv1 "github.com/boldlogic/portfolio-lens-quik/proto/gen/go/quik-portfolio/v1"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/observability"
-	grpcv1 "github.com/boldlogic/portfolio-lens-quik/quik-portfolio/internal/transport/grpc/v1"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/observability"
+	grpcv1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio/transport/grpc/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
