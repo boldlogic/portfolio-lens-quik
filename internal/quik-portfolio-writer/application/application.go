@@ -12,17 +12,17 @@ import (
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/transport/httpserver"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/config"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/repository"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/service"
 	writeserver "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http"
 	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http/v1"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"go.uber.org/zap"
 )
 
 const (
-	defaultConfigPath = "quik-portfolio-writer/config.yaml"
+	defaultConfigPath = "configs/quik-portfolio-writer-config.yaml"
 	errChanBufSize    = 1
 )
 

@@ -9,9 +9,9 @@ import (
 type LimitType string
 
 const (
-	LimitTypeSecurities    LimitType = "securities"     // ценные бумаги (биржевые)
-	LimitTypeSecuritiesOtc LimitType = "securities_otc" // ценные бумаги OTC
-	LimitTypeMoney         LimitType = "money"          // денежные средства
+	LimitTypeSecurities    LimitType = "security"     // ценные бумаги (биржевые)
+	LimitTypeSecuritiesOtc LimitType = "security_otc" // ценные бумаги OTC
+	LimitTypeMoney         LimitType = "money"        // денежные средства
 )
 
 const (

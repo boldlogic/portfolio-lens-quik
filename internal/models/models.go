@@ -21,7 +21,7 @@ type SecurityLimitRow struct {
 	FirmCode                string
 	FirmName                sql.NullString
 	Balance                 *decimal.Decimal
-	AcquisitionCurrencyCode string
+	AcquisitionCurrencyCode sql.NullString
 	ISIN                    sql.NullString
 	ShortName               sql.NullString
 }
@@ -61,7 +61,11 @@ func (s SecurityLimitRow) ToLimit() quik.Limit {
 	}
 	var shortName *string
 	if s.ShortName.Valid {
-		isin = &s.ShortName.String
+		shortName = &s.ShortName.String
+	}
+	var ack *string
+	if s.AcquisitionCurrencyCode.Valid {
+		ack = &s.AcquisitionCurrencyCode.String
 	}
 	return quik.Limit{
 		LoadDate:                s.LoadDate,
@@ -72,7 +76,7 @@ func (s SecurityLimitRow) ToLimit() quik.Limit {
 		FirmCode:                s.FirmCode,
 		FirmName:                dbrepo.StringFromNull(s.FirmName),
 		Balance:                 dbrepo.DecimalFromPtr(s.Balance),
-		AcquisitionCurrencyCode: &s.AcquisitionCurrencyCode,
+		AcquisitionCurrencyCode: ack,
 		ISIN:                    isin,
 		ShortName:               shortName,
 		SettleCode:              quik.SettleCode(s.SettleCode),
@@ -95,6 +99,7 @@ func (m MoneyLimitRow) ToQuik() quik.MoneyLimit {
 }
 
 func (s SecurityLimitRow) ToQuik() quik.SecurityLimit {
+
 	return quik.SecurityLimit{
 		LoadDate:                s.LoadDate,
 		SourceDate:              s.SourceDate,
@@ -104,7 +109,7 @@ func (s SecurityLimitRow) ToQuik() quik.SecurityLimit {
 		FirmCode:                s.FirmCode,
 		FirmName:                dbrepo.StringFromNull(s.FirmName),
 		Balance:                 dbrepo.DecimalFromPtr(s.Balance),
-		AcquisitionCurrencyCode: s.AcquisitionCurrencyCode,
+		AcquisitionCurrencyCode: dbrepo.StringFromNull(s.AcquisitionCurrencyCode),
 		ISIN:                    dbrepo.StringFromNull(s.ISIN),
 		ShortName:               dbrepo.StringFromNull(s.ShortName),
 		SettleCode:              quik.SettleCode(s.SettleCode),

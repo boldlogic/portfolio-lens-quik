@@ -28,7 +28,5 @@ func (h *Handler) Adapt(fn handler.HandlerFunc) http.HandlerFunc {
 }
 
 type Service interface {
-	CreateMoneyLimit(ctx context.Context, ml quik.MoneyLimit) (quik.MoneyLimit, error)
-	CreateSecurityLimit(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error)
-	CreateSecurityLimitOtc(ctx context.Context, sec quik.SecurityLimit) (quik.SecurityLimit, error)
+	CreateLimit(ctx context.Context, l quik.Limit) (quik.Limit, error)
 }
