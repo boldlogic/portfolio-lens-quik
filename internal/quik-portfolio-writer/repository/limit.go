@@ -77,8 +77,8 @@ func (r *Repository) InsertLimit(ctx context.Context, l quik.Limit) (quik.Limit,
 }
 
 const (
-	securityLimitExchangeTableSQL = "quik.security_limits"
-	securityLimitOtcTableSQL      = "quik.security_limits_otc"
+	securityLimitExchangeTableSQL = " quik.security_limits "
+	securityLimitOtcTableSQL      = " quik.security_limits_otc "
 
 	insertSecurityLimitSrcSQL = `
 		WITH src AS
@@ -122,7 +122,13 @@ const (
 				,firm_code = @p5
 				,balance = @p6
 		)
-		INSERT INTO quik.money_limits (client_code, currency_code, position_code, settle_code, firm_code, firm_name, balance)
+		INSERT INTO quik.money_limits (client_code, 
+		currency_code, 
+		position_code, 
+		settle_code, 
+		firm_code, 
+		firm_name, 
+		balance)
 		OUTPUT inserted.load_date, inserted.source_date, inserted.client_code, inserted.currency_code, inserted.position_code, inserted.settle_code, inserted.firm_code, inserted.firm_name, inserted.balance
 		SELECT  src.client_code
 			,src.currency_code

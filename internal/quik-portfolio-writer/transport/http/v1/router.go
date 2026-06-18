@@ -19,6 +19,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func NewRouter(handler *Handler, logger *zap.Logger) *Router {
 	r := chi.NewRouter()
 	r.Post("/limits", handler.Adapt(handler.createLimit))
+	r.Post("/limits/upload", handler.Adapt(handler.upload))
 
 	return &Router{
 		mux:    r,
