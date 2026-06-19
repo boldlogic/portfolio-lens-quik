@@ -1,5 +1,7 @@
 package models
 
+import "github.com/shopspring/decimal"
+
 type Limit struct {
 	Type                    string
 	ClientCode              string
@@ -8,7 +10,12 @@ type Limit struct {
 	SettleCode              string
 	TradeAccount            string
 	FirmCode                string
-	Balance                 string
+	Balance                 decimal.Decimal
 	AcquisitionCurrencyCode string
 	ISIN                    string
+}
+
+type LimitLine struct {
+	Limit
+	Line uint
 }

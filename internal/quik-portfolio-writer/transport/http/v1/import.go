@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/boldlogic/packages/transport/httputils"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/internal/models"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -43,9 +43,9 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 
 	idx := make(map[int]string, 9)
 
-	var out []limitCSV
+	//var out []limitCSV
 
-	var res []*quik.Limit
+	var res []models.LimitLine
 	for i, str := range records {
 		var l limitCSV
 		for j, v := range str {
@@ -76,34 +76,34 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 
 		}
 		if i > 1 {
-			out = append(out, l)
+			//out = append(out, l)
 			balance, err := decimal.NewFromString(l.Balance)
 			if err != nil {
 				h.logger.Error("", zap.Error(err))
 
 				return nil, "", err
 			}
-			limit, err := quik.NewLimit(l.Type,
-				l.ClientCode,
-				&l.Ticker,
-				&l.PositionCode,
-				l.SettleCode,
-				&l.TradeAccount,
-				l.FirmCode,
-				nil,
-				balance,
-				&l.AcquisitionCurrencyCode,
-				&l.ISIN,
-				nil)
-			if err != nil {
-				h.logger.Error("", zap.Error(err))
-
-				return nil, "", err
+			line := models.LimitLine{
+				Limit: models.Limit{
+					Type:                    l.Type,
+					ClientCode:              l.ClientCode,
+					Ticker:                  l.Ticker,
+					PositionCode:            l.PositionCode,
+					SettleCode:              l.SettleCode,
+					TradeAccount:            l.TradeAccount,
+					FirmCode:                l.FirmCode,
+					Balance:                 balance,
+					AcquisitionCurrencyCode: l.AcquisitionCurrencyCode,
+					ISIN:                    l.ISIN,
+				},
+				Line: uint(i),
 			}
-			res = append(res, limit)
+
+			res = append(res, line)
 		}
 
 	}
+	h.service.UpsertLimits(r.Context(), res)
 	h.logger.Debug("", zap.Any("", res))
 	return nil, "", nil
 }

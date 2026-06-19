@@ -121,6 +121,7 @@ func NewLimit(limitType string,
 		out.ShortName = shortName
 	}
 
+	out.Balance = balance
 	return &out, nil
 }
 
