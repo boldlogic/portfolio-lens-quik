@@ -38,51 +38,6 @@ type MoneyLimitRow struct {
 	Balance      *decimal.Decimal
 }
 
-func (m MoneyLimitRow) ToLimit() quik.Limit {
-	//if m.CurrencyCode
-	ml := quik.Limit{
-		LoadDate:     m.LoadDate,
-		SourceDate:   m.SourceDate,
-		ClientCode:   m.ClientCode,
-		CurrencyCode: &m.CurrencyCode,
-		PositionCode: &m.PositionCode,
-		FirmCode:     m.FirmCode,
-		FirmName:     dbrepo.StringFromNull(m.FirmName),
-		Balance:      dbrepo.DecimalFromPtr(m.Balance),
-		SettleCode:   quik.SettleCode(m.SettleCode),
-	}
-	return ml
-}
-
-func (s SecurityLimitRow) ToLimit() quik.Limit {
-	var isin *string
-	if s.ISIN.Valid {
-		isin = &s.ISIN.String
-	}
-	var shortName *string
-	if s.ShortName.Valid {
-		shortName = &s.ShortName.String
-	}
-	var ack *string
-	if s.AcquisitionCurrencyCode.Valid {
-		ack = &s.AcquisitionCurrencyCode.String
-	}
-	return quik.Limit{
-		LoadDate:                s.LoadDate,
-		SourceDate:              s.SourceDate,
-		ClientCode:              s.ClientCode,
-		SecCode:                 &s.SecCode,
-		TradeAccount:            &s.TradeAccount,
-		FirmCode:                s.FirmCode,
-		FirmName:                dbrepo.StringFromNull(s.FirmName),
-		Balance:                 dbrepo.DecimalFromPtr(s.Balance),
-		AcquisitionCurrencyCode: ack,
-		ISIN:                    isin,
-		ShortName:               shortName,
-		SettleCode:              quik.SettleCode(s.SettleCode),
-	}
-}
-
 func (m MoneyLimitRow) ToQuik() quik.MoneyLimit {
 	ml := quik.MoneyLimit{
 		LoadDate:     m.LoadDate,

@@ -13,21 +13,19 @@ func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) e
 
 	var errs []error
 
-	var out []*quik.Limit
+	var out []quik.Limit
 	for _, row := range limits {
 		limit, err := quik.NewLimit(
 			row.Type,
 			row.ClientCode,
-			&row.Ticker,
-			&row.PositionCode,
+			row.Ticker,
+			row.PositionCode,
 			row.SettleCode,
-			&row.TradeAccount,
+			row.TradeAccount,
 			row.FirmCode,
-			nil,
 			row.Balance,
-			&row.AcquisitionCurrencyCode,
-			&row.ISIN,
-			nil,
+			row.AcquisitionCurrencyCode,
+			row.ISIN,
 		)
 		if err != nil {
 			errs = append(errs, err)

@@ -6,13 +6,13 @@ type Limit struct {
 	Type                    string
 	ClientCode              string
 	Ticker                  string
-	PositionCode            string
+	PositionCode            *string
 	SettleCode              string
-	TradeAccount            string
+	TradeAccount            *string
 	FirmCode                string
 	Balance                 decimal.Decimal
-	AcquisitionCurrencyCode string
-	ISIN                    string
+	AcquisitionCurrencyCode *string
+	ISIN                    *string
 }
 
 type LimitLine struct {

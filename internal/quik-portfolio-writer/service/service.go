@@ -8,8 +8,7 @@ import (
 )
 
 type Repository interface {
-	InsertLimit(ctx context.Context, l quik.Limit) (quik.Limit, error)
-	HandleRequest(ctx context.Context, limits []*quik.Limit) error
+	HandleRequest(ctx context.Context, limits []quik.Limit) error
 }
 
 type Service struct {

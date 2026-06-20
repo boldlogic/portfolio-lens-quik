@@ -2,11 +2,13 @@ package v1
 
 import (
 	"encoding/csv"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/boldlogic/packages/transport/httputils"
-	"github.com/boldlogic/portfolio-lens-quik/internal/models"
+	intmodels "github.com/boldlogic/portfolio-lens-quik/internal/models"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -36,16 +38,14 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 	reader.Comma = ';'
 	records, err := reader.ReadAll()
 	if err != nil {
-		h.logger.Error("", zap.Error(err))
+		h.logger.Error(err.Error())
 
 		return nil, "", err
 	}
 
 	idx := make(map[int]string, 9)
 
-	//var out []limitCSV
-
-	var res []models.LimitLine
+	var res []intmodels.LimitLine
 	for i, str := range records {
 		var l limitCSV
 		for j, v := range str {
@@ -76,25 +76,23 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 
 		}
 		if i > 1 {
-			//out = append(out, l)
 			balance, err := decimal.NewFromString(l.Balance)
 			if err != nil {
-				h.logger.Error("", zap.Error(err))
-
+				h.logger.Error(err.Error())
 				return nil, "", err
 			}
-			line := models.LimitLine{
-				Limit: models.Limit{
+			line := intmodels.LimitLine{
+				Limit: intmodels.Limit{
 					Type:                    l.Type,
 					ClientCode:              l.ClientCode,
 					Ticker:                  l.Ticker,
-					PositionCode:            l.PositionCode,
+					PositionCode:            &l.PositionCode,
 					SettleCode:              l.SettleCode,
-					TradeAccount:            l.TradeAccount,
+					TradeAccount:            &l.TradeAccount,
 					FirmCode:                l.FirmCode,
 					Balance:                 balance,
-					AcquisitionCurrencyCode: l.AcquisitionCurrencyCode,
-					ISIN:                    l.ISIN,
+					AcquisitionCurrencyCode: &l.AcquisitionCurrencyCode,
+					ISIN:                    &l.ISIN,
 				},
 				Line: uint(i),
 			}
@@ -103,8 +101,13 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 		}
 
 	}
-	h.service.UpsertLimits(r.Context(), res)
-	h.logger.Debug("", zap.Any("", res))
+	err = h.service.UpsertLimits(r.Context(), res)
+	if err != nil {
+		if errors.Is(err, models.ErrBusinessValidation) || errors.Is(err, models.ErrConflict) {
+			return nil, err.Error(), err
+		}
+		return nil, "", err
+	}
 	return nil, "", nil
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/dbrepo"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -35,33 +34,34 @@ type securityLimitTVP struct {
 func limitToSLTVP(limit quik.Limit) securityLimitTVP {
 
 	return securityLimitTVP{
-		ClientCode:              limit.ClientCode,
-		SecCode:                 *limit.SecCode,
-		TradeAccount:            *limit.TradeAccount,
-		SettleCode:              limit.SettleCode.String(),
-		FirmCode:                limit.FirmCode,
-		Balance:                 limit.Balance,
-		AcquisitionCurrencyCode: limit.AcquisitionCurrencyCode,
-		ISIN:                    limit.ISIN,
+		ClientCode:              limit.ClientCode(),
+		SecCode:                 limit.Ticker(),
+		TradeAccount:            *limit.TradeAccount(),
+		SettleCode:              limit.SettleCode().String(),
+		FirmCode:                limit.FirmCode(),
+		Balance:                 limit.Balance(),
+		AcquisitionCurrencyCode: limit.AcquisitionCurrencyCode(),
+		ISIN:                    limit.ISIN(),
 	}
 }
 
 func limitToMLTVP(limit quik.Limit) moneyLimitTVP {
 	return moneyLimitTVP{
-		ClientCode:   limit.ClientCode,
-		CurrencyCode: *limit.CurrencyCode,
-		PositionCode: *limit.PositionCode,
-		SettleCode:   limit.SettleCode.String(),
-		FirmCode:     limit.FirmCode,
-		Balance:      limit.Balance,
+		ClientCode:   limit.ClientCode(),
+		CurrencyCode: limit.Ticker(),
+		PositionCode: *limit.PositionCode(),
+		SettleCode:   limit.SettleCode().String(),
+		FirmCode:     limit.FirmCode(),
+		Balance:      limit.Balance(),
 	}
 }
 
 const (
-	mergeSecurityLimits    = mergeSecurityLimitsSrcSQL + securityLimitExchangeTableSQL + mergeSecurityLimitsUpsertSQL
-	mergeSecurityLimitsOTC = mergeSecurityLimitsSrcSQL + securityLimitOtcTableSQL + mergeSecurityLimitsUpsertSQL
-
-	mergeSecurityLimitsSrcSQL = `
+	mergeSecurityLimits           = mergeSecurityLimitsSrcSQL + securityLimitExchangeTableSQL + mergeSecurityLimitsUpsertSQL
+	mergeSecurityLimitsOTC        = mergeSecurityLimitsSrcSQL + securityLimitOtcTableSQL + mergeSecurityLimitsUpsertSQL
+	securityLimitExchangeTableSQL = " quik.security_limits "
+	securityLimitOtcTableSQL      = " quik.security_limits_otc "
+	mergeSecurityLimitsSrcSQL     = `
 	WITH src as(
 		select client_code
 				,sec_code
@@ -84,9 +84,15 @@ const (
 		when matched 
 			and (tgt.balance<>src.balance
 				or tgt.acquisition_currency_code<>src.acquisition_currency_code
-				or tgt.isin<>src.isin)	
+				or (tgt.acquisition_currency_code is null and src.acquisition_currency_code is not null)
+				or (tgt.acquisition_currency_code is not null and src.acquisition_currency_code is null)
+				or tgt.isin<>src.isin
+				or (tgt.isin is null and src.isin is not null)
+				or (tgt.isin is not null and src.isin is null))	
 			then update set
-				tgt.balance=src.balance 
+				tgt.balance=src.balance,
+				tgt.acquisition_currency_code=src.acquisition_currency_code,
+				tgt.isin=src.isin
 		WHEN NOT MATCHED BY TARGET
 			then insert	(
 					client_code, 
@@ -149,47 +155,40 @@ const (
 	`
 )
 
-func (r *Repository) HandleRequest(ctx context.Context, limits []*quik.Limit) error {
+func (r *Repository) HandleRequest(ctx context.Context, limits []quik.Limit) error {
 
 	ml := make([]quik.Limit, 0, len(limits))
 	sl := make([]quik.Limit, 0, len(limits))
 	slo := make([]quik.Limit, 0, len(limits))
 	for _, limit := range limits {
-		switch limit.Type {
+		switch limit.Type() {
 		case quik.LimitTypeMoney:
-			ml = append(ml, *limit)
+			ml = append(ml, limit)
 		case quik.LimitTypeSecurities:
-			sl = append(sl, *limit)
+			sl = append(sl, limit)
 		case quik.LimitTypeSecuritiesOtc:
-			slo = append(slo, *limit)
+			slo = append(slo, limit)
 		}
 	}
 	mlT, okM := dbrepo.MakeTVP(ml, limitToMLTVP, "app.money_limits")
 	slT, okS := dbrepo.MakeTVP(sl, limitToSLTVP, "app.security_limits")
 	slOT, okO := dbrepo.MakeTVP(slo, limitToSLTVP, "app.security_limits")
-	r.Logger.Debug("mlT", zap.Bool("okM", okM))
-	r.Logger.Debug("mlT", zap.Bool("okS", okS))
-	r.Logger.Debug("mlT", zap.Bool("okO", okO))
-
 	g, gCTX := errgroup.WithContext(ctx)
 	if okM {
 		g.Go(func() error {
 			_, err := r.Db.ExecContext(gCTX, mergeMoneyLimits, sql.Named("limits", mlT))
-			//r.Logger.Error(err.Error())
 			return err
 		})
 	}
 	if okS {
 		g.Go(func() error {
 			_, err := r.Db.ExecContext(gCTX, mergeSecurityLimits, sql.Named("limits", slT))
-			//r.Logger.Error(err.Error())
 			return err
 		})
 	}
 	if okO {
 		g.Go(func() error {
 			_, err := r.Db.ExecContext(gCTX, mergeSecurityLimitsOTC, sql.Named("limits", slOT))
-			//r.Logger.Error(err.Error())
 			return err
 		})
 	}
@@ -198,7 +197,6 @@ func (r *Repository) HandleRequest(ctx context.Context, limits []*quik.Limit) er
 		r.Logger.Error(err.Error())
 		return err
 	}
-	r.Logger.Debug("ok")
 	return nil
 
 }

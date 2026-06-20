@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/boldlogic/portfolio-lens-quik/internal/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"go.uber.org/zap"
 )
@@ -29,6 +28,6 @@ func (h *Handler) Adapt(fn handler.HandlerFunc) http.HandlerFunc {
 }
 
 type Service interface {
-	CreateLimit(ctx context.Context, l quik.Limit) (quik.Limit, error)
+	UpsertLimit(ctx context.Context, limit models.Limit) error
 	UpsertLimits(ctx context.Context, limits []models.LimitLine) error
 }
