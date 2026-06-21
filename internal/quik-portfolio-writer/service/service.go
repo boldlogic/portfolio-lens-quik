@@ -12,13 +12,15 @@ type Repository interface {
 }
 
 type Service struct {
-	logger *zap.Logger
-	repo   Repository
+	logger      *zap.Logger
+	repo        Repository
+	limitsQueue chan quik.Limit
 }
 
 func NewService(repo Repository, logger *zap.Logger) *Service {
 	return &Service{
-		logger: logger,
-		repo:   repo,
+		logger:      logger,
+		repo:        repo,
+		limitsQueue: make(chan quik.Limit, 100),
 	}
 }

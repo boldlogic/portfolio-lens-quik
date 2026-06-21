@@ -8,7 +8,6 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/internal/models"
 	errmodel "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"go.uber.org/zap"
 )
 
 func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) error {
@@ -32,17 +31,14 @@ func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) e
 		)
 		if err != nil {
 			errs = append(errs, err)
-			s.logger.Error(err.Error())
 			continue
 		}
 		h := limit.KeyHash()
 		byHash[h] = append(byHash[h], row.Line)
 		out = append(out, limit)
-		s.logger.Debug("", zap.Any("", limit))
 	}
 	if len(errs) != 0 {
 		err := errors.Join(errs...)
-		s.logger.Error(err.Error())
 		return fmt.Errorf("%w: %w", errmodel.ErrBusinessValidation, err)
 	}
 

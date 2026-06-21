@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/shopspring/decimal"
 )
@@ -183,18 +182,10 @@ func limitOptionalString(s *string) string {
 
 func ParseClientCode(raw string) (string, error) {
 	code := strings.ToUpper(strings.TrimSpace(raw))
-	if err := validateClientCodeLength(code); err != nil {
+	if err := validateRuneLen(LimitFieldClientCode, code, minClientCodeLen, maxClientCodeLen); err != nil {
 		return "", err
 	}
 	return code, nil
-}
-
-func validateClientCodeLength(code string) error {
-	cl := utf8.RuneCountInString(code)
-	if cl < minClientCodeLen || cl > maxClientCodeLen {
-		return fmt.Errorf("код клиента должен иметь длину от %d до %d символов", minClientCodeLen, maxClientCodeLen)
-	}
-	return nil
 }
 
 func (l Limit) validateCommon() error {
@@ -203,12 +194,11 @@ func (l Limit) validateCommon() error {
 		return err
 	}
 
-	if err := validateClientCodeLength(l.clientCode); err != nil {
+	if err := validateRuneLen(LimitFieldClientCode, l.clientCode, minClientCodeLen, maxClientCodeLen); err != nil {
 		return err
 	}
-	fc := utf8.RuneCountInString(l.firmCode)
-	if fc < minFirmCodeLen || fc > maxFirmCodeLen {
-		return fmt.Errorf("код фирмы должен иметь длину от %d до %d символов", minFirmCodeLen, maxFirmCodeLen)
+	if err := validateRuneLen(LimitFieldFirmCode, l.firmCode, minFirmCodeLen, maxFirmCodeLen); err != nil {
+		return err
 	}
 
 	return l.settleCode.Validate()
@@ -220,13 +210,11 @@ func (l Limit) validateMoney() error {
 	if err != nil {
 		return err
 	}
-	if l.positionCode == nil {
-		return fmt.Errorf("не указан код позиции")
+	if err := validateRequiredPtr(LimitFieldPositionCode, l.positionCode); err != nil {
+		return err
 	}
-	pc := utf8.RuneCountInString(*l.positionCode)
-	if pc < minPositionCodeLen || pc > maxPositionCodeLen {
-		return fmt.Errorf("код позиции должен иметь длину от %d до %d символов", minPositionCodeLen, maxPositionCodeLen)
-
+	if err := validateRuneLen(LimitFieldPositionCode, *l.positionCode, minPositionCodeLen, maxPositionCodeLen); err != nil {
+		return err
 	}
 
 	return nil
@@ -235,31 +223,24 @@ func (l Limit) validateMoney() error {
 
 func (l Limit) validateSecurity() error {
 
-	pc := utf8.RuneCountInString(l.ticker)
-	if pc < minTickerLen || pc > maxTickerLen {
-		return fmt.Errorf("код бумаги должен иметь длину от %d до %d символов", minTickerLen, maxTickerLen)
-
+	if err := validateRuneLen(LimitFieldSecCode, l.ticker, minTickerLen, maxTickerLen); err != nil {
+		return err
 	}
 
-	if l.tradeAccount == nil {
-		return fmt.Errorf("не указан торговый счет")
+	if err := validateRequiredPtr(LimitFieldTradeAccount, l.tradeAccount); err != nil {
+		return err
 	}
-	ta := utf8.RuneCountInString(*l.tradeAccount)
-	if ta < minTradeAccountLen || ta > maxTradeAccountLen {
-		return fmt.Errorf("код позиции должен иметь длину от %d до %d символов", minTradeAccountLen, maxTradeAccountLen)
+	if err := validateRuneLen(LimitFieldTradeAccount, *l.tradeAccount, minTradeAccountLen, maxTradeAccountLen); err != nil {
+		return err
 	}
 
 	if l.isin != nil {
-		i := utf8.RuneCountInString(*l.isin)
-		if i < minTickerLen || i > maxTickerLen {
-			return fmt.Errorf("isin бумаги должен иметь длину от %d до %d символов", minTickerLen, maxTickerLen)
+		if err := validateRuneLen(LimitFieldISIN, *l.isin, minTickerLen, maxTickerLen); err != nil {
+			return err
 		}
-
 	}
-	if l.acquisitionCurrencyCode != nil {
-		if utf8.RuneCountInString(*l.acquisitionCurrencyCode) > 4 {
-			return fmt.Errorf("валюта приобретения не может иметь длину более 4 символов")
-		}
+	if err := validateOptionalMaxRuneLen(LimitFieldAcquisitionCurrencyCode, l.acquisitionCurrencyCode, 4); err != nil {
+		return err
 	}
 
 	return nil
