@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/boldlogic/portfolio-lens-quik/internal/models"
+	errmodel "github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 	"go.uber.org/zap"
 )
@@ -13,7 +15,8 @@ func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) e
 
 	var errs []error
 
-	var out []quik.Limit
+	out := make([]quik.Limit, 0, len(limits))
+	byHash := make(map[[32]byte][]uint, len(limits))
 	for _, row := range limits {
 		limit, err := quik.NewLimit(
 			row.Type,
@@ -32,11 +35,19 @@ func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) e
 			s.logger.Error(err.Error())
 			continue
 		}
+		h := limit.KeyHash()
+		byHash[h] = append(byHash[h], row.Line)
 		out = append(out, limit)
 		s.logger.Debug("", zap.Any("", limit))
 	}
 	if len(errs) != 0 {
-		return errors.Join(errs...)
+		err := errors.Join(errs...)
+		s.logger.Error(err.Error())
+		return fmt.Errorf("%w: %w", errmodel.ErrBusinessValidation, err)
+	}
+
+	if groups := duplicateLineGroupsFromHash(byHash); len(groups) > 0 {
+		return errDuplicateLimits(groups)
 	}
 
 	return s.repo.HandleRequest(ctx, out)

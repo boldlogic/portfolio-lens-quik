@@ -1,6 +1,7 @@
 package quik
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"strings"
@@ -65,7 +66,9 @@ func NewLimit(limitType string,
 	acquisitionCurrencyCode *string,
 	ISIN *string,
 ) (Limit, error) {
-
+	if settleCode == "" {
+		settleCode = SettleCodeTx
+	}
 	out := Limit{
 		limitType:  LimitType(strings.TrimSpace(limitType)),
 		clientCode: strings.TrimSpace(clientCode),
@@ -208,10 +211,6 @@ func (l Limit) validateCommon() error {
 		return fmt.Errorf("код фирмы должен иметь длину от %d до %d символов", minFirmCodeLen, maxFirmCodeLen)
 	}
 
-	if l.settleCode == "" {
-		l.settleCode = SettleCodeTx
-	}
-
 	return l.settleCode.Validate()
 }
 
@@ -265,4 +264,48 @@ func (l Limit) validateSecurity() error {
 
 	return nil
 
+}
+
+func appendLimitKeyPart(b []byte, part string) []byte {
+	if len(b) > 0 {
+		b = append(b, 0)
+	}
+	return append(b, part...)
+}
+
+func (l Limit) keyBytes() ([]byte, bool) {
+	var b []byte
+	switch l.limitType {
+	case LimitTypeMoney:
+		if l.positionCode == nil {
+			return nil, false
+		}
+		b = appendLimitKeyPart(b, string(l.limitType))
+		b = appendLimitKeyPart(b, l.clientCode)
+		b = appendLimitKeyPart(b, l.ticker)
+		b = appendLimitKeyPart(b, string(l.settleCode))
+		b = appendLimitKeyPart(b, *l.positionCode)
+		b = appendLimitKeyPart(b, l.firmCode)
+	case LimitTypeSecurities, LimitTypeSecuritiesOtc:
+		if l.tradeAccount == nil {
+			return nil, false
+		}
+		b = appendLimitKeyPart(b, string(l.limitType))
+		b = appendLimitKeyPart(b, l.clientCode)
+		b = appendLimitKeyPart(b, l.ticker)
+		b = appendLimitKeyPart(b, string(l.settleCode))
+		b = appendLimitKeyPart(b, *l.tradeAccount)
+		b = appendLimitKeyPart(b, l.firmCode)
+	default:
+		return nil, false
+	}
+	return b, true
+}
+
+func (l Limit) KeyHash() [32]byte {
+	b, ok := l.keyBytes()
+	if !ok {
+		return [32]byte{}
+	}
+	return sha256.Sum256(b)
 }

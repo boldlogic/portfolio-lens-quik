@@ -15,8 +15,8 @@ type limitReq struct {
 	Type                    string          `json:"limitType" validate:"oneof=money security security_otc"`
 	ClientCode              string          `json:"clientCode" validate:"required,min=1,max=12"`
 	Ticker                  string          `json:"ticker" validate:"required,min=1,max=12"`
-	PositionCode            *string         `json:"positionCode,omitempty,min=1,max=4"`
-	SettleCode              string          `json:"settleCode" validate:"omitempty,min=0,max=5"`
+	PositionCode            *string         `json:"positionCode" validate:"omitempty,min=1,max=4"`
+	SettleCode              string          `json:"settleCode" validate:"omitempty,oneof=T0 T1 T2 Tx"`
 	TradeAccount            *string         `json:"tradeAccount" validate:"omitempty,min=1,max=12"`
 	FirmCode                string          `json:"firmCode" validate:"required,min=1,max=12"`
 	Balance                 decimal.Decimal `json:"balance" validate:"required"`
@@ -52,7 +52,7 @@ func (h *Handler) createLimit(r *http.Request) (any, string, error) {
 	if err != nil {
 		h.logger.Error("", zap.Error(err))
 
-		if errors.Is(err, models.ErrBusinessValidation) || errors.Is(err, models.ErrConflict) {
+		if errors.Is(err, models.ErrBusinessValidation) {
 			return nil, err.Error(), err
 		}
 		return nil, "", err

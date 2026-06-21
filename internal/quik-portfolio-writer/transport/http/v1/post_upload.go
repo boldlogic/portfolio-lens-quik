@@ -72,10 +72,12 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 				l.PositionCode = v
 			case "trade_account":
 				l.TradeAccount = v
+			case "acquisition_currency":
+				l.AcquisitionCurrencyCode = v
 			}
 
 		}
-		if i > 1 {
+		if i > 0 {
 			balance, err := decimal.NewFromString(l.Balance)
 			if err != nil {
 				h.logger.Error(err.Error())
@@ -106,6 +108,7 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 		if errors.Is(err, models.ErrBusinessValidation) || errors.Is(err, models.ErrConflict) {
 			return nil, err.Error(), err
 		}
+		h.logger.Error(err.Error())
 		return nil, "", err
 	}
 	return nil, "", nil
