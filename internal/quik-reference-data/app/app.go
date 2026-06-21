@@ -14,19 +14,19 @@ import (
 	"github.com/boldlogic/packages/periodic"
 	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
-	referencehttp "github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/api/http"
-	apiv1 "github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/api/http/v1"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/entities/firm"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/features/readfirms"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/features/syncfirms"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/features/writefirms"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/shared/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/shared/db"
+	referencehttp "github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/api/http"
+	apiv1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/api/http/v1"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/firm"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/readfirms"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/syncfirms"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/writefirms"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/shared/config"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/shared/db"
 	"go.uber.org/zap"
 )
 
 const (
-	defaultConfigPath = "quik-reference-data/config.yaml"
+	defaultConfigPath = "configs/quik-reference-data-config.yaml"
 	errChanBufSize    = 1
 )
 

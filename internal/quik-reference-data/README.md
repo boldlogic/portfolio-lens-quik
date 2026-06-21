@@ -89,13 +89,13 @@
 Из корня репозитория:
 
 ```bash
-go run ./quik-reference-data/cmd
+go run ./cmd/quik-reference-data
 ```
 
 По умолчанию сервис ищет конфиг по пути:
 
 ```text
-quik-reference-data/config.yaml
+configs/quik-reference-data-config.yaml
 ```
 
 ## Конфигурация

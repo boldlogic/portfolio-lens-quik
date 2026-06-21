@@ -1,7 +1,7 @@
 package firm
 
 import (
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/shared/db"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/shared/db"
 )
 
 type FirmsRepo struct {

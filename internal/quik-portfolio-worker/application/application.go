@@ -8,14 +8,14 @@ import (
 	"github.com/boldlogic/packages/commonconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/periodic"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-worker/internal/config"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-worker/internal/repository"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-worker/internal/service"
-	"github.com/boldlogic/portfolio-lens-quik/quik-portfolio-worker/internal/workers"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-worker/config"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-worker/repository"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-worker/service"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-worker/workers"
 	"go.uber.org/zap"
 )
 
-const defaultConfigPath = "quik-portfolio-worker/config.yaml"
+const defaultConfigPath = "configs/quik-portfolio-worker-config.yaml"
 
 type application struct {
 	config *config.Config

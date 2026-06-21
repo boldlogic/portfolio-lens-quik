@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultConfigPath = "migrator/config.yaml"
+	defaultConfigPath = "configs/migrator-config.yaml"
 	defaultCommand    = "up"
 	migrationsDir     = "migrations"
 	gooseDialect      = "mssql"

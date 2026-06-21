@@ -3,7 +3,7 @@ package referencehttp
 import (
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/router"
-	v1 "github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/api/http/v1"
+	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/api/http/v1"
 	"go.uber.org/zap"
 )
 

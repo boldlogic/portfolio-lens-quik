@@ -4,7 +4,7 @@
 ## Запуск
 
 ```bash
-go run ./quik-portfolio-worker/cmd
+go run ./cmd/quik-portfolio-worker
 ```
 
-Конфиг по умолчанию: `quik-portfolio-worker/internal/configs/config.yaml`.
+Конфиг по умолчанию: `configs/quik-portfolio-worker-config.yaml`.

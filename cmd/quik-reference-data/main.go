@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/boldlogic/portfolio-lens-quik/quik-reference-data/internal/app"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/app"
 	"go.uber.org/zap"
 )
 
