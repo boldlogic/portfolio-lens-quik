@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 	"github.com/shopspring/decimal"
 )
 

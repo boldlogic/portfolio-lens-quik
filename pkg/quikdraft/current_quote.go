@@ -1,4 +1,4 @@
-package quik
+package quikdraft
 
 import (
 	"fmt"
@@ -7,29 +7,29 @@ import (
 )
 
 type CurrentQuote struct {
-	QuoteDate          *time.Time // Дата торгов
-	InstrumentClass    string     // Код инструмента+Борд
-	Ticker             string     // Код инструмента
-	ISIN               *string    // Международный идентификатор
-	RegistrationNumber *string    // Рег.номер инструмента
-	FullName           *string    // Полное название инструмента
-	ShortName          string     // Краткое название
-	FaceValue          *float64   // Номинал
-	MaturityDate       *time.Time // Дата погашения
-	CouponDuration     *int       // Длительность купона
-	ClassCode          string     // Код класса / Борд
-	ClassName          string     // Наименование класса
-	InstrumentType     string     // Тип инструмента
-	InstrumentSubtype  *string    // Подтип инструмента
-	Currency           string     // Валюта
-	BaseCurrency       string     // Базовая валюта
-	QuoteCurrency      *string    // Валюта котировки
-	CounterCurrency    *string    // Сопряженная валюта
+	QuoteDate          *time.Time
+	InstrumentClass    string
+	Ticker             string
+	ISIN               *string
+	RegistrationNumber *string
+	FullName           *string
+	ShortName          string
+	FaceValue          *float64
+	MaturityDate       *time.Time
+	CouponDuration     *int
+	ClassCode          string
+	ClassName          string
+	InstrumentType     string
+	InstrumentSubtype  *string
+	Currency           string
+	BaseCurrency       string
+	QuoteCurrency      *string
+	CounterCurrency    *string
 	InstrumentId       int
 
 	LastPrice     *float64
 	ClosePrice    *float64
-	AccruedInt    *float64
+	AccruedInt      *float64
 	TradingStatus *string
 }
 

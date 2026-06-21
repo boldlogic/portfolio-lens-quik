@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/boldlogic/portfolio-lens-quik/pkg/dbrepo"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
 func mapRows[R, D any](rows []R, fn func(R) D) []D {

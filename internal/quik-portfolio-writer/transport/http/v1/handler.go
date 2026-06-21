@@ -28,6 +28,6 @@ func (h *Handler) Adapt(fn handler.HandlerFunc) http.HandlerFunc {
 }
 
 type Service interface {
-	UpsertLimit(ctx context.Context, limit models.Limit) error
+	UpsertLimit(ctx context.Context, limit models.LimitInput) error
 	UpsertLimits(ctx context.Context, limits []models.LimitLine) error
 }

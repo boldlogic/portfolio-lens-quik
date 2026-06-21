@@ -7,7 +7,7 @@ import (
 
 	"github.com/boldlogic/packages/shutdown"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 	"go.uber.org/zap"
 )
 

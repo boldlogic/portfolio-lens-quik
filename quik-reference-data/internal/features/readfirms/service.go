@@ -3,7 +3,7 @@ package readfirms
 import (
 	"context"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 	"go.uber.org/zap"
 )
 

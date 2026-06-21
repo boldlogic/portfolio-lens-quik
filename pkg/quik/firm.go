@@ -1,6 +1,6 @@
 package quik
 
-type TradePoint struct {
+type Firm struct {
 	Id   uint8
 	Code string
 	Name string

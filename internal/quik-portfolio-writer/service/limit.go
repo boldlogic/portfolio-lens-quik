@@ -6,10 +6,10 @@ import (
 
 	intmodel "github.com/boldlogic/portfolio-lens-quik/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
-func (s *Service) UpsertLimit(ctx context.Context, limit intmodel.Limit) error {
+func (s *Service) UpsertLimit(ctx context.Context, limit intmodel.LimitInput) error {
 
 	lim, err := quik.NewLimit(limit.Type,
 		limit.ClientCode,

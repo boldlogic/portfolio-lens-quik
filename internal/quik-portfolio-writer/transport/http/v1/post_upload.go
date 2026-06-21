@@ -84,7 +84,7 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 				return nil, "", err
 			}
 			line := intmodels.LimitLine{
-				Limit: intmodels.Limit{
+				LimitInput: intmodels.LimitInput{
 					Type:                    l.Type,
 					ClientCode:              l.ClientCode,
 					Ticker:                  l.Ticker,

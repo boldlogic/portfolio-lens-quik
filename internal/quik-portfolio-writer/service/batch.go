@@ -7,7 +7,7 @@ import (
 
 	"github.com/boldlogic/portfolio-lens-quik/internal/models"
 	errmodel "github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
 func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) error {

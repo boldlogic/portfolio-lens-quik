@@ -6,7 +6,7 @@ import (
 
 	"github.com/boldlogic/packages/utils/dates"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
 func validateLimitsContract(date time.Time, clientCodes []string) ([]string, error) {

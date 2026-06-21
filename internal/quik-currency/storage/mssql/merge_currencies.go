@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
 const (

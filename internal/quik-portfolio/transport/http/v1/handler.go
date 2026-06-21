@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"

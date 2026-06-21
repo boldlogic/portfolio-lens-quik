@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
 func (s *Service) CreateFirm(ctx context.Context, code string, name string) (quik.Firm, error) {

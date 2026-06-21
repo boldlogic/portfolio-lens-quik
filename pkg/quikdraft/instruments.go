@@ -1,4 +1,4 @@
-package quik
+package quikdraft
 
 type InstrumentType struct {
 	Id    uint8
@@ -9,12 +9,6 @@ type InstrumentSubType struct {
 	SubTypeId uint8
 	Title     string
 	TypeId    uint8
-}
-
-type Firm struct {
-	Id   uint8
-	Code string
-	Name string
 }
 
 type Board struct {

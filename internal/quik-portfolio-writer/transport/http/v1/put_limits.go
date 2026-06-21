@@ -35,7 +35,7 @@ func (h *Handler) createLimit(r *http.Request) (any, string, error) {
 		return nil, err.Error(), models.ErrValidation
 	}
 
-	lim := intmodels.Limit{
+	lim := intmodels.LimitInput{
 		Type:                    req.Type,
 		ClientCode:              req.ClientCode,
 		Ticker:                  req.Ticker,

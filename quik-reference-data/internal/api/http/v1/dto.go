@@ -1,6 +1,6 @@
 package v1
 
-import "github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+import "github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 
 type firmCreateReqDTO struct {
 	Code string `json:"firmCode" validate:"required,min=1,max=12"`

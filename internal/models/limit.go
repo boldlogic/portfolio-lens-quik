@@ -2,7 +2,7 @@ package models
 
 import "github.com/shopspring/decimal"
 
-type Limit struct {
+type LimitInput struct {
 	Type                    string
 	ClientCode              string
 	Ticker                  string
@@ -16,6 +16,6 @@ type Limit struct {
 }
 
 type LimitLine struct {
-	Limit
+	LimitInput
 	Line uint
 }

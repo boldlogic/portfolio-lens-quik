@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/boldlogic/portfolio-lens-quik/internal/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 )
 
 func scanMoneyLimitRow(row *sql.Rows) (models.MoneyLimitRow, error) {

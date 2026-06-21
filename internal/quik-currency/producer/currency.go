@@ -1,6 +1,6 @@
 package producer
 
-import "github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
+import "github.com/boldlogic/portfolio-lens-quik/pkg/quik"
 
 type currencyEvent struct {
 	ISOCode     int16  `json:"isoCode"`
