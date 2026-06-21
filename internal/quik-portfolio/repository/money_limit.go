@@ -6,24 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/boldlogic/portfolio-lens-quik/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/shopspring/decimal"
 )
 
-type moneyLimitRow struct {
-	LoadDate     time.Time
-	SourceDate   time.Time
-	ClientCode   string
-	CurrencyCode string
-	PositionCode string
-	SettleCode   string
-	FirmCode     string
-	FirmName     sql.NullString
-	Balance      *decimal.Decimal
-}
-
-func scanMoneyLimitRow(row *sql.Rows) (moneyLimitRow, error) {
-	out := moneyLimitRow{}
+func scanMoneyLimitRow(row *sql.Rows) (models.MoneyLimitRow, error) {
+	out := models.MoneyLimitRow{}
 	err := row.Scan(
 		&out.LoadDate,
 		&out.SourceDate,
@@ -36,7 +24,7 @@ func scanMoneyLimitRow(row *sql.Rows) (moneyLimitRow, error) {
 		&out.Balance,
 	)
 	if err != nil {
-		return moneyLimitRow{}, fmt.Errorf("%w: %w", ErrScan, err)
+		return models.MoneyLimitRow{}, fmt.Errorf("%w: %w", ErrScan, err)
 	}
 	return out, nil
 }
@@ -97,5 +85,5 @@ func (r *Repository) ListMoneyLimits(ctx context.Context, date time.Time, limit 
 		return nil, nil, err
 	}
 
-	return mapRows(limits, moneyLimitRow.toQuik), totalCount, nil
+	return mapRows(limits, models.MoneyLimitRow.ToQuik), totalCount, nil
 }

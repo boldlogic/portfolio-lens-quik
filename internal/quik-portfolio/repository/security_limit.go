@@ -6,27 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/boldlogic/portfolio-lens-quik/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/shopspring/decimal"
 )
 
-type securityLimitRow struct {
-	LoadDate                time.Time
-	SourceDate              time.Time
-	ClientCode              string
-	SecCode                 string
-	TradeAccount            string
-	SettleCode              string
-	FirmCode                string
-	FirmName                sql.NullString
-	Balance                 *decimal.Decimal
-	AcquisitionCurrencyCode string
-	ISIN                    sql.NullString
-	ShortName               sql.NullString
-}
-
-func scanSecurityLimitRow(row *sql.Rows) (securityLimitRow, error) {
-	out := securityLimitRow{}
+func scanSecurityLimitRow(row *sql.Rows) (models.SecurityLimitRow, error) {
+	out := models.SecurityLimitRow{}
 	err := row.Scan(
 		&out.LoadDate,
 		&out.SourceDate,
@@ -42,7 +27,7 @@ func scanSecurityLimitRow(row *sql.Rows) (securityLimitRow, error) {
 		&out.ShortName,
 	)
 	if err != nil {
-		return securityLimitRow{}, fmt.Errorf("%w: %w", ErrScan, err)
+		return models.SecurityLimitRow{}, fmt.Errorf("%w: %w", ErrScan, err)
 	}
 
 	return out, nil
@@ -94,7 +79,7 @@ const (
         SELECT COUNT(*)
         FROM quik.security_limits li
         WHERE li.load_date = cast(@p1 as date)`
-	
+
 	countSecurityLimitsOtcByClients = `SELECT COUNT(*)
 FROM quik.security_limits_otc li
 join @codes c on c.client_code = li.client_code
@@ -121,5 +106,5 @@ func (r *Repository) ListSecurityLimits(ctx context.Context, limitType quik.Limi
 		return nil, nil, err
 	}
 
-	return mapRows(limits, securityLimitRow.toQuik), totalCount, nil
+	return mapRows(limits, models.SecurityLimitRow.ToQuik), totalCount, nil
 }

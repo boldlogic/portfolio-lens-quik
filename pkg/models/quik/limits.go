@@ -6,31 +6,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type LimitType string
-
-const (
-	LimitTypeSecurities    LimitType = "securities"     // ценные бумаги (биржевые)
-	LimitTypeSecuritiesOtc LimitType = "securities_otc" // ценные бумаги OTC
-	LimitTypeMoney         LimitType = "money"          // денежные средства
-)
-
-const (
-	MaxClientCodeLen = 12
-	MinClientCodeLen = 1
-)
-
-type Limit struct {
-	LoadDate     time.Time
-	SourceDate   time.Time
-	ClientCode   string
-	Currency     string
-	PositionCode string
-	SettleCode   SettleCode
-	FirmCode     string
-	FirmName     string
-	Balance      decimal.Decimal
-}
-
 type MoneyLimit struct {
 	LoadDate     time.Time
 	SourceDate   time.Time

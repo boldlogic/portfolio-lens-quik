@@ -1,10 +1,8 @@
 package repository
 
 import (
-	"database/sql"
-
+	"github.com/boldlogic/portfolio-lens-quik/pkg/dbrepo"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
-	"github.com/shopspring/decimal"
 )
 
 func mapRows[R, D any](rows []R, fn func(R) D) []D {
@@ -15,52 +13,6 @@ func mapRows[R, D any](rows []R, fn func(R) D) []D {
 	return out
 }
 
-func stringFromNull(s sql.NullString) string {
-	if s.Valid {
-		return s.String
-	}
-	return ""
-}
-
-func decimalFromPtr(p *decimal.Decimal) decimal.Decimal {
-	if p != nil {
-		return *p
-	}
-	return decimal.Decimal{}
-}
-
-func (m moneyLimitRow) toQuik() quik.MoneyLimit {
-	ml := quik.MoneyLimit{
-		LoadDate:     m.LoadDate,
-		SourceDate:   m.SourceDate,
-		ClientCode:   m.ClientCode,
-		CurrencyCode: m.CurrencyCode,
-		PositionCode: m.PositionCode,
-		FirmCode:     m.FirmCode,
-		FirmName:     stringFromNull(m.FirmName),
-		Balance:      decimalFromPtr(m.Balance),
-		SettleCode:   quik.SettleCode(m.SettleCode),
-	}
-	return ml
-}
-
-func (s securityLimitRow) toQuik() quik.SecurityLimit {
-	return quik.SecurityLimit{
-		LoadDate:                s.LoadDate,
-		SourceDate:              s.SourceDate,
-		ClientCode:              s.ClientCode,
-		SecCode:                 s.SecCode,
-		TradeAccount:            s.TradeAccount,
-		FirmCode:                s.FirmCode,
-		FirmName:                stringFromNull(s.FirmName),
-		Balance:                 decimalFromPtr(s.Balance),
-		AcquisitionCurrencyCode: s.AcquisitionCurrencyCode,
-		ISIN:                    stringFromNull(s.ISIN),
-		ShortName:               stringFromNull(s.ShortName),
-		SettleCode:              quik.SettleCode(s.SettleCode),
-	}
-}
-
 func (p moneyPortfolioRow) toQuikPosition() quik.Position {
 	return quik.Position{
 		LimitType:                   quik.LimitTypeMoney,
@@ -69,7 +21,7 @@ func (p moneyPortfolioRow) toQuikPosition() quik.Position {
 		FirmCode:                    p.FirmCode,
 		FirmName:                    p.FirmName,
 		Ticker:                      p.CurrencyCode,
-		Name:                        stringFromNull(p.CurrencyName),
+		Name:                        dbrepo.StringFromNull(p.CurrencyName),
 		Amount:                      p.Balance,
 		MarketValueInInstrCurrency:  p.Balance,
 		MarketValueInTargetCurrency: p.MarketValueInTargetCurrency,
@@ -84,14 +36,14 @@ func (p securityPortfolioRow) toQuikPositionWithType(limitType quik.LimitType) q
 		SourceDate:                  p.SourceDate,
 		ClientCode:                  p.ClientCode,
 		FirmCode:                    p.FirmCode,
-		FirmName:                    stringFromNull(p.FirmName),
+		FirmName:                    dbrepo.StringFromNull(p.FirmName),
 		Ticker:                      p.SecCode,
-		Name:                        stringFromNull(p.SecName),
+		Name:                        dbrepo.StringFromNull(p.SecName),
 		Amount:                      p.Balance,
-		UnitPrice:                   decimalFromPtr(p.UnitPrice),
-		AccruedInterest:             decimalFromPtr(p.AccruedInterest),
-		MarketValueInInstrCurrency:  decimalFromPtr(p.MarketValueInInstrCurrency),
-		MarketValueInTargetCurrency: decimalFromPtr(p.MarketValueInTargetCurrency),
+		UnitPrice:                   dbrepo.DecimalFromPtr(p.UnitPrice),
+		AccruedInterest:             dbrepo.DecimalFromPtr(p.AccruedInterest),
+		MarketValueInInstrCurrency:  dbrepo.DecimalFromPtr(p.MarketValueInInstrCurrency),
+		MarketValueInTargetCurrency: dbrepo.DecimalFromPtr(p.MarketValueInTargetCurrency),
 		InstrumentCurrencyCode:      p.InstrumentCurrencyCode,
 	}
 }

@@ -2,11 +2,9 @@ package service
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/boldlogic/packages/utils/dates"
-	"github.com/boldlogic/packages/validate"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models/quik"
 )
@@ -47,7 +45,7 @@ func deduplicateClientCodes(clientCodes []string) ([]string, error) {
 
 	unique := 0
 	for _, code := range clientCodes {
-		trimmed, err := validate.TrimAndLen(strings.ToUpper(code), quik.MinClientCodeLen, quik.MaxClientCodeLen)
+		trimmed, err := quik.ParseClientCode(code)
 		if err != nil {
 			return nil, fmt.Errorf("%w: код клиента %s", models.ErrBusinessValidation, code)
 		}
