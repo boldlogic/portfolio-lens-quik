@@ -31,6 +31,7 @@ type application struct {
 	logger  *zap.Logger
 	repo    *repository.Repository
 	server  *httpserver.Server
+	svc     *service.Service
 	errChan chan error
 	wg      sync.WaitGroup
 }
@@ -61,10 +62,10 @@ func (a *application) Start(ctx context.Context) error {
 	}
 	a.repo = repo
 
-	svc := service.NewService(a.repo, a.logger)
+	a.svc = service.NewService(a.repo, a.logger)
 	reg := metrics.New()
 	commonHandler := handler.NewHandler()
-	v1 := v1.NewHandler(commonHandler, svc, a.logger)
+	v1 := v1.NewHandler(commonHandler, a.svc, a.logger)
 	router := writeserver.NewRouter(v1, a.logger, reg)
 	a.server = httpserver.NewServer(router, a.config.Server)
 
@@ -74,6 +75,11 @@ func (a *application) Start(ctx context.Context) error {
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.errChan <- fmt.Errorf("http server остановлен с ошибкой: %w", err)
 		}
+	}()
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+		a.svc.Work(ctx)
 	}()
 	return nil
 }

@@ -80,7 +80,7 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 		if i > 0 {
 			balance, err := decimal.NewFromString(l.Balance)
 			if err != nil {
-				h.logger.Error(err.Error())
+				h.logger.Warn(err.Error())
 				return nil, "", err
 			}
 			line := intmodels.LimitLine{

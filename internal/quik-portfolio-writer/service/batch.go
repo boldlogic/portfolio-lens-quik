@@ -46,6 +46,15 @@ func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) e
 		return errDuplicateLimits(groups)
 	}
 
-	return s.repo.HandleRequest(ctx, out)
+	doneCh, err := s.worker.publish(ctx, out...)
+	if err != nil {
+		return err
+	}
+	select {
+	case err := <-doneCh:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 
 }
