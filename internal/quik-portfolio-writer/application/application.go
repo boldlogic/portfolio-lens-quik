@@ -19,92 +19,113 @@ import (
 	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http/v1"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
 	defaultConfigPath = "configs/quik-portfolio-writer-config.yaml"
-	errChanBufSize    = 1
+	errChanBufSize    = 2
 )
 
 type application struct {
-	config  *config.Config
-	logger  *zap.Logger
-	repo    *repository.Repository
-	server  *httpserver.Server
-	svc     *service.Service
-	errChan chan error
-	wg      sync.WaitGroup
+	config *config.Config
+	Logger *zap.Logger
+	repo   *repository.Repository
+	server *httpserver.Server
+	svc    *service.Service
+
+	runGroup     *errgroup.Group
+	runCtx       context.Context
+	shutdownOnce sync.Once
+	shutdownErr  error
 }
 
-func New() *application {
-	return &application{
-		errChan: make(chan error, errChanBufSize),
-	}
-}
-
-func (a *application) Init() (*zap.Logger, error) {
+func New() (*application, error) {
 	configPath := commonconfig.GetConfigPath(defaultConfigPath)
 
 	conf, err := config.LoadConfig(configPath)
 	if err != nil {
-		return &zap.Logger{}, err
+		return nil, err
 	}
-	a.config = conf
-	a.logger = logger.New(conf.Log)
 
-	return a.logger, nil
+	return &application{
+		config: conf,
+		Logger: logger.New(conf.Log),
+	}, nil
 }
 
 func (a *application) Start(ctx context.Context) error {
-	repo, err := repository.NewRepository(ctx, a.config.Db, a.logger)
+	repo, err := repository.NewRepository(ctx, a.config.Db, a.Logger)
 	if err != nil {
 		return err
 	}
 	a.repo = repo
 
-	a.svc = service.NewService(a.repo, a.logger)
+	a.svc = service.NewService(a.repo, a.config.Worker, a.Logger)
 	reg := metrics.New()
 	commonHandler := handler.NewHandler()
-	v1 := v1.NewHandler(commonHandler, a.svc, a.logger)
-	router := writeserver.NewRouter(v1, a.logger, reg)
+	v1 := v1.NewHandler(commonHandler, a.svc, a.Logger)
+	router := writeserver.NewRouter(v1, a.Logger, reg)
 	a.server = httpserver.NewServer(router, a.config.Server)
 
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
+	a.runGroup, a.runCtx = errgroup.WithContext(ctx)
+
+	a.runGroup.Go(func() error {
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			a.errChan <- fmt.Errorf("http server остановлен с ошибкой: %w", err)
+			return fmt.Errorf("http server остановлен с ошибкой: %w", err)
 		}
-	}()
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-		a.svc.Work(ctx)
-	}()
+		return nil
+	})
+
+	a.runGroup.Go(func() error {
+		if err := a.svc.Run(ctx); err != nil {
+			return fmt.Errorf("воркер остановлен с ошибкой: %w", err)
+		}
+		return nil
+	})
 	return nil
+
 }
 
 func (a *application) Wait(ctx context.Context, cancel context.CancelFunc) error {
-	var appErr error
 
-	errWg := sync.WaitGroup{}
-	errWg.Add(1)
-	go func() {
-		defer errWg.Done()
-		for err := range a.errChan {
-			cancel()
-			appErr = err
-		}
-	}()
-	<-ctx.Done()
-	if a.server != nil {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), time.Duration(a.config.Server.Opts.ShutdownTimeout)*time.Second)
-		defer shutdownCancel()
-		_ = a.server.Shutdown(shutdownCtx)
+	if a.runGroup == nil {
+		return fmt.Errorf("приложение не запущено")
 	}
-	a.wg.Wait()
-	close(a.errChan)
-	errWg.Wait()
+	<-a.runCtx.Done()
+	var err error
+	a.shutdownOnce.Do(func() {
+		err = a.shutdown(ctx)
+	})
+	if err != nil {
+		return err
+	}
 
-	return appErr
+	return a.runGroup.Wait()
+}
+
+func (a *application) shutdown(ctx context.Context) error {
+	var errs []error
+	if a.server != nil {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(a.config.Server.Opts.ShutdownTimeout)*time.Second)
+		err := a.server.Shutdown(shutdownCtx)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("ошибка остановки http: %w", err))
+		}
+		cancel()
+	}
+	if a.svc != nil {
+		a.svc.Stop()
+	}
+	if a.repo != nil {
+		err := a.repo.Close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("ошибка закрытия БД: %w", err))
+		}
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+	return nil
+
 }

@@ -3,26 +3,30 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/quik"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 type worker struct {
-	repo      Repository
-	logger    *zap.Logger
-	batchSize int
-	queueSize uint
-	interval  time.Duration
-	jobsQueue chan writeJob
+	repo         Repository
+	logger       *zap.Logger
+	batchSize    int
+	queueSize    uint16
+	interval     time.Duration
+	jobsQueue    chan writeJob
+	shutdownOnce sync.Once
 }
 
 func newWorker(repo Repository,
 	logger *zap.Logger,
 	batchSize int,
-	queueSize uint,
-	interval uint) *worker {
+	queueSize uint16,
+	interval uint16) *worker {
 	return &worker{
 		logger:    logger,
 		batchSize: batchSize,
@@ -35,15 +39,39 @@ func newWorker(repo Repository,
 }
 
 type writeJob struct {
+	uuid   uuid.UUID
 	limits []quik.Limit
 	resCh  chan error
+}
+
+type result struct {
+	total      int
+	queued     int
+	succeed    int
+	failed     int
+	resultChan chan error
+}
+
+func (s *Service) Stop() {
+	s.worker.stop()
+}
+
+func (w *worker) stop() {
+	w.shutdownOnce.Do(func() {
+		close(w.jobsQueue)
+	})
 }
 
 func (w *worker) publish(ctx context.Context, limits ...quik.Limit) (chan error, error) {
 
 	ch := make(chan error, 1)
 
+	u, err := uuid.NewV7()
+	if err != nil {
+		return nil, err
+	}
 	job := writeJob{
+		uuid:   u,
 		limits: limits,
 		resCh:  ch,
 	}
@@ -52,63 +80,117 @@ func (w *worker) publish(ctx context.Context, limits ...quik.Limit) (chan error,
 	case w.jobsQueue <- job:
 		return ch, nil
 	case <-ctx.Done():
+
 		return nil, ctx.Err()
 	}
 }
 
-func (w *worker) Work(ctx context.Context) error {
+func countFlushed(counter map[uuid.UUID]*result, err error) {
 
-	ticker := time.NewTicker(1 * time.Second)
+	for k, v := range counter {
+		if err != nil {
+			counter[k].failed += v.queued
+		} else {
+			counter[k].succeed += v.queued
+		}
+		counter[k].queued = 0
+	}
+
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	return s.worker.work(ctx)
+}
+
+func (w *worker) work(ctx context.Context) error {
+
+	ticker := time.NewTicker(w.interval)
 	defer ticker.Stop()
 
 	var pending = make(map[[32]byte]quik.Limit, w.batchSize)
-	var signals = make(map[[32]byte][]chan error, w.batchSize)
+	var counter = make(map[uuid.UUID]*result, w.batchSize*10)
+
 	for {
 		select {
-		case job := <-w.jobsQueue:
+		case job, ok := <-w.jobsQueue:
+			if !ok {
+				lastCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
+				err := w.shutdownDrain(lastCtx, pending, counter)
+				return err
+			}
+			counter[job.uuid] = &result{
+				total:      len(job.limits),
+				resultChan: job.resCh,
+			}
+
 			for _, limit := range job.limits {
-				setKeys(limit, job.resCh, pending, signals)
+
+				pending[limit.KeyHash()] = limit
+				counter[job.uuid].queued++
+
+				if len(pending) >= w.batchSize {
+					w.logger.Debug(fmt.Sprintf("по размеру %d", len(pending)))
+					err := w.flush(ctx, pending)
+					countFlushed(counter, err)
+					sendResult(counter)
+					clear(pending)
+				}
 			}
-			if len(pending) >= w.batchSize {
-				w.logger.Debug(fmt.Sprintf("по размеру %d", len(pending)))
-				_ = w.flush(ctx, pending, signals)
-			}
+
 		case <-ticker.C:
 			if len(pending) == 0 {
 				continue
 			}
 			w.logger.Debug(fmt.Sprintf("по времени %d", len(pending)))
-			_ = w.flush(ctx, pending, signals)
+			err := w.flush(ctx, pending)
+			countFlushed(counter, err)
+			sendResult(counter)
+			clear(pending)
+
 		case <-ctx.Done():
 			lastCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			for job := range w.jobsQueue {
-				for _, limit := range job.limits {
-					setKeys(limit, job.resCh, pending, signals)
-				}
-			}
-			err := w.flush(lastCtx, pending, signals)
+			err := w.shutdownDrain(lastCtx, pending, counter)
 			if err != nil {
 				return err
 			}
+			return nil
 
 		}
 	}
 
 }
-func setKeys(limit quik.Limit, resCh chan error, pending map[[32]byte]quik.Limit, signals map[[32]byte][]chan error) {
-	key := limit.KeyHash()
-	pending[key] = limit
 
-	channels, ok := signals[key]
-	if !ok {
-		channels = make([]chan error, 0, 10)
+func (w *worker) shutdownDrain(shutdownCTX context.Context, pending map[[32]byte]quik.Limit, counter map[uuid.UUID]*result) error {
+	for job := range w.jobsQueue {
+		counter[job.uuid] = &result{
+			total:      len(job.limits),
+			resultChan: job.resCh,
+		}
+		for _, limit := range job.limits {
+
+			pending[limit.KeyHash()] = limit
+			counter[job.uuid].queued++
+		}
+
 	}
-	channels = append(channels, resCh)
-	signals[key] = channels
+	err := w.flush(shutdownCTX, pending)
+	countFlushed(counter, err)
+	sendResult(counter)
+	clear(pending)
+
+	for k, v := range counter {
+		v.resultChan <- models.ErrSavingData
+		close(counter[k].resultChan)
+
+	}
+
+	return err
 }
 
-func (w *worker) flush(ctx context.Context, pending map[[32]byte]quik.Limit, signals map[[32]byte][]chan error) error {
+func (w *worker) flush(ctx context.Context, pending map[[32]byte]quik.Limit) error {
 	if len(pending) == 0 {
 		return nil
 	}
@@ -116,12 +198,10 @@ func (w *worker) flush(ctx context.Context, pending map[[32]byte]quik.Limit, sig
 	err := w.repo.HandleRequest(ctx, prepareBatch(pending))
 	if err != nil {
 		w.logger.Error(err.Error())
+		return err
 	}
-	sendResult(signals, err)
-	clear(pending)
-	clear(signals)
 
-	return err
+	return nil
 }
 
 func prepareBatch(pending map[[32]byte]quik.Limit) []quik.Limit {
@@ -132,10 +212,25 @@ func prepareBatch(pending map[[32]byte]quik.Limit) []quik.Limit {
 	return out
 }
 
-func sendResult(signals map[[32]byte][]chan error, err error) {
-	for _, chGroup := range signals {
-		for _, ch := range chGroup {
-			ch <- err
+func sendResult(res map[uuid.UUID]*result) {
+
+	for k, v := range res {
+
+		switch {
+		case res[k].total == res[k].succeed:
+			v.resultChan <- nil
+			close(res[k].resultChan)
+			delete(res, k)
+		case res[k].total == v.failed:
+			v.resultChan <- fmt.Errorf("%w", models.ErrSavingData)
+			close(res[k].resultChan)
+			delete(res, k)
+		case res[k].total == (res[k].failed + res[k].succeed):
+			v.resultChan <- fmt.Errorf("%w: успешно=%d, с ошибкой=%d", models.ErrPartialSuccess, res[k].succeed, res[k].failed)
+			close(res[k].resultChan)
+			delete(res, k)
+		default:
+			continue
 		}
 	}
 }

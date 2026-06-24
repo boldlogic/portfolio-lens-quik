@@ -13,18 +13,18 @@ type Repository interface {
 
 type Service struct {
 	logger *zap.Logger
-	repo   Repository
-
 	worker
 }
 
-func NewService(repo Repository, logger *zap.Logger) *Service {
+func NewService(repo Repository, cfg WorkerConfig, logger *zap.Logger) *Service {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
 
 	return &Service{
 		logger: logger,
-		repo:   repo,
 		worker: *newWorker(
-			repo, logger, 100, 100, 2000,
+			repo, logger, int(cfg.BatchSize), cfg.QueueSize, cfg.Interval,
 		),
 	}
 }

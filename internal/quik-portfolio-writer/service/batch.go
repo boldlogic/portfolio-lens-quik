@@ -50,11 +50,16 @@ func (s *Service) UpsertLimits(ctx context.Context, limits []models.LimitLine) e
 	if err != nil {
 		return err
 	}
+
 	select {
 	case err := <-doneCh:
-		return err
+		if err != nil {
+			s.logger.Error(err.Error())
+			return err
+		}
+
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-
+	return nil
 }

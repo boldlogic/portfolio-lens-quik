@@ -2,13 +2,11 @@ package v1
 
 import (
 	"encoding/csv"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/boldlogic/packages/transport/httputils"
 	intmodels "github.com/boldlogic/portfolio-lens-quik/internal/models"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -26,7 +24,7 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		h.logger.Error("", zap.Error(err))
+		h.logger.Error(err.Error())
 
 		return nil, "", err
 	}
@@ -105,11 +103,7 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 	}
 	err = h.service.UpsertLimits(r.Context(), res)
 	if err != nil {
-		if errors.Is(err, models.ErrBusinessValidation) || errors.Is(err, models.ErrConflict) {
-			return nil, err.Error(), err
-		}
-		h.logger.Error(err.Error())
-		return nil, "", err
+		return nil, err.Error(), err
 	}
 	return nil, "", nil
 }
