@@ -182,7 +182,7 @@ func (w *worker) shutdownDrain(shutdownCTX context.Context, pending map[[32]byte
 	clear(pending)
 
 	for k, v := range counter {
-		v.resultChan <- models.ErrSavingData
+		v.resultChan <- context.Canceled
 		close(counter[k].resultChan)
 
 	}

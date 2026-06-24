@@ -87,8 +87,8 @@ func (a *application) Start(ctx context.Context) error {
 
 }
 
-func (a *application) Wait(ctx context.Context, cancel context.CancelFunc) error {
-
+func (a *application) Wait(ctx context.Context) error {
+	var errs []error
 	if a.runGroup == nil {
 		return fmt.Errorf("приложение не запущено")
 	}
@@ -98,10 +98,17 @@ func (a *application) Wait(ctx context.Context, cancel context.CancelFunc) error
 		err = a.shutdown(ctx)
 	})
 	if err != nil {
-		return err
+		errs = append(errs, err)
+	}
+	err = a.runGroup.Wait()
+	if err != nil {
+		errs = append(errs, err)
 	}
 
-	return a.runGroup.Wait()
+	if len(errs) != 0 {
+		errors.Join(errs...)
+	}
+	return nil
 }
 
 func (a *application) shutdown(ctx context.Context) error {

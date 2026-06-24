@@ -27,7 +27,7 @@ func main() {
 		a.Logger.Fatal("не удалось запустить приложение", zap.Error(err))
 	}
 	a.Logger.Info("приложение запущено")
-	err = a.Wait(ctx, cancel)
+	err = a.Wait(ctx)
 	if err != nil {
 		a.Logger.Fatal("приложение завершилось с ошибкой", zap.Error(err))
 	}
