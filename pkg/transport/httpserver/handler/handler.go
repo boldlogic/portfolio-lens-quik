@@ -39,6 +39,8 @@ func (h *Handler) Adapt(fn HandlerFunc) http.HandlerFunc {
 				status = http.StatusMultiStatus
 			case errors.Is(err, models.ErrBusinessValidation):
 				status = http.StatusUnprocessableEntity
+			case errors.Is(err, models.ErrUnauthorized):
+				status = http.StatusUnauthorized
 			case errors.Is(err, models.ErrNotFound):
 				status = http.StatusNotFound
 			case errors.Is(err, models.ErrConflict):

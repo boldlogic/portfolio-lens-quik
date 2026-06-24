@@ -16,6 +16,7 @@ type Config struct {
 	Db     dbconfig.DBConfig       `yaml:"db" json:"db"`
 	Server httpserver.ServerConfig `yaml:"server" json:"server"`
 	Worker service.WorkerConfig    `yaml:"worker" json:"worker"`
+	ApiKey string                  `yaml:"api_key" json:"api_key"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -45,6 +46,10 @@ func (c *Config) validate() []error {
 	srvErrs := c.Server.Validate()
 	if len(srvErrs) > 0 {
 		errs = append(errs, srvErrs...)
+	}
+
+	if c.ApiKey == "" {
+		errs = append(errs, fmt.Errorf("не указан api_key"))
 	}
 	return errs
 }

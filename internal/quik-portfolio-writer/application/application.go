@@ -64,7 +64,7 @@ func (a *application) Start(ctx context.Context) error {
 	a.svc = service.NewService(a.repo, a.config.Worker, a.Logger)
 	reg := metrics.New()
 	commonHandler := handler.NewHandler()
-	v1 := v1.NewHandler(commonHandler, a.svc, a.Logger)
+	v1 := v1.NewHandler(commonHandler, a.svc, a.Logger, a.config.ApiKey)
 	router := writeserver.NewRouter(v1, a.Logger, reg)
 	a.server = httpserver.NewServer(router, a.config.Server)
 
@@ -106,7 +106,7 @@ func (a *application) Wait(ctx context.Context) error {
 	}
 
 	if len(errs) != 0 {
-		errors.Join(errs...)
+		return errors.Join(errs...)
 	}
 	return nil
 }

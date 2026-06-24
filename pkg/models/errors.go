@@ -3,6 +3,7 @@ package models
 import "errors"
 
 var (
+	ErrUnauthorized       = errors.New("недействительный ключ")
 	ErrNotFound           = errors.New("данные по запросу не найдены")
 	ErrRetrievingData     = errors.New("ошибка при получении данных")
 	ErrSavingData         = errors.New("ошибка при изменении данных")

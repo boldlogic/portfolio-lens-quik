@@ -2,8 +2,8 @@ package writeserver
 
 import (
 	"github.com/boldlogic/packages/metrics"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/router"
 	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http/v1"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/router"
 	"go.uber.org/zap"
 )
 
