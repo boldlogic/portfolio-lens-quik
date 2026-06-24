@@ -17,22 +17,20 @@ func main() {
 	)
 	defer cancel()
 
-	a := application.New()
-
-	logger, err := a.Init()
+	a, err := application.New()
 	if err != nil {
-		log.Fatalf("не удалось проинициализировать приложение, %v", err)
+		log.Fatalf("Не удалось создать приложение: %v", err)
 	}
 
 	err = a.Start(ctx)
 	if err != nil {
-		logger.Fatal("не удалось запустить приложение", zap.Error(err))
+		a.Logger.Fatal("не удалось запустить приложение", zap.Error(err))
 	}
-
-	err = a.Wait(ctx, cancel)
+	a.Logger.Info("приложение запущено")
+	err = a.Wait(ctx)
 	if err != nil {
-		logger.Fatal("приложение завершилось с ошибкой", zap.Error(err))
-
+		a.Logger.Fatal("приложение завершилось с ошибкой", zap.Error(err))
 	}
+	a.Logger.Info("приложение завершилось")
 
 }

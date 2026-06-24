@@ -60,7 +60,7 @@ const (
 	mergeSecurityLimits           = mergeSecurityLimitsSrcSQL + securityLimitExchangeTableSQL + mergeSecurityLimitsUpsertSQL
 	mergeSecurityLimitsOTC        = mergeSecurityLimitsSrcSQL + securityLimitOtcTableSQL + mergeSecurityLimitsUpsertSQL
 	securityLimitExchangeTableSQL = " quik.security_limits "
-	securityLimitOtcTableSQL      = " quik.security_limits_otc "
+	securityLimitOtcTableSQL      = " quik.security_limits_otc"
 	mergeSecurityLimitsSrcSQL     = `
 	WITH src as(
 		select client_code

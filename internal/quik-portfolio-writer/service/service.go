@@ -12,15 +12,19 @@ type Repository interface {
 }
 
 type Service struct {
-	logger      *zap.Logger
-	repo        Repository
-	limitsQueue chan quik.Limit
+	logger *zap.Logger
+	worker
 }
 
-func NewService(repo Repository, logger *zap.Logger) *Service {
+func NewService(repo Repository, cfg WorkerConfig, logger *zap.Logger) *Service {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
 	return &Service{
-		logger:      logger,
-		repo:        repo,
-		limitsQueue: make(chan quik.Limit, 100),
+		logger: logger,
+		worker: *newWorker(
+			repo, logger, int(cfg.BatchSize), cfg.QueueSize, cfg.Interval,
+		),
 	}
 }

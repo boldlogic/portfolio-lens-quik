@@ -24,6 +24,15 @@ func (s *Service) UpsertLimit(ctx context.Context, limit intmodel.LimitInput) er
 	if err != nil {
 		return fmt.Errorf("%w: %w", models.ErrBusinessValidation, err)
 	}
-	out := []quik.Limit{lim}
-	return s.repo.HandleRequest(ctx, out)
+
+	doneCh, err := s.worker.publish(ctx, lim)
+	if err != nil {
+		return err
+	}
+	select {
+	case err := <-doneCh:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

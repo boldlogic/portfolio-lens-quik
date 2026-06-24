@@ -35,6 +35,8 @@ func (h *Handler) Adapt(fn HandlerFunc) http.HandlerFunc {
 				status = http.StatusRequestEntityTooLarge
 			case errors.Is(err, models.ErrValidation) || errors.Is(err, httputils.ErrReadingBody) || errors.Is(err, converters.ErrWrongJSON):
 				status = http.StatusBadRequest
+			case errors.Is(err, models.ErrPartialSuccess):
+				status = http.StatusMultiStatus
 			case errors.Is(err, models.ErrBusinessValidation):
 				status = http.StatusUnprocessableEntity
 			case errors.Is(err, models.ErrNotFound):

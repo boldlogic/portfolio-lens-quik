@@ -8,12 +8,14 @@ import (
 	"github.com/boldlogic/packages/dbconfig"
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/transport/httpserver"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/service"
 )
 
 type Config struct {
 	Log    logger.Config           `yaml:"log" json:"log"`
 	Db     dbconfig.DBConfig       `yaml:"db" json:"db"`
 	Server httpserver.ServerConfig `yaml:"server" json:"server"`
+	Worker service.WorkerConfig    `yaml:"worker" json:"worker"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -51,5 +53,6 @@ func (c *Config) applyDefaults() {
 	c.Db.ApplyDefaults()
 	c.Db.ApplySecretsFromEnv()
 	c.Server.ApplyDefaults()
+	c.Worker.ApplyDefaults()
 
 }

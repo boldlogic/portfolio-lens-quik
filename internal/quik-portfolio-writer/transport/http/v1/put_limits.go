@@ -8,7 +8,6 @@ import (
 	intmodels "github.com/boldlogic/portfolio-lens-quik/internal/models"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/models"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
 
 type limitReq struct {
@@ -50,12 +49,7 @@ func (h *Handler) createLimit(r *http.Request) (any, string, error) {
 
 	err = h.service.UpsertLimit(ctx, lim)
 	if err != nil {
-		h.logger.Error("", zap.Error(err))
-
-		if errors.Is(err, models.ErrBusinessValidation) {
-			return nil, err.Error(), err
-		}
-		return nil, "", err
+		return nil, err.Error(), err
 	}
 
 	return nil, "", nil
