@@ -1,21 +1,7 @@
 package quikdraft
 
-type InstrumentType struct {
-	Id    uint8
-	Title string
-}
-
 type InstrumentSubType struct {
 	SubTypeId uint8
 	Title     string
 	TypeId    uint8
-}
-
-type Board struct {
-	Id           uint8
-	Code         string
-	Name         string
-	IsTraded     bool
-	TradePointId *uint8
-	TradePoint   *TradePoint
 }

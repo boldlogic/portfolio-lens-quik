@@ -77,7 +77,7 @@ func (h *Handler) upload(r *http.Request) (any, string, error) {
 	mr, err := r.MultipartReader()
 	if err != nil {
 		h.logger.Error(err.Error())
-		return nil, err.Error(), models.ErrValidation
+		return nil, err.Error(), httputils.ErrUnsupportedMediaType
 	}
 
 	res := make([]intmodels.LimitLine, 0, 100)
