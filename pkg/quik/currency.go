@@ -39,6 +39,20 @@ type Currency struct {
 	currencyIso
 }
 
+func (c Currency) String() string {
+	name := "—"
+	if c.name != nil {
+		name = *c.name
+	}
+	return fmt.Sprintf("%s (%d) — %s [%s], %d minor units",
+		c.alpha,      // CurrencyCode → string, e.g. "USD"
+		c.numeric,    // numeric code, e.g. 840
+		name,         // Russian name or "—"
+		c.latName,    // Latin name, e.g. "US Dollar"
+		c.minorUnits, // minor units, e.g. 2
+	)
+}
+
 func (c Currency) CharCode() string {
 	return c.charCode
 }

@@ -15,6 +15,7 @@ type Config struct {
 	Log    logger.Config           `yaml:"log" json:"log"`
 	Db     dbconfig.DBConfig       `yaml:"db" json:"db"`
 	Server httpserver.ServerConfig `yaml:"server" json:"server"`
+	Pprof  PprofConfig             `yaml:"pprof" json:"pprof"`
 	Worker service.WorkerConfig    `yaml:"worker" json:"worker"`
 	ApiKey string                  `yaml:"api_key" json:"api_key"`
 }
@@ -48,6 +49,11 @@ func (c *Config) validate() []error {
 		errs = append(errs, srvErrs...)
 	}
 
+	pprofErrs := c.Pprof.Validate()
+	if len(pprofErrs) > 0 {
+		errs = append(errs, pprofErrs...)
+	}
+
 	if c.ApiKey == "" {
 		errs = append(errs, fmt.Errorf("не указан api_key"))
 	}
@@ -58,6 +64,7 @@ func (c *Config) applyDefaults() {
 	c.Db.ApplyDefaults()
 	c.Db.ApplySecretsFromEnv()
 	c.Server.ApplyDefaults()
+	c.Pprof.ApplyDefaults()
 	c.Worker.ApplyDefaults()
 
 }

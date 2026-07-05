@@ -9,16 +9,15 @@ import (
 	logger "github.com/boldlogic/packages/logger/zaplog"
 	"github.com/boldlogic/packages/transport/httpserver"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/producer"
-	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/worker"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-currency/service"
 )
 
 type Config struct {
-	Log               logger.Config           `yaml:"log" json:"log"`
-	Db                dbconfig.DBConfig       `yaml:"db" json:"db"`
-	Server            httpserver.ServerConfig `yaml:"server" json:"server"`
-	FxCBRJobConfig    worker.JobConfig        `yaml:"fx_cbr_worker" json:"fx_cbr_worker"`
-	CurrencyJobConfig worker.JobConfig        `yaml:"currency_worker" json:"currency_worker"`
-	Kafka             producer.Config         `yaml:"kafka_producer" json:"kafka_producer"`
+	Log               logger.Config                `yaml:"log" json:"log"`
+	Db                dbconfig.DBConfig            `yaml:"db" json:"db"`
+	Server            httpserver.ServerConfig      `yaml:"server" json:"server"`
+	CurrencyJobConfig service.CurrencyWorkerConfig `yaml:"currency_worker" json:"currency_worker"`
+	Kafka             producer.Config              `yaml:"kafka_producer" json:"kafka_producer"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -58,6 +57,5 @@ func (c *Config) applyDefaults() {
 	c.Db.ApplyDefaults()
 	c.Db.ApplySecretsFromEnv()
 	c.Server.ApplyDefaults()
-	c.FxCBRJobConfig.ApplyDefaults("quik.currency.crossrates.import")
-	c.CurrencyJobConfig.ApplyDefaults("quik.currency.dictionary.refresh")
+	c.CurrencyJobConfig.ApplyDefaults()
 }

@@ -10,44 +10,65 @@ import (
 )
 
 const (
+	selectExistingCurrencies = `
+		SELECT iso_code
+		,iso_char_code
+		,currency_name
+		,lat_name
+		,minor_units
+	FROM ref.currencies
+  `
 	selectNewCurrenciesFromCrossrates = `
-		WITH crossrate AS (
-			SELECT
-				UPPER(COALESCE(NULLIF(q.currency, ''), NULLIF(q.sec_code, ''))) AS iso_char_code,
-				COALESCE(q.full_name, q.short_name) AS currency_name
-			FROM quik.current_quotes q
-			WHERE q.class_code = 'CROSSRATE'
-		),
-		cets_codes AS (
-			SELECT DISTINCT v.code AS iso_char_code
-			FROM quik.current_quotes q
-			CROSS APPLY (VALUES (q.base_currency), (q.quote_currency)) AS v(code)
-			WHERE q.class_code = 'CETS'
-		),
-		src AS (
-			SELECT iso_char_code, currency_name
-			FROM crossrate
-
-			UNION
-
-			SELECT c.iso_char_code, ''
-			FROM cets_codes c
-			WHERE NOT EXISTS (
-				SELECT 1
-				FROM crossrate cr
-				WHERE cr.iso_char_code = c.iso_char_code
+		with
+			b as (
+				SELECT
+					b.board_id,
+					b.code,
+					b.trade_point_id,
+					t.title
+				FROM
+					ref.boards b
+					JOIN ref.instrument_type_boards tb ON tb.board_id=b.board_id
+					JOIN ref.instrument_types t ON t.type_id=tb.type_id
+				WHERE
+					t.title='Валюта'
+			),
+			crossrate AS (
+				SELECT
+					q.class_code,
+					iso_char_code=UPPER(
+						COALESCE(NULLIF(q.currency, ''), NULLIF(q.sec_code, ''))
+					),
+					currency_name=COALESCE(q.full_name, q.short_name),
+					q.rw
+				FROM
+					b
+					join quik.current_quotes q on q.class_code=b.code
 			)
-		)
-		SELECT s.iso_char_code, s.currency_name
-		FROM src s
-		WHERE s.iso_char_code <> ''
-		AND NOT EXISTS (
-			SELECT 1
-			FROM ref.currencies r
-			WHERE r.iso_char_code = s.iso_char_code
-		)
-		ORDER BY case when s.currency_name='' then 1 else 0 end;`
+		SELECT
+			s.iso_char_code,
+			s.currency_name
+		FROM
+			crossrate s
+		WHERE
+			s.iso_char_code<>''
+		ORDER BY
+			case
+				when s.currency_name='' then 1
+				else 0
+			end;
+`
 )
+
+func scanCurrency(row *sql.Rows) (models.Currency, error) {
+
+	var res models.Currency
+	err := row.Scan(&res.Numeric, &res.CharCode, &res.Name, &res.LatName, &res.MinorUnits)
+	if err != nil {
+		return models.Currency{}, fmt.Errorf("ошибка чтения: %w", err)
+	}
+	return res, nil
+}
 
 func scanCurrencyFromCrossrates(row *sql.Rows) (models.CurrencyFromCrossrates, error) {
 	var res models.CurrencyFromCrossrates
@@ -60,4 +81,8 @@ func scanCurrencyFromCrossrates(row *sql.Rows) (models.CurrencyFromCrossrates, e
 
 func (repo CurrencyRepo) SelectNewCurrenciesFromCrossrates(ctx context.Context) ([]models.CurrencyFromCrossrates, error) {
 	return dbrepo.SelectRows(ctx, repo.runner, selectNewCurrenciesFromCrossrates, scanCurrencyFromCrossrates)
+}
+
+func (repo CurrencyRepo) SelectCurrencies(ctx context.Context) ([]models.Currency, error) {
+	return dbrepo.SelectRows(ctx, repo.runner, selectExistingCurrencies, scanCurrency)
 }

@@ -10,9 +10,10 @@ import (
 type InstrumentTypeTitle string
 
 const (
-	InstrumentTitleSecurities = "Акции"
-	InstrumentTitleBonds      = "Облигации"
-	InstrumentTitleCurrencies = "Валюта"
+	InstrumentTitleSecurities    = "Акции"
+	InstrumentTitleBonds         = "Облигации"
+	InstrumentTitleCurrencies    = "Валюта"
+	InstrumentTitleCurrencyPairs = "Валютные пары"
 )
 
 type InstrumentType struct {

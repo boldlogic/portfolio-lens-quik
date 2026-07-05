@@ -15,6 +15,7 @@ import (
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/config"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/repository"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/service"
+	debugserver "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/debug"
 	writeserver "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http"
 	v1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-portfolio-writer/transport/http/v1"
 	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
@@ -32,6 +33,7 @@ type application struct {
 	Logger *zap.Logger
 	repo   *repository.Repository
 	server *httpserver.Server
+	pprof  *debugserver.Server
 	svc    *service.Service
 
 	runGroup     *errgroup.Group
@@ -77,6 +79,14 @@ func (a *application) Start(ctx context.Context) error {
 		return nil
 	})
 
+	if a.config.Pprof.Enabled {
+		a.pprof = debugserver.NewServer(a.config.Pprof)
+		a.Logger.Info("pprof server запущен", zap.String("addr", a.pprof.Addr()))
+		a.runGroup.Go(func() error {
+			return a.pprof.ListenAndServe()
+		})
+	}
+
 	a.runGroup.Go(func() error {
 		if err := a.svc.Run(ctx); err != nil {
 			return fmt.Errorf("воркер остановлен с ошибкой: %w", err)
@@ -118,6 +128,14 @@ func (a *application) shutdown(ctx context.Context) error {
 		err := a.server.Shutdown(shutdownCtx)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("ошибка остановки http: %w", err))
+		}
+		cancel()
+	}
+	if a.pprof != nil {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(a.config.Server.Opts.ShutdownTimeout)*time.Second)
+		err := a.pprof.Shutdown(shutdownCtx)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("ошибка остановки pprof: %w", err))
 		}
 		cancel()
 	}
