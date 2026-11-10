@@ -1,0 +1,34 @@
+﻿{
+    "prepare_client_count":  2,
+    "date":  "2026-06-09",
+    "include_date":  false,
+    "portfolio_base_url":  "http://127.0.0.1:5030",
+    "fixture_firms_codes_only":  true,
+    "primary_client_code":  "LDCL38290001",
+    "firm_ids":  [
+
+                 ],
+    "firm_codes":  [
+                       "NC0058900000",
+                       "MC0003300000"
+                   ],
+    "writer_seed_kinds":  [
+                              "Money"
+                          ],
+    "prepare_firm_count":  2,
+    "client_codes":  [
+                         "LDCL38290001",
+                         "LDCL38290002"
+                     ],
+    "run_id":  "38297c64",
+    "writer_base_url":  "http://127.0.0.1:5060",
+    "seed_client_count":  2,
+    "reference_base_url":  "http://127.0.0.1:6030",
+    "date_mode":  "omit",
+    "page_limit":  50,
+    "firms_fixture_path":  "C:\\Users\\user\\Documents\\go_pet_projects\\quik-portfolio\\loadtests\\k6\\fixtures\\firms.json",
+    "target_rps":  10,
+    "test_duration_sec":  6,
+    "warmup_duration_sec":  5,
+    "hold_duration_sec":  1
+}

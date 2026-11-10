@@ -1,0 +1,66 @@
+﻿{
+    "include_date":  false,
+    "sec_codes":  [
+                      "GLD",
+                      "EQMX",
+                      "OBLG",
+                      "DIVD",
+                      "FXRW",
+                      "BCSR",
+                      "SU26245RMFS9",
+                      "SU26246RMFS7",
+                      "SU26247RMFS5",
+                      "SU26248RMFS3",
+                      "RU000A1059R0",
+                      "RU000A105JT4",
+                      "F",
+                      "C-RM",
+                      "DIS-RM",
+                      "WDC-RM",
+                      "SPBE_SPB",
+                      "USD000UTSTOM"
+                  ],
+    "money_currencies":  [
+                             "RUB",
+                             "USD"
+                         ],
+    "client_codes":  [
+
+                     ],
+    "primary_client_code":  "",
+    "seed_client_count":  20,
+    "writer_seed_kinds":  [
+                              "All"
+                          ],
+    "fixture_firms_codes_only":  true,
+    "prepare_client_count":  20,
+    "otc_sec_codes":  [
+                          "RU000A1059R0",
+                          "RU000A105JT4",
+                          "SU26245RMFS9",
+                          "SU26246RMFS7",
+                          "SU26247RMFS5",
+                          "SU26248RMFS3"
+                      ],
+    "firm_codes":  [
+                       "NC0058900000",
+                       "MC0003300000"
+                   ],
+    "firm_ids":  [
+
+                 ],
+    "prepare_firm_count":  2,
+    "firms_fixture_path":  "C:\\Users\\user\\Documents\\go_pet_projects\\quik-portfolio\\loadtests\\k6\\fixtures\\firms.json",
+    "run_id":  "2483f0ad",
+    "date_mode":  "omit",
+    "portfolio_base_url":  "http://127.0.0.1:5030",
+    "date":  "2026-06-30",
+    "page_limit":  50,
+    "reference_base_url":  "http://127.0.0.1:6030",
+    "target_rps":  50,
+    "test_duration_sec":  120,
+    "warmup_duration_sec":  5,
+    "hold_duration_sec":  115,
+    "writer_api_key":  "ksjdfgld",
+    "writer_base_url":  "http://127.0.0.1:5030"
+}

@@ -1,0 +1,6 @@
+{
+  "firms": [
+    { "id": 1, "firmCode": "NC0058900000", "firmName": "БКС" },
+    { "id": 2, "firmCode": "MC0003300000", "firmName": "ВТБ" }
+  ]
+}

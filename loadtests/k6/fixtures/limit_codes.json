@@ -1,0 +1,14 @@
+{
+  "moneyCurrencies": ["RUB", "USD"],
+  "secCodes": [
+    "GLD", "EQMX", "OBLG", "DIVD", "FXRW", "BCSR",
+    "SU26245RMFS9", "SU26246RMFS7", "SU26247RMFS5", "SU26248RMFS3",
+    "RU000A1059R0", "RU000A105JT4",
+    "F", "C-RM", "DIS-RM", "WDC-RM",
+    "SPBE_SPB", "USD000UTSTOM"
+  ],
+  "otcSecCodes": [
+    "RU000A1059R0", "RU000A105JT4",
+    "SU26245RMFS9", "SU26246RMFS7", "SU26247RMFS5", "SU26248RMFS3"
+  ]
+}

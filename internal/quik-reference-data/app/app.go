@@ -13,15 +13,17 @@ import (
 	"github.com/boldlogic/packages/metrics"
 	"github.com/boldlogic/packages/periodic"
 	"github.com/boldlogic/packages/transport/httpserver"
-	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	referencehttp "github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/api/http"
 	apiv1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/api/http/v1"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/firm"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/tradeaccount"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/readfirms"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/syncfirms"
+	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/synctradeaccounts"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/writefirms"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/shared/config"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/shared/db"
+	"github.com/boldlogic/portfolio-lens-quik/pkg/transport/httpserver/handler"
 	"go.uber.org/zap"
 )
 
@@ -66,13 +68,16 @@ func (a *application) Start(ctx context.Context) error {
 	a.repo = repo
 
 	firmRepo := firm.NewFirmsRepo(a.repo)
+	tradeAccountRepo := tradeaccount.NewTradeAccountsRepo(a.repo)
 
 	readFirmsSvc := readfirms.NewService(firmRepo, a.logger)
 	writeFirmsSvc := writefirms.NewService(firmRepo, a.logger)
 	syncFirmsSvc := syncfirms.NewService(firmRepo, a.logger)
+	syncTradeAccountsSvc := synctradeaccounts.NewService(tradeAccountRepo, a.logger)
 
 	runner := periodic.NewRunner(
 		syncfirms.NewActualizeFirmsWorker(syncFirmsSvc, a.logger, 60*time.Second),
+		synctradeaccounts.NewActualizeTradeAccountsWorker(syncTradeAccountsSvc, a.logger, 60*time.Second),
 	)
 	a.wg.Add(1)
 	go func() {

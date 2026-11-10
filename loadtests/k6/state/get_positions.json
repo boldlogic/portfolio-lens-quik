@@ -1,0 +1,53 @@
+﻿{
+    "prepare_client_count":  20,
+    "date":  "2026-06-11",
+    "include_date":  false,
+    "portfolio_base_url":  "http://127.0.0.1:5030",
+    "fixture_firms_codes_only":  false,
+    "primary_client_code":  "LDCL9C8D0001",
+    "firm_ids":  [
+                     1,
+                     2
+                 ],
+    "firm_codes":  [
+                       "NC0058900000",
+                       "MC0003300000"
+                   ],
+    "writer_seed_kinds":  [
+                              "All"
+                          ],
+    "prepare_firm_count":  2,
+    "client_codes":  [
+                         "LDCL9C8D0001",
+                         "LDCL9C8D0002",
+                         "LDCL9C8D0003",
+                         "LDCL9C8D0004",
+                         "LDCL9C8D0005",
+                         "LDCL9C8D0006",
+                         "LDCL9C8D0007",
+                         "LDCL9C8D0008",
+                         "LDCL9C8D0009",
+                         "LDCL9C8D0010",
+                         "LDCL9C8D0011",
+                         "LDCL9C8D0012",
+                         "LDCL9C8D0013",
+                         "LDCL9C8D0014",
+                         "LDCL9C8D0015",
+                         "LDCL9C8D0016",
+                         "LDCL9C8D0017",
+                         "LDCL9C8D0018",
+                         "LDCL9C8D0019",
+                         "LDCL9C8D0020"
+                     ],
+    "run_id":  "9c8d9ff0",
+    "writer_base_url":  "http://127.0.0.1:5060",
+    "seed_client_count":  20,
+    "reference_base_url":  "http://127.0.0.1:6030",
+    "date_mode":  "omit",
+    "page_limit":  50,
+    "firms_fixture_path":  "C:\\Users\\user\\Documents\\go_pet_projects\\quik-portfolio\\loadtests\\k6\\fixtures\\firms.json",
+    "target_rps":  50,
+    "test_duration_sec":  60,
+    "warmup_duration_sec":  5,
+    "hold_duration_sec":  55
+}

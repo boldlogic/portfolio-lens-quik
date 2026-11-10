@@ -1,0 +1,18 @@
+﻿{
+    "portfolio_base_url":  "http://127.0.0.1:5030",
+    "writer_base_url":  "http://127.0.0.1:5060",
+    "page_limit":  50,
+    "include_date":  false,
+    "date":  "2026-05-31",
+    "client_codes":  [
+                         "TESTCLIENT01"
+                     ],
+    "primary_client_code":  "TESTCLIENT01",
+    "target_http_rps":  30,
+    "target_iter_rps":  10,
+    "target_rps":  30,
+    "pages_per_iter":  3,
+    "test_duration_sec":  6,
+    "warmup_duration_sec":  5,
+    "hold_duration_sec":  1
+}

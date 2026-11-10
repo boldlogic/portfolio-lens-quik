@@ -1,0 +1,52 @@
+﻿{
+    "prepare_client_count":  20,
+    "date":  "2026-06-09",
+    "include_date":  false,
+    "portfolio_base_url":  "http://127.0.0.1:5030",
+    "fixture_firms_codes_only":  true,
+    "primary_client_code":  "LDCLC0A80001",
+    "firm_ids":  [
+
+                 ],
+    "firm_codes":  [
+                       "NC0058900000",
+                       "MC0003300000"
+                   ],
+    "writer_seed_kinds":  [
+                              "Securities"
+                          ],
+    "prepare_firm_count":  2,
+    "client_codes":  [
+                         "LDCLC0A80001",
+                         "LDCLC0A80002",
+                         "LDCLC0A80003",
+                         "LDCLC0A80004",
+                         "LDCLC0A80005",
+                         "LDCLC0A80006",
+                         "LDCLC0A80007",
+                         "LDCLC0A80008",
+                         "LDCLC0A80009",
+                         "LDCLC0A80010",
+                         "LDCLC0A80011",
+                         "LDCLC0A80012",
+                         "LDCLC0A80013",
+                         "LDCLC0A80014",
+                         "LDCLC0A80015",
+                         "LDCLC0A80016",
+                         "LDCLC0A80017",
+                         "LDCLC0A80018",
+                         "LDCLC0A80019",
+                         "LDCLC0A80020"
+                     ],
+    "run_id":  "c0a89e53",
+    "writer_base_url":  "http://127.0.0.1:5060",
+    "seed_client_count":  20,
+    "reference_base_url":  "http://127.0.0.1:6030",
+    "date_mode":  "omit",
+    "page_limit":  50,
+    "firms_fixture_path":  "C:\\Users\\user\\Documents\\go_pet_projects\\quik-portfolio\\loadtests\\k6\\fixtures\\firms.json",
+    "target_rps":  5,
+    "test_duration_sec":  80,
+    "warmup_duration_sec":  5,
+    "hold_duration_sec":  75
+}
