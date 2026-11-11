@@ -17,6 +17,9 @@ type Repository interface {
 	SelectSecurityLimitsOtcMaxDate(ctx context.Context) (*time.Time, error)
 	InsertSecurityLimitsOtcCopy(ctx context.Context, dateFrom time.Time, dateTo time.Time) error
 	DeleteSecurityLimitsOtc(ctx context.Context, date time.Time) error
+	ListPositionLoadDates(ctx context.Context) ([]time.Time, error)
+	ReplacePositionsForDate(ctx context.Context, loadDate time.Time) error
+	DeletePositionsWithoutLimits(ctx context.Context) error
 }
 
 type Service struct {

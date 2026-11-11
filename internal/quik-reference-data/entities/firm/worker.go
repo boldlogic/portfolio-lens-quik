@@ -11,17 +11,18 @@ import (
 const (
 	syncFirmsFromLimits = `
 		INSERT INTO ref.firms (code, name)
-		SELECT DISTINCT src.code, src.name
+		SELECT src.code, MAX(src.name)
 		FROM (
 			SELECT firm_code AS code, LTRIM(RTRIM(firm_name)) AS name
 			FROM quik.money_limits
-			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_name)) <> ''
-			UNION
-			SELECT firm_code AS code, LTRIM(RTRIM(firm_name)) AS name
+			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_code)) <> ''
+			UNION ALL
+			SELECT firm_code, LTRIM(RTRIM(firm_name))
 			FROM quik.security_limits
-			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_name)) <> ''
+			WHERE firm_code IS NOT NULL AND LTRIM(RTRIM(firm_code)) <> ''
 		) src
-		WHERE NOT EXISTS (SELECT 1 FROM ref.firms f WHERE f.code = src.code);
+		WHERE NOT EXISTS (SELECT 1 FROM ref.firms f WHERE f.code = src.code)
+		GROUP BY src.code;
 	`
 )
 
