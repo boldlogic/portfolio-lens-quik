@@ -17,12 +17,10 @@ import (
 	apiv1 "github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/api/http/v1"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/client"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/firm"
-	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/instrumentcode"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/entities/tradeaccount"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/readfirms"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/syncclients"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/syncfirms"
-	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/syncinstrumentcodes"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/synctradeaccounts"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/features/writefirms"
 	"github.com/boldlogic/portfolio-lens-quik/internal/quik-reference-data/shared/config"
@@ -74,20 +72,17 @@ func (a *application) Start(ctx context.Context) error {
 	firmRepo := firm.NewFirmsRepo(a.repo)
 	clientRepo := client.NewClientsRepo(a.repo)
 	tradeAccountRepo := tradeaccount.NewTradeAccountsRepo(a.repo)
-	instrumentCodeRepo := instrumentcode.NewInstrumentCodesRepo(a.repo)
 
 	readFirmsSvc := readfirms.NewService(firmRepo, a.logger)
 	writeFirmsSvc := writefirms.NewService(firmRepo, a.logger)
 	syncFirmsSvc := syncfirms.NewService(firmRepo, a.logger)
 	syncClientsSvc := syncclients.NewService(clientRepo, a.logger)
 	syncTradeAccountsSvc := synctradeaccounts.NewService(tradeAccountRepo, a.logger)
-	syncInstrumentCodesSvc := syncinstrumentcodes.NewService(instrumentCodeRepo, a.logger)
 
 	runner := periodic.NewRunner(
 		syncfirms.NewActualizeFirmsWorker(syncFirmsSvc, a.logger, 60*time.Second),
 		syncclients.NewActualizeClientsWorker(syncClientsSvc, a.logger, 60*time.Second),
 		synctradeaccounts.NewActualizeTradeAccountsWorker(syncTradeAccountsSvc, a.logger, 60*time.Second),
-		syncinstrumentcodes.NewActualizeInstrumentCodesWorker(syncInstrumentCodesSvc, a.logger, 60*time.Second),
 	)
 	a.wg.Add(1)
 	go func() {

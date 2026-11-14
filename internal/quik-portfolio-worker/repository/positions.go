@@ -25,9 +25,12 @@ const deletePositionsWithoutLimitsSQL = `
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
 	BEGIN TRAN;
+	DECLARE @quik tinyint = (SELECT ext_system_id FROM ref.external_systems WHERE ext_system = N'QUIK');
 	DELETE p
 	FROM portfolio.positions p
-	WHERE NOT EXISTS (
+	WHERE p.source_account_id IS NULL
+	AND (p.ext_system_id IS NULL OR p.ext_system_id = @quik)
+	AND NOT EXISTS (
 		SELECT 1 FROM quik.money_limits m WHERE m.load_date = p.load_date
 		UNION ALL
 		SELECT 1 FROM quik.security_limits s WHERE s.load_date = p.load_date
@@ -189,11 +192,16 @@ const replacePositionsForDateSQL = `
 	WHERE trade_account_id IS NOT NULL AND instrument_id IS NOT NULL
 	GROUP BY trade_account_id, instrument_id;
 
+	DECLARE @quik tinyint = (SELECT ext_system_id FROM ref.external_systems WHERE ext_system = N'QUIK');
+	DECLARE @observed datetimeoffset = SYSDATETIMEOFFSET();
+
 	BEGIN TRAN;
 
 	DELETE p
 	FROM portfolio.positions AS p
 	WHERE p.load_date = @d
+		AND p.source_account_id IS NULL
+		AND (p.ext_system_id IS NULL OR p.ext_system_id = @quik)
 		AND NOT EXISTS (
 			SELECT 1
 			FROM @pos AS s
@@ -203,22 +211,29 @@ const replacePositionsForDateSQL = `
 		);
 
 	UPDATE p
-	SET balance = s.balance
+	SET balance = s.balance,
+		source_updated_at = @observed,
+		ext_system_id = @quik
 	FROM portfolio.positions AS p
 	JOIN @pos AS s
 		ON s.instrument_id = p.instrument_id
 		AND EXISTS (SELECT p.client_id INTERSECT SELECT s.client_id)
 		AND EXISTS (SELECT p.trade_account_id INTERSECT SELECT s.trade_account_id)
 	WHERE p.load_date = @d
-		AND EXISTS (SELECT p.balance EXCEPT SELECT s.balance);
+		AND p.source_account_id IS NULL
+		AND EXISTS (SELECT p.balance EXCEPT SELECT s.balance)
+		AND (p.source_updated_at IS NULL OR p.source_updated_at < @observed);
 
-	INSERT INTO portfolio.positions (load_date, client_id, trade_account_id, instrument_id, balance)
-	SELECT @d, s.client_id, s.trade_account_id, s.instrument_id, s.balance
+	INSERT INTO portfolio.positions (
+		load_date, client_id, trade_account_id, instrument_id, balance, source_updated_at, ext_system_id
+	)
+	SELECT @d, s.client_id, s.trade_account_id, s.instrument_id, s.balance, @observed, @quik
 	FROM @pos AS s
 	WHERE NOT EXISTS (
 		SELECT 1
 		FROM portfolio.positions AS p
 		WHERE p.load_date = @d
+			AND p.source_account_id IS NULL
 			AND p.instrument_id = s.instrument_id
 			AND EXISTS (SELECT p.client_id INTERSECT SELECT s.client_id)
 			AND EXISTS (SELECT p.trade_account_id INTERSECT SELECT s.trade_account_id)

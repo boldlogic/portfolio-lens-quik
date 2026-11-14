@@ -1,0 +1,52 @@
+-- +goose Up
+-- +goose StatementBegin
+ALTER TABLE moex.securities ADD
+    lat_name NVARCHAR(250) NULL,
+    lot_size INT NULL,
+    list_level NVARCHAR(20) NULL,
+    currency_id NVARCHAR(10) NULL,
+    issue_size DECIMAL(18,6) NULL,
+    coupon_percent DECIMAL(18,6) NULL,
+    coupon_date DATE NULL,
+    days_to_redemption INT NULL,
+    asset_code NVARCHAR(20) NULL,
+    lst_del_date DATE NULL,
+    delivery_type NVARCHAR(50) NULL,
+    settle_type NVARCHAR(50) NULL,
+    calc_mode NVARCHAR(50) NULL,
+    calc_mode_descr NVARCHAR(255) NULL,
+    frequency NVARCHAR(50) NULL,
+    option_type NVARCHAR(50) NULL,
+    strike DECIMAL(18,6) NULL,
+    initial_value DECIMAL(18,6) NULL,
+    start_date_moex DATE NULL,
+    exec_type NVARCHAR(50) NULL,
+    margin_style NVARCHAR(50) NULL,
+    contract_name NVARCHAR(255) NULL,
+    group_type NVARCHAR(50) NULL,
+    trading_session NVARCHAR(50) NULL,
+    program_registry_number NVARCHAR(100) NULL,
+    included_by_moex BIT NULL,
+    qual_investors_group NVARCHAR(50) NULL,
+    underlying_asset NVARCHAR(100) NULL,
+    expiration_clr_sess NVARCHAR(50) NULL,
+    series_name NVARCHAR(100) NULL,
+    time_course_int NVARCHAR(50) NULL,
+    time_course_clr NVARCHAR(50) NULL,
+    emitter_id NVARCHAR(50) NULL,
+    lst_trade DATE NULL,
+    frst_trade DATE NULL,
+    is_qualified_investors BIT NULL,
+    morning_session BIT NULL,
+    evening_session BIT NULL;
+-- +goose StatementEnd
+
+-- +goose Down
+ALTER TABLE moex.securities DROP COLUMN
+    lat_name, lot_size, list_level, currency_id, issue_size, coupon_percent, coupon_date,
+    days_to_redemption, asset_code, lst_del_date, delivery_type, settle_type, calc_mode,
+    calc_mode_descr, frequency, option_type, strike, initial_value, start_date_moex,
+    exec_type, margin_style, contract_name, group_type, trading_session,
+    program_registry_number, included_by_moex, qual_investors_group, underlying_asset,
+    expiration_clr_sess, series_name, time_course_int, time_course_clr, emitter_id,
+    lst_trade, frst_trade, is_qualified_investors, morning_session, evening_session;
